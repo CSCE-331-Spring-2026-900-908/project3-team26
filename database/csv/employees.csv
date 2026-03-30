@@ -1,0 +1,6 @@
+id,permission,actions,changes
+1,Manager,All,All
+2,Cashier,Create Orders,None
+3,Cashier,Create Orders,None
+4,Manager,All,All
+5,Cashier,Create Orders,None
