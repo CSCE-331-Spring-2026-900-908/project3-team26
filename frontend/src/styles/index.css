@@ -849,3 +849,41 @@ fieldset.panel legend {
   color: var(--success);
   line-height: 1;
 }
+
+@media (max-width: 900px) {
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cashier-body,
+  .cashier-layout,
+  .manager-grid-2,
+  .two-column {
+    flex-direction: column;
+    display: flex;
+  }
+
+  .cashier-right,
+  .kiosk-right {
+    width: 100%;
+  }
+
+  .manager-metrics,
+  .manager-nav,
+  .manager-form-grid,
+  .cat-row,
+  .cashier-categories,
+  .kiosk-menu-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .menu-grid,
+  .cashier-menu-grid,
+  .custom-row,
+  .cashier-customization,
+  .cashier-bottom,
+  .cashier-bottom-bar {
+    grid-template-columns: 1fr;
+  }
+}
