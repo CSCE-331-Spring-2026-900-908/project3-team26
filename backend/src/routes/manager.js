@@ -71,3 +71,67 @@ router.get('/dashboard', async (_req, res, next) => {
     next(error);
   }
 });
+
+router.get('/orders', async (_req, res, next) => {
+  try {
+    const support = await getSchemaSupport();
+    const result = await query(
+      `SELECT o.id, o.order_time, o.total_amount, o.cashier,
+              ${support.hasOrderSource ? 'o.order_source,' : "'cashier' AS order_source,"}
+              ${support.hasOrderVoids ? "CASE WHEN ov.order_id IS NULL THEN 'ACTIVE' ELSE 'VOIDED' END AS status, ov.voided_at, ov.manager_id" : "'ACTIVE' AS status, NULL AS voided_at, NULL AS manager_id"}
+       FROM orders o
+       ${support.hasOrderVoids ? 'LEFT JOIN order_voids ov ON ov.order_id = o.id' : ''}
+       ORDER BY o.id DESC
+       LIMIT 250`
+    );
+    res.json({ orders: result.rows });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/orders/:id/void', async (req, res, next) => {
+  const orderId = Number(req.params.id);
+  const managerId = req.body?.managerId || null;
+
+  try {
+    const support = await getSchemaSupport();
+    if (!support.hasOrderVoids) {
+      return res.status(400).json({ error: 'Order voiding is unavailable on the original Project 2 schema.' });
+    }
+    await withClient(async (client) => {
+      await client.query('BEGIN');
+      try {
+        const orderResult = await client.query(
+          'SELECT order_time::date AS business_date FROM orders WHERE id = $1',
+          [orderId]
+        );
+        if (orderResult.rowCount === 0) {
+          throw new Error('Order not found.');
+        }
+
+        const alreadyVoided = await client.query(
+          'SELECT COUNT(*)::int AS count FROM order_voids WHERE order_id = $1',
+          [orderId]
+        );
+        if (Number(alreadyVoided.rows[0].count) > 0) {
+          throw new Error('Order is already voided.');
+        }
+
+        await client.query(
+          `INSERT INTO order_voids(order_id, business_date, voided_at, manager_id)
+           VALUES ($1, $2, NOW(), $3)`,
+          [orderId, orderResult.rows[0].business_date, managerId]
+        );
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
