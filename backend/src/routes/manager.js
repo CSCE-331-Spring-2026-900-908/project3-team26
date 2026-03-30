@@ -370,3 +370,25 @@ router.delete('/employees/:id', async (req, res, next) => {
     next(error);
   }
 });
+
+router.get('/reports/x', async (_req, res, next) => {
+  try {
+    const businessDate = new Date().toISOString().slice(0, 10);
+    const report = await buildXReport(businessDate);
+    res.json({ report });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/reports/z-preview', async (_req, res, next) => {
+  try {
+    const businessDate = new Date().toISOString().slice(0, 10);
+    const report = await buildZPreview(businessDate);
+    res.json({ report });
+  } catch (error) {
+    next(error);
+  }
+});
+
+export default router;
