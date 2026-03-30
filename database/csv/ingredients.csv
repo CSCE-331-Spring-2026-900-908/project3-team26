@@ -1,0 +1,16 @@
+id,name,unit,availability
+1,Black Tea,oz,True
+2,Green Tea,oz,True
+3,Oolong Tea,oz,True
+4,Milk,oz,True
+5,Brown Sugar,oz,True
+6,Tapioca Pearls,oz,True
+7,Matcha Powder,oz,True
+8,Taro Powder,oz,True
+9,Mango Syrup,oz,True
+10,Strawberry Syrup,oz,True
+11,Lychee Syrup,oz,True
+12,Ice,oz,True
+13,Cups,unit,True
+14,Straws,unit,True
+15,Lids,unit,True
