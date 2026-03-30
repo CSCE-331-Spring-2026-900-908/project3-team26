@@ -320,3 +320,53 @@ router.delete('/menu/:id', async (req, res, next) => {
     next(error);
   }
 });
+
+router.get('/employees', async (_req, res, next) => {
+  try {
+    const result = await query('SELECT id, permission, actions, changes FROM employees ORDER BY id');
+    res.json({ employees: result.rows });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/employees', async (req, res, next) => {
+  const { id, permission, actions, changes } = req.body || {};
+  try {
+    await query(
+      'INSERT INTO employees(id, permission, actions, changes) VALUES ($1, $2, $3, $4)',
+      [id, permission, actions || null, changes || null]
+    );
+    res.status(201).json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/employees/:id', async (req, res, next) => {
+  const id = Number(req.params.id);
+  const { permission, actions, changes } = req.body || {};
+  try {
+    await query(
+      `UPDATE employees
+       SET permission = COALESCE($1, permission),
+           actions = COALESCE($2, actions),
+           changes = COALESCE($3, changes)
+       WHERE id = $4`,
+      [permission ?? null, actions ?? null, changes ?? null, id]
+    );
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/employees/:id', async (req, res, next) => {
+  const id = Number(req.params.id);
+  try {
+    await query('DELETE FROM employees WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
