@@ -135,3 +135,87 @@ router.post('/orders/:id/void', async (req, res, next) => {
     next(error);
   }
 });
+
+router.get('/inventory', async (_req, res, next) => {
+  try {
+    const result = await query(
+      `SELECT i.id AS ingredient_id, i.name, i.unit, i.availability, inv.quantity, inv.threshold
+       FROM inventory inv
+       JOIN ingredients i ON i.id = inv.ingredient_id
+       ORDER BY i.id`
+    );
+    res.json({ items: result.rows });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/inventory', async (req, res, next) => {
+  const { name, unit, quantity, threshold, availability } = req.body || {};
+  try {
+    const item = await withClient(async (client) => {
+      await client.query('BEGIN');
+      try {
+        const ingredientId = await nextId(client, 'ingredients');
+        const inventoryId = await nextId(client, 'inventory');
+        await client.query(
+          'INSERT INTO ingredients(id, name, unit, availability) VALUES ($1, $2, $3, $4)',
+          [ingredientId, name, unit || null, availability ?? true]
+        );
+        await client.query(
+          'INSERT INTO inventory(id, ingredient_id, quantity, threshold) VALUES ($1, $2, $3, $4)',
+          [inventoryId, ingredientId, quantity, threshold]
+        );
+        await client.query('COMMIT');
+        return { ingredientId, name, unit, quantity, threshold, availability: availability ?? true };
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+    });
+
+    res.status(201).json({ item });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/inventory/:ingredientId', async (req, res, next) => {
+  const ingredientId = Number(req.params.ingredientId);
+  const { delta, threshold, availability } = req.body || {};
+
+  try {
+    if (delta !== undefined) {
+      await query('UPDATE inventory SET quantity = quantity + $1 WHERE ingredient_id = $2', [delta, ingredientId]);
+    }
+    if (threshold !== undefined) {
+      await query('UPDATE inventory SET threshold = $1 WHERE ingredient_id = $2', [threshold, ingredientId]);
+    }
+    if (availability !== undefined) {
+      await query('UPDATE ingredients SET availability = $1 WHERE id = $2', [availability, ingredientId]);
+    }
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/inventory/:ingredientId', async (req, res, next) => {
+  const ingredientId = Number(req.params.ingredientId);
+  try {
+    await withClient(async (client) => {
+      await client.query('BEGIN');
+      try {
+        await client.query('DELETE FROM menu_item_ingredients WHERE ingredient_id = $1', [ingredientId]);
+        await client.query('DELETE FROM ingredients WHERE id = $1', [ingredientId]);
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
