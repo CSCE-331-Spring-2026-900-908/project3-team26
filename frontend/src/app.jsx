@@ -7,3 +7,26 @@ import ManagerPage from './pages/ManagerPage.jsx';
 import SalesPage from './pages/SalesPage.jsx';
 import KioskPage from './pages/KioskPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx'; 
+
+export default function App() {
+  const location = useLocation();
+  const chromePages = new Set(['/', '/sales']);
+  const showNav = chromePages.has(location.pathname);
+
+  return (
+    <div className="app-shell">
+      {showNav ? <NavBar /> : null}
+      <main className="page-shell">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/cashier" element={<CashierPage />} />
+          <Route path="/manager" element={<ManagerPage />} />
+          <Route path="/sales" element={<SalesPage />} />
+          <Route path="/kiosk" element={<KioskPage />} />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
