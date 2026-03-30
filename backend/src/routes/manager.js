@@ -219,3 +219,104 @@ router.delete('/inventory/:ingredientId', async (req, res, next) => {
     next(error);
   }
 });
+
+router.get('/menu', async (_req, res, next) => {
+  try {
+    const result = await query(
+      `SELECT m.id, m.name, m.price, m.availability,
+              COALESCE(STRING_AGG(mi.ingredient_id::text, ', ' ORDER BY mi.ingredient_id), '') AS ingredient_ids
+       FROM menu_items m
+       LEFT JOIN menu_item_ingredients mi ON mi.menu_item_id = m.id
+       GROUP BY m.id, m.name, m.price, m.availability
+       ORDER BY m.id`
+    );
+    res.json({ items: result.rows });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/menu', async (req, res, next) => {
+  const { id, name, price, availability, ingredientIds = [] } = req.body || {};
+  try {
+    await withClient(async (client) => {
+      await client.query('BEGIN');
+      try {
+        const menuId = id || (await nextId(client, 'menu_items'));
+        await client.query(
+          'INSERT INTO menu_items(id, name, price, availability) VALUES ($1, $2, $3, $4)',
+          [menuId, name, price, availability ?? true]
+        );
+
+        let relationId = await nextId(client, 'menu_item_ingredients');
+        for (const ingredientId of ingredientIds) {
+          await client.query(
+            'INSERT INTO menu_item_ingredients(id, menu_item_id, ingredient_id) VALUES ($1, $2, $3)',
+            [relationId, menuId, ingredientId]
+          );
+          relationId += 1;
+        }
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+    });
+    res.status(201).json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.patch('/menu/:id', async (req, res, next) => {
+  const id = Number(req.params.id);
+  const { name, price, availability, ingredientIds } = req.body || {};
+  try {
+    await withClient(async (client) => {
+      await client.query('BEGIN');
+      try {
+        await client.query(
+          `UPDATE menu_items
+           SET name = COALESCE($1, name),
+               price = COALESCE($2, price),
+               availability = COALESCE($3, availability)
+           WHERE id = $4`,
+          [name ?? null, price ?? null, availability ?? null, id]
+        );
+        if (Array.isArray(ingredientIds)) {
+          await client.query('DELETE FROM menu_item_ingredients WHERE menu_item_id = $1', [id]);
+          let relationId = await nextId(client, 'menu_item_ingredients');
+          for (const ingredientId of ingredientIds) {
+            await client.query(
+              'INSERT INTO menu_item_ingredients(id, menu_item_id, ingredient_id) VALUES ($1, $2, $3)',
+              [relationId, id, ingredientId]
+            );
+            relationId += 1;
+          }
+        }
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/menu/:id', async (req, res, next) => {
+  const id = Number(req.params.id);
+  try {
+    const usage = await query('SELECT COUNT(*)::int AS count FROM order_items WHERE menu_item_id = $1', [id]);
+    if (Number(usage.rows[0].count) > 0) {
+      await query('UPDATE menu_items SET availability = FALSE WHERE id = $1', [id]);
+    } else {
+      await query('DELETE FROM menu_items WHERE id = $1', [id]);
+    }
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
