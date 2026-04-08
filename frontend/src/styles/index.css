@@ -31,6 +31,30 @@ body {
   font-size: 13px;
 }
 
+body[data-contrast='high'] {
+  --page-bg: #0b0b0b;
+  --panel-bg: #171717;
+  --active-btn: #2b2b2b;
+  --border: #f7f7f7;
+  --text: #ffffff;
+  --btn-bg: #111111;
+  --btn-hover: #303030;
+  --primary: #ffd84d;
+  --primary-fg: #111111;
+}
+
+body[data-contrast='soft'] {
+  --page-bg: #f6efdf;
+  --panel-bg: #fffaf0;
+  --active-btn: #e3d8bc;
+  --border: #685f4c;
+  --text: #2c261d;
+  --btn-bg: #f1e7cf;
+  --btn-hover: #e5d9bb;
+  --primary: #685f4c;
+  --primary-fg: #fffaf0;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -214,6 +238,160 @@ fieldset.panel legend {
 .nav-link.active {
   background: var(--active-btn);
   border-color: var(--border);
+}
+
+.accessibility-widget {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.language-select {
+  font-family: Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans', 'Microsoft YaHei',
+    'Yu Gothic', 'Malgun Gothic', sans-serif;
+}
+
+.accessibility-trigger {
+  min-width: 148px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  background: var(--primary);
+  color: var(--primary-fg);
+  font-weight: bold;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.accessibility-trigger:hover {
+  filter: brightness(0.95);
+}
+
+.accessibility-panel {
+  width: min(320px, calc(100vw - 24px));
+  padding: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
+.accessibility-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.accessibility-panel-header p {
+  margin-top: 4px;
+  color: #555;
+}
+
+.accessibility-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.accessibility-field:last-child {
+  margin-bottom: 0;
+}
+
+.google-translate-host {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.magnifier-lens {
+  position: fixed;
+  width: 240px;
+  height: 180px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 45;
+  transition: opacity 120ms ease-out;
+}
+
+.magnifier-lens.active {
+  opacity: 1;
+}
+
+.magnifier-lens-frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 3px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+}
+
+.magnifier-lens-content {
+  width: max-content;
+  transform-origin: top left;
+}
+
+.magnifier-cursor {
+  position: absolute;
+  left: 120px;
+  top: 90px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d72638;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+}
+
+.magnifier-cursor::before,
+.magnifier-cursor::after {
+  content: '';
+  position: absolute;
+  background: #d72638;
+}
+
+.magnifier-cursor::before {
+  width: 2px;
+  height: 26px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.magnifier-cursor::after {
+  width: 26px;
+  height: 2px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.magnifier-clone {
+  width: 100vw;
+  min-height: 100vh;
+}
+
+body[data-contrast='high'] .accessibility-panel-header p,
+body[data-contrast='high'] .brand-lockup p,
+body[data-contrast='high'] .page-copy,
+body[data-contrast='high'] .helper-text {
+  color: #e7e7e7;
+}
+
+body[data-contrast='soft'] .accessibility-panel-header p,
+body[data-contrast='soft'] .brand-lockup p,
+body[data-contrast='soft'] .page-copy,
+body[data-contrast='soft'] .helper-text {
+  color: #514939;
 }
 
 .hero-layout,
@@ -430,6 +608,29 @@ fieldset.panel legend {
   padding: 10px;
   font-size: 14px;
   margin-top: 6px;
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero-actions,
+  .page-action-row,
+  .cashier-header,
+  .swing-header {
+    flex-wrap: wrap;
+  }
+
+  .accessibility-widget {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .accessibility-trigger {
+    min-width: 132px;
+  }
 }
 
 /* Cashier */
