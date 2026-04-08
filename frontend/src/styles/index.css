@@ -240,6 +240,43 @@ fieldset.panel legend {
   border-color: var(--border);
 }
 
+.accessibility-widget {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.language-select {
+  font-family: Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans', 'Microsoft YaHei',
+    'Yu Gothic', 'Malgun Gothic', sans-serif;
+}
+
+.accessibility-trigger {
+  min-width: 148px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 2px solid var(--border);
+  background: var(--primary);
+  color: var(--primary-fg);
+  font-weight: bold;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.accessibility-trigger:hover {
+  filter: brightness(0.95);
+}
+
+.accessibility-panel {
+  width: min(320px, calc(100vw - 24px));
+  padding: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+}
+
 .hero-layout,
 .stack-page {
   padding: 12px;
