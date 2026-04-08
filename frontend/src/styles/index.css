@@ -216,6 +216,42 @@ fieldset.panel legend {
   border-color: var(--border);
 }
 
+.weather-widget {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: var(--btn-bg);
+  border: 1px solid #9aa1ae;
+  border-radius: 2px;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.weather-widget .weather-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.weather-widget .weather-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.weather-widget .weather-text strong {
+  font-size: 13px;
+}
+
+.weather-widget .weather-text span {
+  font-size: 11px;
+  color: #555;
+}
+
+.weather-widget-error {
+  opacity: 0.6;
+}
+
 .hero-layout,
 .stack-page {
   padding: 12px;
@@ -504,11 +540,32 @@ fieldset.panel legend {
 
 .menu-btn,
 .menu-tile {
-  height: 60px;
+  height: 130px;
   font-size: 13px;
   font-weight: bold;
   text-align: center;
   padding: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.menu-tile-image {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: contain;
+  display: block;
+}
+
+.menu-tile-name {
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .menu-btn.active,
@@ -790,18 +847,32 @@ fieldset.panel legend {
 }
 
 .kiosk-menu-btn {
-  min-height: 110px;
+  min-height: 200px;
   padding: 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   font-size: 16px;
   font-weight: bold;
+  gap: 6px;
 }
 
 .kiosk-menu-btn strong {
   font-size: 18px;
+}
+
+.kiosk-menu-image {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: contain;
+  display: block;
+}
+
+.kiosk-menu-btn span {
+  text-align: center;
+  white-space: normal;
 }
 
 .kiosk-right {
