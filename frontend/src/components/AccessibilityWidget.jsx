@@ -95,3 +95,298 @@ function applyGoogleTranslate(language) {
   select.dispatchEvent(new Event('change', { bubbles: true }));
   return true;
 }
+
+export default function AccessibilityWidget() {
+  const defaults = useMemo(() => getStoredPreferences(), []);
+  const [isOpen, setIsOpen] = useState(false);
+  const [language, setLanguage] = useState(defaults.language);
+  const [scale, setScale] = useState(defaults.scale);
+  const [contrast, setContrast] = useState(defaults.contrast);
+  const [translateReady, setTranslateReady] = useState(false);
+  const [lensPosition, setLensPosition] = useState({ x: 160, y: 160 });
+  const [pointerPosition, setPointerPosition] = useState({ x: 160, y: 160 });
+  const [lensVisible, setLensVisible] = useState(false);
+  const lensContentRef = useRef(null);
+  const mutationObserverRef = useRef(null);
+
+  const handleLanguageChange = (nextLanguage) => {
+    if (nextLanguage === language) {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ language: nextLanguage, scale, contrast }),
+      );
+    } catch {
+      // Ignore storage failures and continue with the reload flow.
+    }
+
+    if (nextLanguage === 'en') {
+      clearGoogleTranslateCookie();
+    } else {
+      setGoogleTranslateCookie(nextLanguage);
+    }
+
+    window.location.reload();
+  };
+
+  useEffect(() => {
+    document.body.dataset.contrast = contrast;
+
+    try {
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ language, scale, contrast }),
+      );
+    } catch {
+      // Ignore storage failures so the panel still works in restricted browsers.
+    }
+  }, [contrast, language, scale]);
+
+  useEffect(() => {
+    if (scale === '1') {
+      setLensVisible(false);
+      if (mutationObserverRef.current) {
+        mutationObserverRef.current.disconnect();
+        mutationObserverRef.current = null;
+      }
+      if (lensContentRef.current) {
+        lensContentRef.current.innerHTML = '';
+      }
+      return undefined;
+    }
+
+    const syncClone = () => {
+      const appShell = document.querySelector('.app-shell');
+      const lensContent = lensContentRef.current;
+
+      if (!appShell || !lensContent) {
+        return;
+      }
+
+      lensContent.innerHTML = '';
+      const clone = appShell.cloneNode(true);
+      clone.classList.add('magnifier-clone');
+      clone.setAttribute('aria-hidden', 'true');
+      lensContent.appendChild(clone);
+    };
+
+    syncClone();
+
+    const appShell = document.querySelector('.app-shell');
+    if (appShell) {
+      mutationObserverRef.current = new MutationObserver(() => {
+        window.requestAnimationFrame(syncClone);
+      });
+
+      mutationObserverRef.current.observe(appShell, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+      });
+    }
+
+    const handlePointerMove = (event) => {
+      setPointerPosition({ x: event.clientX, y: event.clientY });
+
+      const nextX = Math.min(
+        Math.max(event.clientX - LENS_WIDTH / 2, 12),
+        window.innerWidth - LENS_WIDTH - 12,
+      );
+      const nextY = Math.min(
+        Math.max(event.clientY - LENS_HEIGHT - LENS_VERTICAL_OFFSET, 12),
+        window.innerHeight - LENS_HEIGHT - 12,
+      );
+
+      setLensPosition({ x: nextX, y: nextY });
+      setLensVisible(true);
+    };
+
+    const handlePointerLeave = () => {
+      setLensVisible(false);
+    };
+
+    window.addEventListener('mousemove', handlePointerMove);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('mouseleave', handlePointerLeave);
+
+    return () => {
+      if (mutationObserverRef.current) {
+        mutationObserverRef.current.disconnect();
+        mutationObserverRef.current = null;
+      }
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('mouseleave', handlePointerLeave);
+    };
+  }, [scale]);
+
+  useEffect(() => {
+    if (window.google?.translate?.TranslateElement) {
+      if (!document.getElementById(GOOGLE_HOST_ID)?.childElementCount) {
+        new window.google.translate.TranslateElement(
+          {
+            pageLanguage: 'en',
+            includedLanguages: LANGUAGE_OPTIONS.map((option) => option.value).join(','),
+            autoDisplay: false,
+          },
+          GOOGLE_HOST_ID,
+        );
+      }
+
+      setTranslateReady(true);
+      return undefined;
+    }
+
+    window.googleTranslateElementInit = () => {
+      const host = document.getElementById(GOOGLE_HOST_ID);
+      if (!host || host.childElementCount) {
+        setTranslateReady(true);
+        return;
+      }
+
+      new window.google.translate.TranslateElement(
+        {
+          pageLanguage: 'en',
+          includedLanguages: LANGUAGE_OPTIONS.map((option) => option.value).join(','),
+          autoDisplay: false,
+        },
+        GOOGLE_HOST_ID,
+      );
+
+      setTranslateReady(true);
+    };
+
+    if (!document.getElementById(GOOGLE_SCRIPT_ID)) {
+      const script = document.createElement('script');
+      script.id = GOOGLE_SCRIPT_ID;
+      script.src =
+        'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+
+    return () => {
+      delete window.googleTranslateElementInit;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!translateReady || language === 'en') {
+      return undefined;
+    }
+
+    const applyNow = () => applyGoogleTranslate(language);
+    if (applyNow()) {
+      return undefined;
+    }
+
+    let attempts = 0;
+    const interval = window.setInterval(() => {
+      attempts += 1;
+      const applied = applyNow();
+
+      if (applied || attempts > 20) {
+        window.clearInterval(interval);
+      }
+    }, 150);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [language, translateReady]);
+
+  return (
+    <>
+      <div className="google-translate-host" id={GOOGLE_HOST_ID} aria-hidden="true" />
+
+      {scale !== '1' ? (
+        <div
+          className={`magnifier-lens${lensVisible ? ' active' : ''}`}
+          aria-hidden="true"
+          style={{
+            left: `${lensPosition.x}px`,
+            top: `${lensPosition.y}px`,
+          }}
+        >
+          <div className="magnifier-lens-frame">
+            <div
+              className="magnifier-lens-content"
+              ref={lensContentRef}
+              style={{
+                transform: `translate(${-pointerPosition.x * Number(scale) + LENS_WIDTH / 2}px, ${-pointerPosition.y * Number(scale) + LENS_HEIGHT / 2}px) scale(${scale})`,
+              }}
+            />
+            <div className="magnifier-cursor" />
+          </div>
+        </div>
+      ) : null}
+
+      <div className="accessibility-widget notranslate" translate="no">
+        <button
+          type="button"
+          className="accessibility-trigger"
+          aria-expanded={isOpen}
+          aria-controls="accessibility-panel"
+          onClick={() => setIsOpen((open) => !open)}
+        >
+          Accessibility
+        </button>
+
+        {isOpen ? (
+          <section className="accessibility-panel panel" id="accessibility-panel">
+            <div className="accessibility-panel-header">
+              <div>
+                <strong>Accessibility Tools</strong>
+                <p>Translate the page, enlarge the interface, or improve readability.</p>
+              </div>
+              <button type="button" onClick={() => setIsOpen(false)}>
+                Close
+              </button>
+            </div>
+
+            <label className="accessibility-field">
+              <span>Translation</span>
+              <select
+                className="language-select"
+                value={language}
+                onChange={(event) => handleLanguageChange(event.target.value)}
+              >
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="accessibility-field">
+              <span>Magnifier</span>
+              <select value={scale} onChange={(event) => setScale(event.target.value)}>
+                {MAGNIFIER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="accessibility-field">
+              <span>Contrast</span>
+              <select value={contrast} onChange={(event) => setContrast(event.target.value)}>
+                {CONTRAST_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </section>
+        ) : null}
+      </div>
+    </>
+  );
+}
