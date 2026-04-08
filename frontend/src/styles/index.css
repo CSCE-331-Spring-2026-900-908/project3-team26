@@ -380,7 +380,19 @@ fieldset.panel legend {
   min-height: 100vh;
 }
 
+body[data-contrast='high'] .accessibility-panel-header p,
+body[data-contrast='high'] .brand-lockup p,
+body[data-contrast='high'] .page-copy,
+body[data-contrast='high'] .helper-text {
+  color: #e7e7e7;
+}
 
+body[data-contrast='soft'] .accessibility-panel-header p,
+body[data-contrast='soft'] .brand-lockup p,
+body[data-contrast='soft'] .page-copy,
+body[data-contrast='soft'] .helper-text {
+  color: #514939;
+}
 
 .hero-layout,
 .stack-page {
