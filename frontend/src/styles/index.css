@@ -277,6 +277,41 @@ fieldset.panel legend {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
 }
 
+.accessibility-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.accessibility-panel-header p {
+  margin-top: 4px;
+  color: #555;
+}
+
+.accessibility-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.accessibility-field:last-child {
+  margin-bottom: 0;
+}
+
+.google-translate-host {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+
 .hero-layout,
 .stack-page {
   padding: 12px;
@@ -491,6 +526,29 @@ fieldset.panel legend {
   padding: 10px;
   font-size: 14px;
   margin-top: 6px;
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero-actions,
+  .page-action-row,
+  .cashier-header,
+  .swing-header {
+    flex-wrap: wrap;
+  }
+
+  .accessibility-widget {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .accessibility-trigger {
+    min-width: 132px;
+  }
 }
 
 /* Cashier */
