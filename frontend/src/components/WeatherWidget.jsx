@@ -1,22 +1,67 @@
-// Maps menu item names from the database to their image files.
-// Images live in frontend/public/images/menu/ and are served at /images/menu/<file>
-// To add a new image: drop the file into public/images/menu/ and add an entry below.
+import { useEffect, useState } from 'react';
 
-const imageMap = {
-  'classic milk tea': '/images/menu/classic-milk-tea.jpg',
+// Uses the free Open-Meteo API (no API key required).
+// Defaults to College Station, TX; override via props if needed.
+const WEATHER_CODES = {
+  0: ['Clear', '☀️'],
+  1: ['Mainly clear', '🌤️'],
+  2: ['Partly cloudy', '⛅'],
+  3: ['Overcast', '☁️'],
+  45: ['Fog', '🌫️'],
+  48: ['Fog', '🌫️'],
+  51: ['Drizzle', '🌦️'],
+  53: ['Drizzle', '🌦️'],
+  55: ['Drizzle', '🌦️'],
+  61: ['Rain', '🌧️'],
+  63: ['Rain', '🌧️'],
+  65: ['Heavy rain', '🌧️'],
+  71: ['Snow', '🌨️'],
+  73: ['Snow', '🌨️'],
+  75: ['Snow', '🌨️'],
+  80: ['Showers', '🌦️'],
+  81: ['Showers', '🌦️'],
+  82: ['Showers', '⛈️'],
+  95: ['Thunderstorm', '⛈️'],
+  96: ['Thunderstorm', '⛈️'],
+  99: ['Thunderstorm', '⛈️'],
 };
 
-const PLACEHOLDER = '/images/menu/placeholder.jpg';
+export default function WeatherWidget({
+  latitude = 30.6280,
+  longitude = -96.3344,
+  label = 'College Station',
+}) {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
 
-function normalize(name) {
-  return String(name || '').trim().toLowerCase();
-}
+  useEffect(() => {
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${latitude}` +
+      `&longitude=${longitude}&current_weather=true&temperature_unit=fahrenheit`;
+    fetch(url)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((j) => setData(j.current_weather))
+      .catch((e) => setError(e.message));
+  }, [latitude, longitude]);
 
-export function getMenuImage(name) {
-  const key = normalize(name);
-  return imageMap[key] || null;
-}
+  if (error) {
+    return <div className="weather-widget weather-widget-error">Weather unavailable</div>;
+  }
+  if (!data) {
+    return <div className="weather-widget">Loading…</div>;
+  }
 
-export function getMenuImageOrPlaceholder(name) {
-  return getMenuImage(name) || PLACEHOLDER;
+  const [desc, icon] = WEATHER_CODES[data.weathercode] || ['—', '🌡️'];
+  return (
+    <div className="weather-widget" title={`${desc} in ${label}`}>
+      <span className="weather-icon">{icon}</span>
+      <div className="weather-text">
+        <strong>{Math.round(data.temperature)}°F</strong>
+        <span>{label}</span>
+      </div>
+    </div>
+  );
 }
