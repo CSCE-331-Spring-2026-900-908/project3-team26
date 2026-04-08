@@ -311,6 +311,76 @@ fieldset.panel legend {
   overflow: hidden;
 }
 
+.magnifier-lens {
+  position: fixed;
+  width: 240px;
+  height: 180px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 45;
+  transition: opacity 120ms ease-out;
+}
+
+.magnifier-lens.active {
+  opacity: 1;
+}
+
+.magnifier-lens-frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 3px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+}
+
+.magnifier-lens-content {
+  width: max-content;
+  transform-origin: top left;
+}
+
+.magnifier-cursor {
+  position: absolute;
+  left: 120px;
+  top: 90px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d72638;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+}
+
+.magnifier-cursor::before,
+.magnifier-cursor::after {
+  content: '';
+  position: absolute;
+  background: #d72638;
+}
+
+.magnifier-cursor::before {
+  width: 2px;
+  height: 26px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.magnifier-cursor::after {
+  width: 26px;
+  height: 2px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.magnifier-clone {
+  width: 100vw;
+  min-height: 100vh;
+}
+
+
 
 .hero-layout,
 .stack-page {
