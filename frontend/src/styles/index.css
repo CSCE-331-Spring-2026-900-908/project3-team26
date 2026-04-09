@@ -240,42 +240,6 @@ fieldset.panel legend {
   border-color: var(--border);
 }
 
-<<<<<<< HEAD
-.weather-widget {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 10px;
-  background: var(--btn-bg);
-  border: 1px solid #9aa1ae;
-  border-radius: 2px;
-  font-size: 12px;
-  margin-left: 4px;
-}
-
-.weather-widget .weather-icon {
-  font-size: 20px;
-  line-height: 1;
-}
-
-.weather-widget .weather-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-}
-
-.weather-widget .weather-text strong {
-  font-size: 13px;
-}
-
-.weather-widget .weather-text span {
-  font-size: 11px;
-  color: #555;
-}
-
-.weather-widget-error {
-  opacity: 0.6;
-=======
 .accessibility-widget {
   position: fixed;
   right: 18px;
@@ -428,7 +392,42 @@ body[data-contrast='soft'] .brand-lockup p,
 body[data-contrast='soft'] .page-copy,
 body[data-contrast='soft'] .helper-text {
   color: #514939;
->>>>>>> main
+}
+
+.weather-widget {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  background: var(--btn-bg);
+  border: 1px solid #9aa1ae;
+  border-radius: 2px;
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+.weather-widget .weather-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.weather-widget .weather-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.weather-widget .weather-text strong {
+  font-size: 13px;
+}
+
+.weather-widget .weather-text span {
+  font-size: 11px;
+  color: #555;
+}
+
+.weather-widget-error {
+  opacity: 0.6;
 }
 
 .hero-layout,
