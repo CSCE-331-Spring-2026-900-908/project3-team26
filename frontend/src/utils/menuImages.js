@@ -4,6 +4,21 @@
 
 const imageMap = {
   'classic milk tea': '/images/menu/classic-milk-tea.jpg',
+  'brown sugar milk tea': '/images/menu/brown-sugar-milk-tea.png',
+  'thai milk tea': '/images/menu/thai-milk-tea.jpg',
+  'taro milk tea': '/images/menu/taro-milk-tea.png',
+  'matcha latte': '/images/menu/matcha-latte.png',
+  'jasmine green milk tea': '/images/menu/jasmine-green-milk-tea.png',
+  'oolong milk tea': '/images/menu/oolong-milk-tea.png',
+  'honeydew milk tea': '/images/menu/honeydew-milk-tea.png',
+  'mango green tea': '/images/menu/mango-green-tea.png',
+  'strawberry green tea': '/images/menu/strawberry-green-tea.png',
+  'passionfruit black tea': '/images/menu/passionfruit-black-tea.png',
+  'peach oolong tea': '/images/menu/peach-oolong-tea.png',
+  'lychee slush': '/images/menu/lychee-slush.png',
+  'mango slush': '/images/menu/mango-slush.png',
+  'coffee milk tea': '/images/menu/coffee-milk-tea.png',
+  'wintermelon milk tea': '/images/menu/wintermelon-milk-tea.png',
 };
 
 const PLACEHOLDER = '/images/menu/placeholder.jpg';
