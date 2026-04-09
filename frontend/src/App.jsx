@@ -14,19 +14,22 @@ export default function App() {
   const showNav = chromePages.has(location.pathname);
 
   return (
-    <div className="app-shell">
-      {showNav ? <NavBar /> : null}
-      <main className="page-shell">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/cashier" element={<CashierPage />} />
-          <Route path="/manager" element={<ManagerPage />} />
-          <Route path="/sales" element={<SalesPage />} />
-          <Route path="/kiosk" element={<KioskPage />} />
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </main>
-    </div>
+    <>
+      <div className="app-shell">
+        {showNav ? <NavBar /> : null}
+        <main className="page-shell">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/cashier" element={<CashierPage />} />
+            <Route path="/manager" element={<ManagerPage />} />
+            <Route path="/sales" element={<SalesPage />} />
+            <Route path="/kiosk" element={<KioskPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </main>
+      </div>
+      <AccessibilityWidget />
+    </>
   );
 }
