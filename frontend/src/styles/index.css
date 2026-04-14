@@ -342,8 +342,8 @@ fieldset.panel legend {
 
 .magnifier-cursor {
   position: absolute;
-  left: 120px;
-  top: 90px;
+  left: 100px;
+  top: 100px;
   width: 18px;
   height: 18px;
   border: 2px solid #d72638;
