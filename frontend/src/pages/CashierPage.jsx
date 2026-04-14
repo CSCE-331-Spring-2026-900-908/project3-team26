@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
+import { getMenuImage } from '../utils/menuImages.js';
 
 const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
 const sizes = ['Small', 'Medium', 'Large'];
@@ -199,16 +200,35 @@ export default function CashierPage() {
           <section className="swing-panel">
             <div className="panel-title">MENU ITEMS</div>
             <div className="cashier-menu-grid">
-              {visibleItems.map((item, index) => (
-                <button
-                  key={item ? item.id : `empty-${index}`}
-                  className={item?.id === selectedItemId ? 'menu-tile active' : 'menu-tile'}
-                  disabled={!item}
-                  onClick={() => setSelectedItemId(item.id)}
-                >
-                  {item ? item.name : '-'}
-                </button>
-              ))}
+              {visibleItems.map((item, index) => {
+                const imageSrc = item ? getMenuImage(item.name) : null;
+                return (
+                  <button
+                    key={item ? item.id : `empty-${index}`}
+                    className={item?.id === selectedItemId ? 'menu-tile active' : 'menu-tile'}
+                    disabled={!item}
+                    onClick={() => setSelectedItemId(item.id)}
+                  >
+                    {item ? (
+                      <>
+                        {imageSrc ? (
+                          <img
+                            src={imageSrc}
+                            alt={item.name}
+                            className="menu-tile-image"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : null}
+                        <span className="menu-tile-name">{item.name}</span>
+                      </>
+                    ) : (
+                      '-'
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </section>
 

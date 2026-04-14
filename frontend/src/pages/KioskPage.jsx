@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
+import { getMenuImage } from '../utils/menuImages.js';
 
 const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
 
@@ -182,12 +183,25 @@ export default function KioskPage() {
           <fieldset className="panel kiosk-menu-panel">
             <legend>Menu Items</legend>
             <div className="kiosk-menu-grid">
-              {visibleItems.map((item) => (
-                <button key={item.id} className="kiosk-menu-btn" onClick={() => addItem(item)}>
-                  <span>{item.name}</span>
-                  <strong>{formatCurrency(item.price)}</strong>
-                </button>
-              ))}
+              {visibleItems.map((item) => {
+                const imageSrc = getMenuImage(item.name);
+                return (
+                  <button key={item.id} className="kiosk-menu-btn" onClick={() => addItem(item)}>
+                    {imageSrc ? (
+                      <img
+                        src={imageSrc}
+                        alt={item.name}
+                        className="kiosk-menu-image"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <span>{item.name}</span>
+                    <strong>{formatCurrency(item.price)}</strong>
+                  </button>
+                );
+              })}
             </div>
           </fieldset>
         </div>
