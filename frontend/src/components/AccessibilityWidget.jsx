@@ -5,7 +5,7 @@ const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
 const LENS_WIDTH = 200;
 const LENS_HEIGHT = 200;
-const LENS_VERTICAL_OFFSET = 44;
+const LENS_VERTICAL_OFFSET = 0;
 
 const LANGUAGE_OPTIONS = [
   { value: 'en', label: 'English' },
@@ -197,7 +197,7 @@ export default function AccessibilityWidget() {
         window.innerWidth - LENS_WIDTH - 12,
       );
       const nextY = Math.min(
-        Math.max(event.clientY - LENS_HEIGHT - LENS_VERTICAL_OFFSET, 12),
+        Math.max(event.clientY - LENS_HEIGHT / 2, 12),
         window.innerHeight - LENS_HEIGHT - 12,
       );
 
