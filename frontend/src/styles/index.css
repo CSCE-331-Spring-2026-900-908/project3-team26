@@ -298,6 +298,10 @@ fieldset.panel legend {
   gap: 8px;
 }
 
+body[data-page='kiosk'] .accessibility-widget {
+  bottom: 96px;
+}
+
 .language-select {
   font-family: Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans', 'Microsoft YaHei',
     'Yu Gothic', 'Malgun Gothic', sans-serif;

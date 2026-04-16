@@ -4,6 +4,20 @@ import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
 import { getMenuImage } from '../utils/menuImages.js';
 
+function useKioskBodyFlag(started, hasConfirmation) {
+  useEffect(() => {
+    const active = started && !hasConfirmation;
+    if (active) {
+      document.body.dataset.page = 'kiosk';
+    }
+    return () => {
+      if (document.body.dataset.page === 'kiosk') {
+        delete document.body.dataset.page;
+      }
+    };
+  }, [started, hasConfirmation]);
+}
+
 const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
 const sizeOptions = ['Small', 'Medium', 'Large'];
 const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%'];
@@ -60,6 +74,8 @@ export default function KioskPage() {
   const [submitting, setSubmitting] = useState(false);
   const [customizingItem, setCustomizingItem] = useState(null);
   const [draftCustomization, setDraftCustomization] = useState(DEFAULT_CUSTOMIZATION);
+
+  useKioskBodyFlag(started, Boolean(confirmation));
 
   useEffect(() => {
     api

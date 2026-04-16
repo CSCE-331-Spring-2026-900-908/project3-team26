@@ -96,8 +96,19 @@ function applyGoogleTranslate(language) {
   }
 
   select.value = language === 'en' ? '' : language;
+  select.dispatchEvent(new Event('input', { bubbles: true }));
   select.dispatchEvent(new Event('change', { bubbles: true }));
   return true;
+}
+
+function forceGoogleTranslate(language) {
+  // Apply immediately if ready, and keep retrying for a few seconds.
+  applyGoogleTranslate(language);
+  const delays = [60, 180, 400, 800, 1500];
+  const timers = delays.map((ms) =>
+    window.setTimeout(() => applyGoogleTranslate(language), ms),
+  );
+  return () => timers.forEach((id) => window.clearTimeout(id));
 }
 
 export default function AccessibilityWidget() {
@@ -135,16 +146,7 @@ export default function AccessibilityWidget() {
       setGoogleTranslateCookie(nextLanguage);
     }
 
-    // Apply via Google's select element; fall back to polling if not ready.
-    if (!applyGoogleTranslate(nextLanguage)) {
-      let attempts = 0;
-      const interval = window.setInterval(() => {
-        attempts += 1;
-        if (applyGoogleTranslate(nextLanguage) || attempts > 30) {
-          window.clearInterval(interval);
-        }
-      }, 150);
-    }
+    forceGoogleTranslate(nextLanguage);
   };
 
   useEffect(() => {
@@ -315,24 +317,7 @@ export default function AccessibilityWidget() {
       return undefined;
     }
 
-    const applyNow = () => applyGoogleTranslate(language);
-    if (applyNow()) {
-      return undefined;
-    }
-
-    let attempts = 0;
-    const interval = window.setInterval(() => {
-      attempts += 1;
-      const applied = applyNow();
-
-      if (applied || attempts > 20) {
-        window.clearInterval(interval);
-      }
-    }, 150);
-
-    return () => {
-      window.clearInterval(interval);
-    };
+    return forceGoogleTranslate(language);
   }, [language, translateReady]);
 
   // Lens position: offset diagonally from cursor, clamped to the viewport.
@@ -387,7 +372,7 @@ export default function AccessibilityWidget() {
                 className="magnifier-lens-content"
                 ref={lensContentRef}
                 style={{
-                  transform: `translate(${-pointerPosition.x * Number(scale) + LENS_RADIUS - LENS_BORDER}px, ${-pointerPosition.y * Number(scale) + LENS_RADIUS - LENS_BORDER}px) scale(${scale})`,
+                  transform: `translate(${-lensCenterX * Number(scale) + LENS_RADIUS - LENS_BORDER}px, ${-lensCenterY * Number(scale) + LENS_RADIUS - LENS_BORDER}px) scale(${scale})`,
                 }}
               />
               <div className="magnifier-cursor" />
