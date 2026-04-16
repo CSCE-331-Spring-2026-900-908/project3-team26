@@ -386,21 +386,21 @@ fieldset.panel legend {
 
 .magnifier-handle {
   position: fixed;
-  height: 14px;
+  height: 10px;
   background: linear-gradient(180deg, #a08b75 0%, #6d4c2f 100%);
   border: 1px solid #4a2e14;
-  border-radius: 8px;
+  border-radius: 6px;
   transform-origin: 0 50%;
   pointer-events: none;
   z-index: 44;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
 }
 
 .magnifier-handle-grip {
   position: absolute;
-  left: 6px;
+  left: 4px;
   top: 2px;
-  right: 18px;
+  right: 10px;
   bottom: 2px;
   background: repeating-linear-gradient(
     90deg,
@@ -409,7 +409,7 @@ fieldset.panel legend {
     transparent 2px,
     transparent 6px
   );
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 .magnifier-lens-content {
@@ -419,8 +419,8 @@ fieldset.panel legend {
 
 .magnifier-cursor {
   position: absolute;
-  left: 120px;
-  top: 90px;
+  left: 50%;
+  top: 50%;
   width: 18px;
   height: 18px;
   border: 2px solid #d72638;

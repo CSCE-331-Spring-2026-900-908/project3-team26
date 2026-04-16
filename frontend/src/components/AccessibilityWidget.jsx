@@ -4,7 +4,11 @@ const STORAGE_KEY = 'bubble-tea-accessibility';
 const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
 const LENS_SIZE = 200;
-const HANDLE_LENGTH = 130;
+const LENS_RADIUS = LENS_SIZE / 2;
+const LENS_OFFSET_X = 150;
+const LENS_OFFSET_Y = -150;
+const CURSOR_GAP = 16;
+const EDGE_GAP = 6;
 
 const LANGUAGE_OPTIONS = [
   { value: 'en', label: 'English' },
@@ -330,20 +334,26 @@ export default function AccessibilityWidget() {
     };
   }, [language, translateReady]);
 
-  // Lens position: offset from cursor so the handle extends up-and-right from pointer.
+  // Lens position: offset diagonally from cursor, clamped to the viewport.
   const lensCenterX = Math.min(
-    Math.max(pointerPosition.x + HANDLE_LENGTH * 0.6, LENS_SIZE / 2 + 12),
-    window.innerWidth - LENS_SIZE / 2 - 12,
+    Math.max(pointerPosition.x + LENS_OFFSET_X, LENS_RADIUS + 12),
+    window.innerWidth - LENS_RADIUS - 12,
   );
   const lensCenterY = Math.min(
-    Math.max(pointerPosition.y - HANDLE_LENGTH * 0.6, LENS_SIZE / 2 + 12),
-    window.innerHeight - LENS_SIZE / 2 - 12,
+    Math.max(pointerPosition.y + LENS_OFFSET_Y, LENS_RADIUS + 12),
+    window.innerHeight - LENS_RADIUS - 12,
   );
 
   const handleDx = lensCenterX - pointerPosition.x;
   const handleDy = lensCenterY - pointerPosition.y;
-  const handleLength = Math.sqrt(handleDx * handleDx + handleDy * handleDy);
-  const handleAngle = Math.atan2(handleDy, handleDx) * (180 / Math.PI);
+  const centerDistance = Math.sqrt(handleDx * handleDx + handleDy * handleDy) || 1;
+  const handleAngleRad = Math.atan2(handleDy, handleDx);
+  const handleAngle = handleAngleRad * (180 / Math.PI);
+
+  // Start handle CURSOR_GAP away from cursor; stop EDGE_GAP before lens edge.
+  const handleStartX = pointerPosition.x + Math.cos(handleAngleRad) * CURSOR_GAP;
+  const handleStartY = pointerPosition.y + Math.sin(handleAngleRad) * CURSOR_GAP;
+  const handleLength = Math.max(0, centerDistance - LENS_RADIUS - CURSOR_GAP - EDGE_GAP);
 
   return (
     <>
@@ -355,8 +365,8 @@ export default function AccessibilityWidget() {
             className="magnifier-handle"
             aria-hidden="true"
             style={{
-              left: `${pointerPosition.x}px`,
-              top: `${pointerPosition.y - 7}px`,
+              left: `${handleStartX}px`,
+              top: `${handleStartY - 5}px`,
               width: `${handleLength}px`,
               transform: `rotate(${handleAngle}deg)`,
             }}
@@ -367,8 +377,8 @@ export default function AccessibilityWidget() {
             className="magnifier-lens active"
             aria-hidden="true"
             style={{
-              left: `${lensCenterX - LENS_SIZE / 2}px`,
-              top: `${lensCenterY - LENS_SIZE / 2}px`,
+              left: `${lensCenterX - LENS_RADIUS}px`,
+              top: `${lensCenterY - LENS_RADIUS}px`,
             }}
           >
             <div className="magnifier-lens-frame">
@@ -376,7 +386,7 @@ export default function AccessibilityWidget() {
                 className="magnifier-lens-content"
                 ref={lensContentRef}
                 style={{
-                  transform: `translate(${-pointerPosition.x * Number(scale) + LENS_SIZE / 2}px, ${-pointerPosition.y * Number(scale) + LENS_SIZE / 2}px) scale(${scale})`,
+                  transform: `translate(${-pointerPosition.x * Number(scale) + LENS_RADIUS}px, ${-pointerPosition.y * Number(scale) + LENS_RADIUS}px) scale(${scale})`,
                 }}
               />
               <div className="magnifier-cursor" />
