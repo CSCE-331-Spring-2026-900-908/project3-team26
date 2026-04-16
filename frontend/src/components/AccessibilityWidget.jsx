@@ -5,6 +5,7 @@ const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
 const LENS_SIZE = 200;
 const LENS_RADIUS = LENS_SIZE / 2;
+const LENS_BORDER = 6;
 const LENS_OFFSET_X = 150;
 const LENS_OFFSET_Y = -150;
 const CURSOR_GAP = 16;
@@ -386,7 +387,7 @@ export default function AccessibilityWidget() {
                 className="magnifier-lens-content"
                 ref={lensContentRef}
                 style={{
-                  transform: `translate(${-pointerPosition.x * Number(scale) + LENS_RADIUS}px, ${-pointerPosition.y * Number(scale) + LENS_RADIUS}px) scale(${scale})`,
+                  transform: `translate(${-pointerPosition.x * Number(scale) + LENS_RADIUS - LENS_BORDER}px, ${-pointerPosition.y * Number(scale) + LENS_RADIUS - LENS_BORDER}px) scale(${scale})`,
                 }}
               />
               <div className="magnifier-cursor" />
