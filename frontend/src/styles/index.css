@@ -384,7 +384,7 @@ body[data-page='kiosk'] .accessibility-widget {
   overflow: hidden;
   border: 6px solid var(--primary-alt);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--page-bg);
   box-shadow: 0 16px 42px rgba(20, 30, 50, 0.3), inset 0 0 0 2px rgba(255, 255, 255, 0.6);
 }
 
@@ -396,6 +396,7 @@ body[data-page='kiosk'] .accessibility-widget {
 .magnifier-clone {
   width: 100vw;
   min-height: 100vh;
+  background: var(--page-bg);
 }
 
 body[data-contrast='high'] .accessibility-panel-header p,
