@@ -4,7 +4,32 @@ import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
 import { getMenuImage } from '../utils/menuImages.js';
 
+function useKioskBodyFlag(started, hasConfirmation) {
+  useEffect(() => {
+    const active = started && !hasConfirmation;
+    if (active) {
+      document.body.dataset.page = 'kiosk';
+    }
+    return () => {
+      if (document.body.dataset.page === 'kiosk') {
+        delete document.body.dataset.page;
+      }
+    };
+  }, [started, hasConfirmation]);
+}
+
 const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
+const sizeOptions = ['Small', 'Medium', 'Large'];
+const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%'];
+const iceOptions = ['0%', '25%', '50%', '75%', '100%'];
+const toppingOptions = ['Boba', 'Jelly', 'Cheese Foam', 'Lychee Popping'];
+
+const DEFAULT_CUSTOMIZATION = {
+  size: 'Medium',
+  sweetness: '100%',
+  ice: '100%',
+  toppings: [],
+};
 
 function inferCategory(name = '') {
   const normalized = name.toLowerCase();
@@ -30,6 +55,14 @@ function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
+function customizationSummary(custom) {
+  const parts = [custom.size, `Sweet ${custom.sweetness}`, `Ice ${custom.ice}`];
+  if (custom.toppings.length) {
+    parts.push(custom.toppings.join(' + '));
+  }
+  return parts.join(' · ');
+}
+
 export default function KioskPage() {
   const navigate = useNavigate();
   const [started, setStarted] = useState(false);
@@ -39,6 +72,10 @@ export default function KioskPage() {
   const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [customizingItem, setCustomizingItem] = useState(null);
+  const [draftCustomization, setDraftCustomization] = useState(DEFAULT_CUSTOMIZATION);
+
+  useKioskBodyFlag(started, Boolean(confirmation));
 
   useEffect(() => {
     api
@@ -60,23 +97,65 @@ export default function KioskPage() {
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  function addItem(item) {
-    setCart((current) => {
-      const existing = current.find((line) => line.id === item.id);
-      if (existing) {
-        return current.map((line) =>
-          line.id === item.id ? { ...line, quantity: line.quantity + 1 } : line
-        );
-      }
-      return [...current, { id: item.id, name: item.name, price: Number(item.price), quantity: 1 }];
-    });
+  function openCustomization(item) {
+    setCustomizingItem(item);
+    setDraftCustomization(DEFAULT_CUSTOMIZATION);
   }
 
-  function updateQuantity(id, delta) {
+  function toggleTopping(topping) {
+    setDraftCustomization((current) => ({
+      ...current,
+      toppings: current.toppings.includes(topping)
+        ? current.toppings.filter((entry) => entry !== topping)
+        : [...current.toppings, topping],
+    }));
+  }
+
+  function confirmAddToCart() {
+    if (!customizingItem) {
+      return;
+    }
+
+    const key = JSON.stringify({
+      size: draftCustomization.size,
+      sweetness: draftCustomization.sweetness,
+      ice: draftCustomization.ice,
+      toppings: [...draftCustomization.toppings].sort(),
+    });
+
+    setCart((current) => {
+      const existing = current.find(
+        (line) => line.id === customizingItem.id && line.customKey === key
+      );
+      if (existing) {
+        return current.map((line) =>
+          line === existing ? { ...line, quantity: line.quantity + 1 } : line
+        );
+      }
+      return [
+        ...current,
+        {
+          id: customizingItem.id,
+          name: customizingItem.name,
+          price: Number(customizingItem.price),
+          quantity: 1,
+          customKey: key,
+          customization: draftCustomization,
+        },
+      ];
+    });
+
+    setCustomizingItem(null);
+    setDraftCustomization(DEFAULT_CUSTOMIZATION);
+  }
+
+  function updateQuantity(customKey, id, delta) {
     setCart((current) =>
       current
         .map((line) =>
-          line.id === id ? { ...line, quantity: Math.max(0, line.quantity + delta) } : line
+          line.id === id && line.customKey === customKey
+            ? { ...line, quantity: Math.max(0, line.quantity + delta) }
+            : line
         )
         .filter((line) => line.quantity > 0)
     );
@@ -90,12 +169,17 @@ export default function KioskPage() {
     setSubmitting(true);
     setError('');
     try {
+      const grouped = new Map();
+      for (const line of cart) {
+        grouped.set(line.id, (grouped.get(line.id) || 0) + line.quantity);
+      }
+
       const result = await api.post('/orders', {
         source: 'kiosk',
         paymentMethod: 'CARD',
-        items: cart.map((line) => ({
-          menuItemId: line.id,
-          quantity: line.quantity,
+        items: [...grouped.entries()].map(([menuItemId, quantity]) => ({
+          menuItemId,
+          quantity,
         })),
       });
 
@@ -113,6 +197,7 @@ export default function KioskPage() {
     setCart([]);
     setConfirmation(null);
     setActiveCategory('Milk Tea');
+    setCustomizingItem(null);
   }
 
   if (!started) {
@@ -186,7 +271,11 @@ export default function KioskPage() {
               {visibleItems.map((item) => {
                 const imageSrc = getMenuImage(item.name);
                 return (
-                  <button key={item.id} className="kiosk-menu-btn" onClick={() => addItem(item)}>
+                  <button
+                    key={item.id}
+                    className="kiosk-menu-btn"
+                    onClick={() => openCustomization(item)}
+                  >
                     {imageSrc ? (
                       <img
                         src={imageSrc}
@@ -212,15 +301,18 @@ export default function KioskPage() {
             <div className="kiosk-cart-list">
               {cart.length ? (
                 cart.map((item) => (
-                  <div className="kiosk-cart-row" key={item.id}>
-                    <div>
+                  <div className="kiosk-cart-row" key={`${item.id}-${item.customKey}`}>
+                    <div className="kiosk-cart-info">
                       <strong>{item.name}</strong>
+                      <div className="kiosk-cart-custom">
+                        {customizationSummary(item.customization)}
+                      </div>
                       <div>{formatCurrency(item.price)}</div>
                     </div>
                     <div className="kiosk-qty-controls">
-                      <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+                      <button onClick={() => updateQuantity(item.customKey, item.id, -1)}>-</button>
                       <span>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+                      <button onClick={() => updateQuantity(item.customKey, item.id, 1)}>+</button>
                     </div>
                   </div>
                 ))
@@ -228,15 +320,119 @@ export default function KioskPage() {
                 <div className="helper-text">Your cart is empty.</div>
               )}
             </div>
-            <div className="order-footer">
-              <div className="order-total">TOTAL: {formatCurrency(total)}</div>
-              <button className="primary bold kiosk-checkout-button" disabled={!cart.length || submitting} onClick={checkout}>
-                {submitting ? 'PROCESSING...' : 'CHECKOUT'}
-              </button>
-            </div>
           </div>
         </div>
       </div>
+
+      <div className="kiosk-checkout-bar">
+        <div className="kiosk-checkout-summary">
+          <span>Items: {cart.reduce((sum, line) => sum + line.quantity, 0)}</span>
+          <strong>TOTAL: {formatCurrency(total)}</strong>
+        </div>
+        <button
+          className="primary bold kiosk-checkout-button"
+          disabled={!cart.length || submitting}
+          onClick={checkout}
+        >
+          {submitting ? 'PROCESSING...' : 'CHECKOUT'}
+        </button>
+      </div>
+
+      {customizingItem ? (
+        <div className="kiosk-modal-backdrop" onClick={() => setCustomizingItem(null)}>
+          <div className="kiosk-modal panel" onClick={(e) => e.stopPropagation()}>
+            <div className="kiosk-modal-header">
+              <div>
+                <strong>{customizingItem.name}</strong>
+                <p>{formatCurrency(customizingItem.price)}</p>
+              </div>
+              <button type="button" onClick={() => setCustomizingItem(null)}>
+                Close
+              </button>
+            </div>
+
+            <div className="kiosk-modal-field">
+              <span>Size</span>
+              <div className="kiosk-modal-options">
+                {sizeOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={draftCustomization.size === option ? 'active bold' : 'bold'}
+                    onClick={() =>
+                      setDraftCustomization((current) => ({ ...current, size: option }))
+                    }
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="kiosk-modal-field">
+              <span>Sweetness</span>
+              <div className="kiosk-modal-options">
+                {sweetnessOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={draftCustomization.sweetness === option ? 'active bold' : 'bold'}
+                    onClick={() =>
+                      setDraftCustomization((current) => ({ ...current, sweetness: option }))
+                    }
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="kiosk-modal-field">
+              <span>Ice</span>
+              <div className="kiosk-modal-options">
+                {iceOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={draftCustomization.ice === option ? 'active bold' : 'bold'}
+                    onClick={() =>
+                      setDraftCustomization((current) => ({ ...current, ice: option }))
+                    }
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="kiosk-modal-field">
+              <span>Toppings</span>
+              <div className="kiosk-modal-options">
+                {toppingOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={
+                      draftCustomization.toppings.includes(option) ? 'active bold' : 'bold'
+                    }
+                    onClick={() => toggleTopping(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="primary bold kiosk-modal-confirm"
+              onClick={confirmAddToCart}
+            >
+              ADD TO CART · {formatCurrency(customizingItem.price)}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
