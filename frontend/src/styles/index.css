@@ -388,72 +388,9 @@ body[data-page='kiosk'] .accessibility-widget {
   box-shadow: 0 16px 42px rgba(20, 30, 50, 0.3), inset 0 0 0 2px rgba(255, 255, 255, 0.6);
 }
 
-.magnifier-handle {
-  position: fixed;
-  height: 10px;
-  background: linear-gradient(180deg, #a08b75 0%, #6d4c2f 100%);
-  border: 1px solid #4a2e14;
-  border-radius: 6px;
-  transform-origin: 0 50%;
-  pointer-events: none;
-  z-index: 44;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
-}
-
-.magnifier-handle-grip {
-  position: absolute;
-  left: 4px;
-  top: 2px;
-  right: 10px;
-  bottom: 2px;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(0, 0, 0, 0.15) 0,
-    rgba(0, 0, 0, 0.15) 2px,
-    transparent 2px,
-    transparent 6px
-  );
-  border-radius: 3px;
-}
-
 .magnifier-lens-content {
   width: max-content;
   transform-origin: top left;
-}
-
-.magnifier-cursor {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 18px;
-  height: 18px;
-  border: 2px solid #d72638;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
-}
-
-.magnifier-cursor::before,
-.magnifier-cursor::after {
-  content: '';
-  position: absolute;
-  background: #d72638;
-}
-
-.magnifier-cursor::before {
-  width: 2px;
-  height: 26px;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.magnifier-cursor::after {
-  width: 26px;
-  height: 2px;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
 }
 
 .magnifier-clone {

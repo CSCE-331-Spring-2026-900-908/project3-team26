@@ -5,11 +5,6 @@ const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
 const LENS_SIZE = 200;
 const LENS_RADIUS = LENS_SIZE / 2;
-const LENS_BORDER = 6;
-const LENS_OFFSET_X = 150;
-const LENS_OFFSET_Y = -150;
-const CURSOR_GAP = 16;
-const EDGE_GAP = 6;
 
 const LANGUAGE_OPTIONS = [
   { value: 'en', label: 'English' },
@@ -320,65 +315,39 @@ export default function AccessibilityWidget() {
     return forceGoogleTranslate(language);
   }, [language, translateReady]);
 
-  // Lens position: offset diagonally from cursor, clamped to the viewport.
+  // Lens follows the cursor directly, clamped to the viewport.
   const lensCenterX = Math.min(
-    Math.max(pointerPosition.x + LENS_OFFSET_X, LENS_RADIUS + 12),
+    Math.max(pointerPosition.x, LENS_RADIUS + 12),
     window.innerWidth - LENS_RADIUS - 12,
   );
   const lensCenterY = Math.min(
-    Math.max(pointerPosition.y + LENS_OFFSET_Y, LENS_RADIUS + 12),
+    Math.max(pointerPosition.y, LENS_RADIUS + 12),
     window.innerHeight - LENS_RADIUS - 12,
   );
-
-  const handleDx = lensCenterX - pointerPosition.x;
-  const handleDy = lensCenterY - pointerPosition.y;
-  const centerDistance = Math.sqrt(handleDx * handleDx + handleDy * handleDy) || 1;
-  const handleAngleRad = Math.atan2(handleDy, handleDx);
-  const handleAngle = handleAngleRad * (180 / Math.PI);
-
-  // Start handle CURSOR_GAP away from cursor; stop EDGE_GAP before lens edge.
-  const handleStartX = pointerPosition.x + Math.cos(handleAngleRad) * CURSOR_GAP;
-  const handleStartY = pointerPosition.y + Math.sin(handleAngleRad) * CURSOR_GAP;
-  const handleLength = Math.max(0, centerDistance - LENS_RADIUS - CURSOR_GAP - EDGE_GAP);
 
   return (
     <>
       <div className="google-translate-host" id={GOOGLE_HOST_ID} aria-hidden="true" />
 
       {scale !== '1' && lensVisible ? (
-        <>
-          <div
-            className="magnifier-handle"
-            aria-hidden="true"
-            style={{
-              left: `${handleStartX}px`,
-              top: `${handleStartY - 5}px`,
-              width: `${handleLength}px`,
-              transform: `rotate(${handleAngle}deg)`,
-            }}
-          >
-            <span className="magnifier-handle-grip" />
+        <div
+          className="magnifier-lens active"
+          aria-hidden="true"
+          style={{
+            left: `${lensCenterX - LENS_RADIUS}px`,
+            top: `${lensCenterY - LENS_RADIUS}px`,
+          }}
+        >
+          <div className="magnifier-lens-frame">
+            <div
+              className="magnifier-lens-content"
+              ref={lensContentRef}
+              style={{
+                transform: `translate(${-pointerPosition.x * Number(scale) + LENS_RADIUS}px, ${-pointerPosition.y * Number(scale) + LENS_RADIUS}px) scale(${scale})`,
+              }}
+            />
           </div>
-          <div
-            className="magnifier-lens active"
-            aria-hidden="true"
-            style={{
-              left: `${lensCenterX - LENS_RADIUS}px`,
-              top: `${lensCenterY - LENS_RADIUS}px`,
-            }}
-          >
-            <div className="magnifier-lens-frame">
-              <div
-                className="magnifier-lens-content"
-                ref={lensContentRef}
-                style={{
-                  transform: `translate(${-lensCenterX * Number(scale) + LENS_RADIUS - LENS_BORDER}px, ${-lensCenterY * Number(scale) + LENS_RADIUS - LENS_BORDER}px) scale(${scale})`,
-                }}
-              />
-              <div className="magnifier-cursor" />
-            </div>
-          </div>
-        </>
+        </div>
       ) : null}
 
       <div className="accessibility-widget notranslate" translate="no">
