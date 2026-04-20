@@ -658,6 +658,24 @@ body[data-contrast='soft'] .helper-text {
   gap: 12px;
 }
 
+.login-role-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.login-role-switch button {
+  min-height: 42px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.login-role-switch button.active {
+  background: var(--primary);
+  color: var(--primary-fg);
+  border-color: var(--primary);
+}
+
 .login-pin-mark {
   display: inline-flex;
   align-items: center;
@@ -737,6 +755,46 @@ body[data-contrast='soft'] .helper-text {
   text-align: center;
   color: #7b8498;
   font-size: 12px;
+}
+
+.login-divider {
+  position: relative;
+  text-align: center;
+  color: #7b8498;
+  font-size: 13px;
+}
+
+.login-divider::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 1px solid var(--border-soft);
+}
+
+.login-divider span {
+  position: relative;
+  display: inline-block;
+  padding: 0 10px;
+  background: #fff;
+}
+
+.login-google-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.login-google-copy {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7489;
+}
+
+.login-google-button {
+  min-height: 44px;
 }
 
 @media (max-width: 720px) {
