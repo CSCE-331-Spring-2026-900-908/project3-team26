@@ -53,15 +53,15 @@ export default function LoginPage() {
     }
 
     const match = PIN_ROLES[pin];
-    if (!match || match.role !== selectedRole) {
-      setError(`Invalid ${selectedRole} PIN. Try again.`);
+    if (!match) {
+      setError('Invalid PIN. Try again.');
       const timer = window.setTimeout(() => setPin(''), 600);
       return () => window.clearTimeout(timer);
     }
 
     setError('');
     finishLogin(match);
-  }, [pin, navigate, selectedRole]);
+  }, [pin, navigate]);
 
   useEffect(() => {
     if (window.google?.accounts?.id) {
@@ -167,23 +167,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="login-role-switch" role="tablist" aria-label="Login role">
-          {LOGIN_ROLE_OPTIONS.map((option) => (
-            <button
-              key={option.key}
-              type="button"
-              className={selectedRole === option.key ? 'active' : ''}
-              onClick={() => {
-                setSelectedRole(option.key);
-                setPin('');
-                setError('');
-              }}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-
         <div className="login-pin-display" aria-label="PIN entry">
           {Array.from({ length: PIN_LENGTH }).map((_, index) => (
             <span
@@ -222,6 +205,21 @@ export default function LoginPage() {
         </div>
 
         <div className="login-google-block">
+          <div className="login-role-switch" role="tablist" aria-label="Google sign-in role">
+            {LOGIN_ROLE_OPTIONS.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                className={selectedRole === option.key ? 'active' : ''}
+                onClick={() => {
+                  setSelectedRole(option.key);
+                  setError('');
+                }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
           <p className="login-google-copy">
             Continue as {selectedRole === 'manager' ? 'Manager' : 'Cashier'} with Google
           </p>
