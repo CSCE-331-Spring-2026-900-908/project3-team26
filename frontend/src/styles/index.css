@@ -652,6 +652,24 @@ body[data-contrast='soft'] .helper-text {
   box-shadow: var(--shadow-lg);
 }
 
+.login-card-top {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.login-back-button {
+  min-height: 38px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--btn-bg);
+  border: 1px solid var(--border-soft);
+  font-weight: 600;
+}
+
+.login-back-button:hover {
+  background: var(--btn-hover);
+}
+
 .login-pin-brand {
   display: flex;
   align-items: center;

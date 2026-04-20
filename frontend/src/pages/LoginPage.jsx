@@ -159,6 +159,16 @@ export default function LoginPage() {
   return (
     <section id="page-login" className="page active login-pin-page">
       <div className="login-pin-card panel">
+        <div className="login-card-top">
+          <button
+            type="button"
+            className="login-back-button"
+            onClick={() => navigate('/')}
+          >
+            Back to Main Screen
+          </button>
+        </div>
+
         <div className="login-pin-brand">
           <span className="login-pin-mark">B26</span>
           <div>
