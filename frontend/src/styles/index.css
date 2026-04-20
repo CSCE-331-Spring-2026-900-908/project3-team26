@@ -576,6 +576,17 @@ body[data-contrast='soft'] .helper-text {
   margin-bottom: 6px;
 }
 
+.weather-home-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.weather-home-card .weather-widget {
+  margin-left: 0;
+  width: fit-content;
+}
+
 .rank-list,
 .report-lines {
   display: flex;
