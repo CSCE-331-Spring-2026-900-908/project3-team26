@@ -11,7 +11,7 @@ import AccessibilityWidget from './components/AccessibilityWidget.jsx';
 
 export default function App() {
   const location = useLocation();
-  const chromePages = new Set(['/', '/sales']);
+  const chromePages = new Set(['/sales']);
   const showNav = chromePages.has(location.pathname);
 
   return (
