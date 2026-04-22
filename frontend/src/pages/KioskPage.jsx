@@ -33,6 +33,17 @@ const milkTerms = ['milk'];
 const caffeineTerms = ['black tea', 'green tea', 'oolong tea', 'matcha powder', 'coffee'];
 const nutTerms = ['nuts', 'almond', 'peanut', 'cashew', 'hazelnut', 'walnut', 'pecan', 'pistachio'];
 const toppingTerms = ['tapioca pearls'];
+const sizeOptions = ['Small', 'Medium', 'Large'];
+const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%'];
+const iceOptions = ['0%', '25%', '50%', '75%', '100%'];
+const toppingOptions = ['Boba', 'Jelly', 'Cheese Foam', 'Lychee Popping'];
+
+const DEFAULT_CUSTOMIZATION = {
+  size: 'Medium',
+  sweetness: '100%',
+  ice: '100%',
+  toppings: [],
+};
 
 function inferCategory(name = '') {
   const normalized = name.toLowerCase();
@@ -56,6 +67,14 @@ function inferCategory(name = '') {
 
 function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
+}
+
+function customizationSummary(custom) {
+  const parts = [custom.size, `Sweet ${custom.sweetness}`, `Ice ${custom.ice}`];
+  if (custom.toppings.length) {
+    parts.push(custom.toppings.join(' + '));
+  }
+  return parts.join(' - ');
 }
 
 function includesAnyIngredient(item, terms) {
@@ -189,13 +208,14 @@ export default function KioskPage() {
     setActiveMaxPrice(maxPriceLimit);
   }, [minPriceLimit, maxPriceLimit]);
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const sliderValue = baseFilteredItems.length
     ? Math.min(Math.max(activeMaxPrice, minPriceLimit), maxPriceLimit)
     : 0;
+
   const activeFilterLabel =
     filterOptions.find((option) => option.value === activeFilterValue)?.label ||
     allIngredientsLabel;
+
   const visibleItems = useMemo(
     () =>
       baseFilteredItems
@@ -203,6 +223,8 @@ export default function KioskPage() {
         .slice(0, 12),
     [baseFilteredItems, sliderValue]
   );
+
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   function openCustomization(item) {
     setCustomizingItem(item);
@@ -239,6 +261,7 @@ export default function KioskPage() {
           line === existing ? { ...line, quantity: line.quantity + 1 } : line
         );
       }
+
       return [
         ...current,
         {
@@ -306,6 +329,8 @@ export default function KioskPage() {
     setActiveCategory('Milk Tea');
     setActiveFilterValue(allIngredientsValue);
     setActiveMaxPrice(0);
+    setCustomizingItem(null);
+    setDraftCustomization(DEFAULT_CUSTOMIZATION);
   }
 
   if (!started) {
@@ -421,40 +446,34 @@ export default function KioskPage() {
             <legend>Menu Items</legend>
             <div className="kiosk-menu-grid">
               {visibleItems.length ? (
-                visibleItems.map((item) => (
-                  <button key={item.id} className="kiosk-menu-btn" onClick={() => addItem(item)}>
-                    <span>{item.name}</span>
-                    <strong>{formatCurrency(item.price)}</strong>
-                  </button>
-                ))
+                visibleItems.map((item) => {
+                  const imageSrc = getMenuImage(item.name);
+                  return (
+                    <button
+                      key={item.id}
+                      className="kiosk-menu-btn"
+                      onClick={() => openCustomization(item)}
+                    >
+                      {imageSrc ? (
+                        <img
+                          src={imageSrc}
+                          alt={item.name}
+                          className="kiosk-menu-image"
+                          onError={(event) => {
+                            event.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : null}
+                      <span>{item.name}</span>
+                      <strong>{formatCurrency(item.price)}</strong>
+                    </button>
+                  );
+                })
               ) : (
                 <div className="kiosk-empty-state helper-text">
                   No drinks in this category match the selected ingredient filter and price range.
                 </div>
               )}
-              {visibleItems.map((item) => {
-                const imageSrc = getMenuImage(item.name);
-                return (
-                  <button
-                    key={item.id}
-                    className="kiosk-menu-btn"
-                    onClick={() => openCustomization(item)}
-                  >
-                    {imageSrc ? (
-                      <img
-                        src={imageSrc}
-                        alt={item.name}
-                        className="kiosk-menu-image"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    ) : null}
-                    <span>{item.name}</span>
-                    <strong>{formatCurrency(item.price)}</strong>
-                  </button>
-                );
-              })}
             </div>
           </fieldset>
         </div>
@@ -492,6 +511,22 @@ export default function KioskPage() {
                 onClick={checkout}
               >
                 {submitting ? 'PROCESSING...' : 'CHECKOUT'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {customizingItem ? (
+        <div className="kiosk-modal-backdrop" onClick={() => setCustomizingItem(null)}>
+          <div className="kiosk-modal panel" onClick={(event) => event.stopPropagation()}>
+            <div className="kiosk-modal-header">
+              <div>
+                <strong>{customizingItem.name}</strong>
+                <p>{formatCurrency(customizingItem.price)}</p>
+              </div>
+              <button type="button" onClick={() => setCustomizingItem(null)}>
+                Close
               </button>
             </div>
 
@@ -572,7 +607,7 @@ export default function KioskPage() {
               className="primary bold kiosk-modal-confirm"
               onClick={confirmAddToCart}
             >
-              ADD TO CART · {formatCurrency(customizingItem.price)}
+              ADD TO CART - {formatCurrency(customizingItem.price)}
             </button>
           </div>
         </div>

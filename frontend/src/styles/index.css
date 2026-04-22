@@ -1344,6 +1344,19 @@ body[data-contrast='soft'] .helper-text {
   font-size: 16px;
   font-weight: bold;
   gap: 6px;
+  text-align: center;
+}
+
+.kiosk-menu-image {
+  width: 100%;
+  max-width: 180px;
+  height: 140px;
+  object-fit: contain;
+  display: block;
+}
+
+.kiosk-menu-btn span {
+  display: block;
 }
 
 .kiosk-menu-btn strong {
