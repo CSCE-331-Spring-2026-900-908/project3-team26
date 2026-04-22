@@ -54,4 +54,46 @@ export default function ChatWidget() {
       sendMessage();
     }
   };
+
+  return (
+    <div className="chat-widget">
+      {isOpen && (
+        <div className="chat-panel panel">
+          <div className="chat-panel-header">
+            <strong>Order Assistant</strong>
+            <button onClick={() => setIsOpen(false)} aria-label="Close chat">✕</button>
+          </div>
+          <div className="chat-messages">
+            {messages.map((m, i) => (
+              <div key={i} className={`chat-message chat-message--${m.role}`}>
+                {m.text}
+              </div>
+            ))}
+            {loading && <div className="chat-message chat-message--assistant">Typing…</div>}
+            <div ref={bottomRef} />
+          </div>
+          <div className="chat-input-row">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask about the menu…"
+              aria-label="Chat input"
+            />
+            <button onClick={sendMessage} disabled={loading} className="primary">
+              Send
+            </button>
+          </div>
+        </div>
+      )}
+      <button
+        className="chat-trigger accessibility-trigger"
+        onClick={() => setIsOpen((o) => !o)}
+        aria-label="Toggle order assistant"
+      >
+        💬 Order Help
+      </button>
+    </div>
+  );
 }
