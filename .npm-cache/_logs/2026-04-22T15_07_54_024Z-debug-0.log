@@ -1,0 +1,415 @@
+0 verbose cli C:\Program Files\nodejs\node.exe C:\Users\tayte\AppData\Roaming\npm\node_modules\npm\bin\npm-cli.js
+1 info using npm@11.2.0
+2 info using node@v22.14.0
+3 silly config load:file:C:\Users\tayte\AppData\Roaming\npm\node_modules\npm\npmrc
+4 silly config load:file:C:\Users\tayte\Downloads\project3-demo\project3-team26\backend\.npmrc
+5 silly config load:file:C:\Users\tayte\.npmrc
+6 silly config load:file:C:\Users\tayte\AppData\Roaming\npm\etc\npmrc
+7 verbose title npm install
+8 verbose argv "install" "--prefix" "backend"
+9 verbose logfile logs-max:10 dir:c:\Users\tayte\Downloads\project3-demo\project3-team26\.npm-cache\_logs\2026-04-22T15_07_54_024Z-
+10 verbose logfile c:\Users\tayte\Downloads\project3-demo\project3-team26\.npm-cache\_logs\2026-04-22T15_07_54_024Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4345298944 maxSize:1086324736 maxEntrySize:543162368
+13 silly idealTree buildDeps
+14 silly placeDep ROOT project3-team26@ OK for: project3-team26-backend@1.0.0 want: file:..
+15 silly reify mark retired [
+15 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\balanced-match'
+15 silly reify ]
+16 silly reify mark retired [
+16 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\body-parser'
+16 silly reify ]
+17 silly reify mark retired [
+17 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\brace-expansion'
+17 silly reify ]
+18 silly reify mark retired [
+18 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\cors'
+18 silly reify ]
+19 silly reify mark retired [
+19 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\dotenv'
+19 silly reify ]
+20 silly reify mark retired [
+20 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\express'
+20 silly reify ]
+21 silly reify mark retired [
+21 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\finalhandler'
+21 silly reify ]
+22 silly reify mark retired [
+22 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\fsevents'
+22 silly reify ]
+23 silly reify mark retired [
+23 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\http-errors'
+23 silly reify ]
+24 silly reify mark retired [
+24 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\ignore-by-default'
+24 silly reify ]
+25 silly reify mark retired [
+25 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\minimatch'
+25 silly reify ]
+26 silly reify mark retired [
+26 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\path-to-regexp'
+26 silly reify ]
+27 silly reify mark retired [
+27 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pg'
+27 silly reify ]
+28 silly reify mark retired [
+28 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pg-cloudflare'
+28 silly reify ]
+29 silly reify mark retired [
+29 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pg-connection-string'
+29 silly reify ]
+30 silly reify mark retired [
+30 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pg-pool'
+30 silly reify ]
+31 silly reify mark retired [
+31 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pgpass'
+31 silly reify ]
+32 silly reify mark retired [
+32 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\picomatch'
+32 silly reify ]
+33 silly reify mark retired [
+33 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pstree.remy'
+33 silly reify ]
+34 silly reify mark retired [
+34 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\qs'
+34 silly reify ]
+35 silly reify mark retired [
+35 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\raw-body'
+35 silly reify ]
+36 silly reify mark retired [
+36 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\send'
+36 silly reify ]
+37 silly reify mark retired [
+37 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\serve-static'
+37 silly reify ]
+38 silly reify mark retired [
+38 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\simple-update-notifier'
+38 silly reify ]
+39 silly reify mark retired [
+39 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\split2'
+39 silly reify ]
+40 silly reify mark retired [
+40 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\statuses'
+40 silly reify ]
+41 silly reify mark retired [
+41 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\undefsafe'
+41 silly reify ]
+42 silly reify mark retired [
+42 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\cookie-signature'
+42 silly reify ]
+43 silly reify mark retired [
+43 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\mime',
+43 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\mime',
+43 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\mime.cmd',
+43 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\mime.ps1'
+43 silly reify ]
+44 silly reify mark retired [
+44 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\nodemon',
+44 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodemon',
+44 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodemon.cmd',
+44 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodemon.ps1'
+44 silly reify ]
+45 silly reify mark retired [
+45 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\semver',
+45 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\semver',
+45 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\semver.cmd',
+45 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\semver.ps1'
+45 silly reify ]
+46 silly reify mark retired [
+46 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\touch',
+46 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodetouch',
+46 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodetouch.cmd',
+46 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodetouch.ps1'
+46 silly reify ]
+47 silly reify moves {
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\balanced-match': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.balanced-match-ALo875iN',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\body-parser': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.body-parser-bSy7Z1N5',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\brace-expansion': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.brace-expansion-xHuJkNFr',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\cors': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.cors-QEDrPcQc',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\dotenv': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.dotenv-WwWPFzSW',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\express': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.express-Z57BSWDI',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\finalhandler': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.finalhandler-OT6VCOtv',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\fsevents': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.fsevents-4Ru6QH70',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\http-errors': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.http-errors-qzVarpf2',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\ignore-by-default': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.ignore-by-default-lvnqFc21',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\minimatch': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.minimatch-BtDSCuPV',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\path-to-regexp': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.path-to-regexp-7gSAIG64',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pg': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.pg-bp0icbfj',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pg-cloudflare': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.pg-cloudflare-BQ1c6atO',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pg-connection-string': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.pg-connection-string-L98cBtM0',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pg-pool': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.pg-pool-z0z9AD1p',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pgpass': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.pgpass-md3ufSMt',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\picomatch': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.picomatch-wg3HHtGT',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\pstree.remy': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.pstree.remy-4n66TggO',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\qs': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.qs-5niEF18P',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\raw-body': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.raw-body-RbfLyhuk',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\send': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.send-jiCjTXCM',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\serve-static': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.serve-static-09wJqXi2',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\simple-update-notifier': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.simple-update-notifier-GNRtGLLl',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\split2': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.split2-dY9sYDdX',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\statuses': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.statuses-0ZebJcpS',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\undefsafe': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.undefsafe-rxDU9rav',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\cookie-signature': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.cookie-signature-wsq8Nd1T',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\mime': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.mime-hwBLv1N9',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\mime': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.mime-sBYp2BzY',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\mime.cmd': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.mime.cmd-opyATRWP',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\mime.ps1': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.mime.ps1-jZLKRhbQ',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\nodemon': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.nodemon-U90yeEvP',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodemon': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.nodemon-HAXBrGX2',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodemon.cmd': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.nodemon.cmd-wntJdgg1',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodemon.ps1': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.nodemon.ps1-UfLcbhMY',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\semver': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.semver-nsF9qYUX',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\semver': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.semver-8Q0BAwDp',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\semver.cmd': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.semver.cmd-amnryHBp',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\semver.ps1': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.semver.ps1-Nc11gTDG',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\touch': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.touch-2FAebiek',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodetouch': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.nodetouch-Tqj4syq4',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodetouch.cmd': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.nodetouch.cmd-ujmu99Y1',
+47 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\nodetouch.ps1': 'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\.bin\\.nodetouch.ps1-DotCMLJp'
+47 silly reify }
+48 silly audit bulk request {
+48 silly audit   accepts: [ '1.3.8' ],
+48 silly audit   anymatch: [ '3.1.3' ],
+48 silly audit   'array-flatten': [ '1.1.1' ],
+48 silly audit   'balanced-match': [ '4.0.4' ],
+48 silly audit   'binary-extensions': [ '2.3.0' ],
+48 silly audit   'body-parser': [ '1.20.4' ],
+48 silly audit   'brace-expansion': [ '5.0.5' ],
+48 silly audit   braces: [ '3.0.3' ],
+48 silly audit   bytes: [ '3.1.2' ],
+48 silly audit   'call-bind-apply-helpers': [ '1.0.2' ],
+48 silly audit   'call-bound': [ '1.0.4' ],
+48 silly audit   chokidar: [ '3.6.0' ],
+48 silly audit   'content-disposition': [ '0.5.4' ],
+48 silly audit   'content-type': [ '1.0.5' ],
+48 silly audit   cookie: [ '0.7.2' ],
+48 silly audit   'cookie-signature': [ '1.0.7' ],
+48 silly audit   cors: [ '2.8.6' ],
+48 silly audit   debug: [ '2.6.9', '4.4.3' ],
+48 silly audit   depd: [ '2.0.0' ],
+48 silly audit   destroy: [ '1.2.0' ],
+48 silly audit   dotenv: [ '16.6.1' ],
+48 silly audit   'dunder-proto': [ '1.0.1' ],
+48 silly audit   'ee-first': [ '1.1.1' ],
+48 silly audit   encodeurl: [ '2.0.0' ],
+48 silly audit   'es-define-property': [ '1.0.1' ],
+48 silly audit   'es-errors': [ '1.3.0' ],
+48 silly audit   'es-object-atoms': [ '1.1.1' ],
+48 silly audit   'escape-html': [ '1.0.3' ],
+48 silly audit   etag: [ '1.8.1' ],
+48 silly audit   express: [ '4.22.1' ],
+48 silly audit   'fill-range': [ '7.1.1' ],
+48 silly audit   finalhandler: [ '1.3.2' ],
+48 silly audit   forwarded: [ '0.2.0' ],
+48 silly audit   fresh: [ '0.5.2' ],
+48 silly audit   fsevents: [ '2.3.3' ],
+48 silly audit   'function-bind': [ '1.1.2' ],
+48 silly audit   'get-intrinsic': [ '1.3.0' ],
+48 silly audit   'get-proto': [ '1.0.1' ],
+48 silly audit   'glob-parent': [ '5.1.2' ],
+48 silly audit   gopd: [ '1.2.0' ],
+48 silly audit   'has-flag': [ '3.0.0' ],
+48 silly audit   'has-symbols': [ '1.1.0' ],
+48 silly audit   hasown: [ '2.0.2' ],
+48 silly audit   'http-errors': [ '2.0.1' ],
+48 silly audit   'iconv-lite': [ '0.4.24' ],
+48 silly audit   'ignore-by-default': [ '1.0.1' ],
+48 silly audit   inherits: [ '2.0.4' ],
+48 silly audit   'ipaddr.js': [ '1.9.1' ],
+48 silly audit   'is-binary-path': [ '2.1.0' ],
+48 silly audit   'is-extglob': [ '2.1.1' ],
+48 silly audit   'is-glob': [ '4.0.3' ],
+48 silly audit   'is-number': [ '7.0.0' ],
+48 silly audit   'math-intrinsics': [ '1.1.0' ],
+48 silly audit   'media-typer': [ '0.3.0' ],
+48 silly audit   'merge-descriptors': [ '1.0.3' ],
+48 silly audit   methods: [ '1.1.2' ],
+48 silly audit   mime: [ '1.6.0' ],
+48 silly audit   'mime-db': [ '1.52.0' ],
+48 silly audit   'mime-types': [ '2.1.35' ],
+48 silly audit   minimatch: [ '10.2.5' ],
+48 silly audit   ms: [ '2.0.0', '2.1.3' ],
+48 silly audit   negotiator: [ '0.6.3' ],
+48 silly audit   nodemon: [ '3.1.14' ],
+48 silly audit   'normalize-path': [ '3.0.0' ],
+48 silly audit   'object-assign': [ '4.1.1' ],
+48 silly audit   'object-inspect': [ '1.13.4' ],
+48 silly audit   'on-finished': [ '2.4.1' ],
+48 silly audit   parseurl: [ '1.3.3' ],
+48 silly audit   'path-to-regexp': [ '0.1.13' ],
+48 silly audit   pg: [ '8.20.0' ],
+48 silly audit   'pg-cloudflare': [ '1.3.0' ],
+48 silly audit   'pg-connection-string': [ '2.12.0' ],
+48 silly audit   'pg-int8': [ '1.0.1' ],
+48 silly audit   'pg-pool': [ '3.13.0' ],
+48 silly audit   'pg-protocol': [ '1.13.0' ],
+48 silly audit   'pg-types': [ '2.2.0' ],
+48 silly audit   pgpass: [ '1.0.5' ],
+48 silly audit   picomatch: [ '2.3.2' ],
+48 silly audit   'postgres-array': [ '2.0.0' ],
+48 silly audit   'postgres-bytea': [ '1.0.1' ],
+48 silly audit   'postgres-date': [ '1.0.7' ],
+48 silly audit   'postgres-interval': [ '1.2.0' ],
+48 silly audit   'proxy-addr': [ '2.0.7' ],
+48 silly audit   'pstree.remy': [ '1.1.8' ],
+48 silly audit   qs: [ '6.14.2' ],
+48 silly audit   'range-parser': [ '1.2.1' ],
+48 silly audit   'raw-body': [ '2.5.3' ],
+48 silly audit   readdirp: [ '3.6.0' ],
+48 silly audit   'safe-buffer': [ '5.2.1' ],
+48 silly audit   'safer-buffer': [ '2.1.2' ],
+48 silly audit   semver: [ '7.7.4' ],
+48 silly audit   send: [ '0.19.2' ],
+48 silly audit   'serve-static': [ '1.16.3' ],
+48 silly audit   setprototypeof: [ '1.2.0' ],
+48 silly audit   'side-channel': [ '1.1.0' ],
+48 silly audit   'side-channel-list': [ '1.0.0' ],
+48 silly audit   'side-channel-map': [ '1.0.1' ],
+48 silly audit   'side-channel-weakmap': [ '1.0.2' ],
+48 silly audit   'simple-update-notifier': [ '2.0.0' ],
+48 silly audit   split2: [ '4.2.0' ],
+48 silly audit   statuses: [ '2.0.2' ],
+48 silly audit   'supports-color': [ '5.5.0' ],
+48 silly audit   'to-regex-range': [ '5.0.1' ],
+48 silly audit   toidentifier: [ '1.0.1' ],
+48 silly audit   touch: [ '3.1.1' ],
+48 silly audit   'type-is': [ '1.6.18' ],
+48 silly audit   undefsafe: [ '2.0.5' ],
+48 silly audit   unpipe: [ '1.0.0' ],
+48 silly audit   'utils-merge': [ '1.0.1' ],
+48 silly audit   vary: [ '1.1.2' ],
+48 silly audit   xtend: [ '4.0.2' ]
+48 silly audit }
+49 verbose reify failed optional dependency C:\Users\tayte\Downloads\project3-demo\project3-team26\backend\node_modules\fsevents
+50 silly reify mark deleted [
+50 silly reify   'C:\\Users\\tayte\\Downloads\\project3-demo\\project3-team26\\backend\\node_modules\\fsevents'
+50 silly reify ]
+51 http cache touch@https://registry.npmjs.org/touch/-/touch-3.1.1.tgz 0ms (cache hit)
+52 http cache nodemon@https://registry.npmjs.org/nodemon/-/nodemon-3.1.14.tgz 0ms (cache hit)
+53 http cache semver@https://registry.npmjs.org/semver/-/semver-7.7.4.tgz 0ms (cache hit)
+54 http cache mime@https://registry.npmjs.org/mime/-/mime-1.6.0.tgz 0ms (cache hit)
+55 http cache cookie-signature@https://registry.npmjs.org/cookie-signature/-/cookie-signature-1.0.7.tgz 0ms (cache hit)
+56 http cache undefsafe@https://registry.npmjs.org/undefsafe/-/undefsafe-2.0.5.tgz 0ms (cache hit)
+57 http cache split2@https://registry.npmjs.org/split2/-/split2-4.2.0.tgz 0ms (cache hit)
+58 http cache statuses@https://registry.npmjs.org/statuses/-/statuses-2.0.2.tgz 0ms (cache hit)
+59 http cache simple-update-notifier@https://registry.npmjs.org/simple-update-notifier/-/simple-update-notifier-2.0.0.tgz 0ms (cache hit)
+60 http cache serve-static@https://registry.npmjs.org/serve-static/-/serve-static-1.16.3.tgz 0ms (cache hit)
+61 http cache send@https://registry.npmjs.org/send/-/send-0.19.2.tgz 0ms (cache hit)
+62 http cache raw-body@https://registry.npmjs.org/raw-body/-/raw-body-2.5.3.tgz 0ms (cache hit)
+63 http cache qs@https://registry.npmjs.org/qs/-/qs-6.14.2.tgz 0ms (cache hit)
+64 http cache pstree.remy@https://registry.npmjs.org/pstree.remy/-/pstree.remy-1.1.8.tgz 0ms (cache hit)
+65 http cache picomatch@https://registry.npmjs.org/picomatch/-/picomatch-2.3.2.tgz 0ms (cache hit)
+66 http cache pgpass@https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz 0ms (cache hit)
+67 http cache pg-pool@https://registry.npmjs.org/pg-pool/-/pg-pool-3.13.0.tgz 0ms (cache hit)
+68 http cache pg-cloudflare@https://registry.npmjs.org/pg-cloudflare/-/pg-cloudflare-1.3.0.tgz 0ms (cache hit)
+69 http cache path-to-regexp@https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-0.1.13.tgz 0ms (cache hit)
+70 http cache pg-connection-string@https://registry.npmjs.org/pg-connection-string/-/pg-connection-string-2.12.0.tgz 0ms (cache hit)
+71 http cache pg@https://registry.npmjs.org/pg/-/pg-8.20.0.tgz 0ms (cache hit)
+72 http cache minimatch@https://registry.npmjs.org/minimatch/-/minimatch-10.2.5.tgz 0ms (cache hit)
+73 http cache finalhandler@https://registry.npmjs.org/finalhandler/-/finalhandler-1.3.2.tgz 0ms (cache hit)
+74 http cache ignore-by-default@https://registry.npmjs.org/ignore-by-default/-/ignore-by-default-1.0.1.tgz 0ms (cache hit)
+75 http cache http-errors@https://registry.npmjs.org/http-errors/-/http-errors-2.0.1.tgz 0ms (cache hit)
+76 http cache express@https://registry.npmjs.org/express/-/express-4.22.1.tgz 0ms (cache hit)
+77 http cache dotenv@https://registry.npmjs.org/dotenv/-/dotenv-16.6.1.tgz 0ms (cache hit)
+78 http cache cors@https://registry.npmjs.org/cors/-/cors-2.8.6.tgz 0ms (cache hit)
+79 http cache brace-expansion@https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.5.tgz 0ms (cache hit)
+80 http cache body-parser@https://registry.npmjs.org/body-parser/-/body-parser-1.20.4.tgz 0ms (cache hit)
+81 http cache balanced-match@https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz 0ms (cache hit)
+82 silly tarball no local data for touch@https://registry.npmjs.org/touch/-/touch-3.1.1.tgz. Extracting by manifest.
+83 http cache debug@https://registry.npmjs.org/debug/-/debug-4.4.3.tgz 0ms (cache hit)
+84 silly tarball no local data for nodemon@https://registry.npmjs.org/nodemon/-/nodemon-3.1.14.tgz. Extracting by manifest.
+85 silly tarball no local data for semver@https://registry.npmjs.org/semver/-/semver-7.7.4.tgz. Extracting by manifest.
+86 silly tarball no local data for mime@https://registry.npmjs.org/mime/-/mime-1.6.0.tgz. Extracting by manifest.
+87 silly tarball no local data for cookie-signature@https://registry.npmjs.org/cookie-signature/-/cookie-signature-1.0.7.tgz. Extracting by manifest.
+88 silly tarball no local data for undefsafe@https://registry.npmjs.org/undefsafe/-/undefsafe-2.0.5.tgz. Extracting by manifest.
+89 silly tarball no local data for split2@https://registry.npmjs.org/split2/-/split2-4.2.0.tgz. Extracting by manifest.
+90 silly tarball no local data for statuses@https://registry.npmjs.org/statuses/-/statuses-2.0.2.tgz. Extracting by manifest.
+91 silly tarball no local data for simple-update-notifier@https://registry.npmjs.org/simple-update-notifier/-/simple-update-notifier-2.0.0.tgz. Extracting by manifest.
+92 silly tarball no local data for serve-static@https://registry.npmjs.org/serve-static/-/serve-static-1.16.3.tgz. Extracting by manifest.
+93 silly tarball no local data for send@https://registry.npmjs.org/send/-/send-0.19.2.tgz. Extracting by manifest.
+94 silly tarball no local data for raw-body@https://registry.npmjs.org/raw-body/-/raw-body-2.5.3.tgz. Extracting by manifest.
+95 silly tarball no local data for qs@https://registry.npmjs.org/qs/-/qs-6.14.2.tgz. Extracting by manifest.
+96 silly tarball no local data for pstree.remy@https://registry.npmjs.org/pstree.remy/-/pstree.remy-1.1.8.tgz. Extracting by manifest.
+97 silly tarball no local data for picomatch@https://registry.npmjs.org/picomatch/-/picomatch-2.3.2.tgz. Extracting by manifest.
+98 silly tarball no local data for pgpass@https://registry.npmjs.org/pgpass/-/pgpass-1.0.5.tgz. Extracting by manifest.
+99 silly tarball no local data for pg-pool@https://registry.npmjs.org/pg-pool/-/pg-pool-3.13.0.tgz. Extracting by manifest.
+100 silly tarball no local data for pg-cloudflare@https://registry.npmjs.org/pg-cloudflare/-/pg-cloudflare-1.3.0.tgz. Extracting by manifest.
+101 silly tarball no local data for path-to-regexp@https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-0.1.13.tgz. Extracting by manifest.
+102 silly tarball no local data for pg-connection-string@https://registry.npmjs.org/pg-connection-string/-/pg-connection-string-2.12.0.tgz. Extracting by manifest.
+103 silly tarball no local data for pg@https://registry.npmjs.org/pg/-/pg-8.20.0.tgz. Extracting by manifest.
+104 silly tarball no local data for minimatch@https://registry.npmjs.org/minimatch/-/minimatch-10.2.5.tgz. Extracting by manifest.
+105 silly tarball no local data for finalhandler@https://registry.npmjs.org/finalhandler/-/finalhandler-1.3.2.tgz. Extracting by manifest.
+106 silly tarball no local data for ignore-by-default@https://registry.npmjs.org/ignore-by-default/-/ignore-by-default-1.0.1.tgz. Extracting by manifest.
+107 silly tarball no local data for http-errors@https://registry.npmjs.org/http-errors/-/http-errors-2.0.1.tgz. Extracting by manifest.
+108 silly tarball no local data for express@https://registry.npmjs.org/express/-/express-4.22.1.tgz. Extracting by manifest.
+109 silly tarball no local data for dotenv@https://registry.npmjs.org/dotenv/-/dotenv-16.6.1.tgz. Extracting by manifest.
+110 silly tarball no local data for cors@https://registry.npmjs.org/cors/-/cors-2.8.6.tgz. Extracting by manifest.
+111 silly tarball no local data for brace-expansion@https://registry.npmjs.org/brace-expansion/-/brace-expansion-5.0.5.tgz. Extracting by manifest.
+112 silly tarball no local data for body-parser@https://registry.npmjs.org/body-parser/-/body-parser-1.20.4.tgz. Extracting by manifest.
+113 silly tarball no local data for balanced-match@https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz. Extracting by manifest.
+114 silly tarball no local data for debug@https://registry.npmjs.org/debug/-/debug-4.4.3.tgz. Extracting by manifest.
+115 verbose audit error FetchError: request to https://registry.npmjs.org/-/npm/v1/security/advisories/bulk failed, reason: 
+115 verbose audit error     at ClientRequest.<anonymous> (C:\Users\tayte\AppData\Roaming\npm\node_modules\npm\node_modules\minipass-fetch\lib\index.js:130:14)
+115 verbose audit error     at ClientRequest.emit (node:events:518:28)
+115 verbose audit error     at emitErrorEvent (node:_http_client:104:11)
+115 verbose audit error     at _destroy (node:_http_client:898:9)
+115 verbose audit error     at onSocketNT (node:_http_client:918:5)
+115 verbose audit error     at process.processTicksAndRejections (node:internal/process/task_queues:91:21) {
+115 verbose audit error   code: 'EACCES',
+115 verbose audit error   errno: 'EACCES',
+115 verbose audit error   type: 'system'
+115 verbose audit error }
+116 silly audit error undefined
+117 silly audit report null
+118 http fetch GET https://registry.npmjs.org/touch/-/touch-3.1.1.tgz attempt 1 failed with EACCES
+119 http fetch GET https://registry.npmjs.org/nodemon/-/nodemon-3.1.14.tgz attempt 1 failed with EACCES
+120 http fetch GET https://registry.npmjs.org/mime/-/mime-1.6.0.tgz attempt 1 failed with EACCES
+121 http fetch GET https://registry.npmjs.org/semver/-/semver-7.7.4.tgz attempt 1 failed with EACCES
+122 http fetch GET https://registry.npmjs.org/cookie-signature/-/cookie-signature-1.0.7.tgz attempt 1 failed with EACCES
+123 http fetch GET https://registry.npmjs.org/undefsafe/-/undefsafe-2.0.5.tgz attempt 1 failed with EACCES
+124 http fetch GET https://registry.npmjs.org/split2/-/split2-4.2.0.tgz attempt 1 failed with EACCES
+125 http fetch GET https://registry.npmjs.org/statuses/-/statuses-2.0.2.tgz attempt 1 failed with EACCES
+126 http fetch GET https://registry.npmjs.org/simple-update-notifier/-/simple-update-notifier-2.0.0.tgz attempt 1 failed with EACCES
+127 http fetch GET https://registry.npmjs.org/serve-static/-/serve-static-1.16.3.tgz attempt 1 failed with EACCES
+128 http fetch GET https://registry.npmjs.org/send/-/send-0.19.2.tgz attempt 1 failed with EACCES
+129 http fetch GET https://registry.npmjs.org/raw-body/-/raw-body-2.5.3.tgz attempt 1 failed with EACCES
+130 http fetch GET https://registry.npmjs.org/qs/-/qs-6.14.2.tgz attempt 1 failed with EACCES
+131 http fetch GET https://registry.npmjs.org/pstree.remy/-/pstree.remy-1.1.8.tgz attempt 1 failed with EACCES
+132 http fetch GET https://registry.npmjs.org/touch/-/touch-3.1.1.tgz attempt 2 failed with EACCES
+133 http fetch GET https://registry.npmjs.org/nodemon/-/nodemon-3.1.14.tgz attempt 2 failed with EACCES
+134 http fetch GET https://registry.npmjs.org/mime/-/mime-1.6.0.tgz attempt 2 failed with EACCES
+135 http fetch GET https://registry.npmjs.org/semver/-/semver-7.7.4.tgz attempt 2 failed with EACCES
+136 http fetch GET https://registry.npmjs.org/cookie-signature/-/cookie-signature-1.0.7.tgz attempt 2 failed with EACCES
+137 http fetch GET https://registry.npmjs.org/undefsafe/-/undefsafe-2.0.5.tgz attempt 2 failed with EACCES
+138 http fetch GET https://registry.npmjs.org/split2/-/split2-4.2.0.tgz attempt 2 failed with EACCES
+139 http fetch GET https://registry.npmjs.org/statuses/-/statuses-2.0.2.tgz attempt 2 failed with EACCES
+140 http fetch GET https://registry.npmjs.org/simple-update-notifier/-/simple-update-notifier-2.0.0.tgz attempt 2 failed with EACCES
+141 http fetch GET https://registry.npmjs.org/serve-static/-/serve-static-1.16.3.tgz attempt 2 failed with EACCES
+142 http fetch GET https://registry.npmjs.org/send/-/send-0.19.2.tgz attempt 2 failed with EACCES
+143 http fetch GET https://registry.npmjs.org/raw-body/-/raw-body-2.5.3.tgz attempt 2 failed with EACCES
+144 http fetch GET https://registry.npmjs.org/qs/-/qs-6.14.2.tgz attempt 2 failed with EACCES
+145 http fetch GET https://registry.npmjs.org/pstree.remy/-/pstree.remy-1.1.8.tgz attempt 2 failed with EACCES
+146 http fetch GET https://registry.npmjs.org/touch/-/touch-3.1.1.tgz attempt 3 failed with EACCES
+147 http fetch GET https://registry.npmjs.org/nodemon/-/nodemon-3.1.14.tgz attempt 3 failed with EACCES
+148 http fetch GET https://registry.npmjs.org/mime/-/mime-1.6.0.tgz attempt 3 failed with EACCES
+149 http fetch GET https://registry.npmjs.org/semver/-/semver-7.7.4.tgz attempt 3 failed with EACCES
+150 http fetch GET https://registry.npmjs.org/cookie-signature/-/cookie-signature-1.0.7.tgz attempt 3 failed with EACCES
+151 http fetch GET https://registry.npmjs.org/undefsafe/-/undefsafe-2.0.5.tgz attempt 3 failed with EACCES
+152 http fetch GET https://registry.npmjs.org/split2/-/split2-4.2.0.tgz attempt 3 failed with EACCES
+153 http fetch GET https://registry.npmjs.org/statuses/-/statuses-2.0.2.tgz attempt 3 failed with EACCES
+154 http fetch GET https://registry.npmjs.org/simple-update-notifier/-/simple-update-notifier-2.0.0.tgz attempt 3 failed with EACCES
+155 http fetch GET https://registry.npmjs.org/serve-static/-/serve-static-1.16.3.tgz attempt 3 failed with EACCES
+156 http fetch GET https://registry.npmjs.org/send/-/send-0.19.2.tgz attempt 3 failed with EACCES
+157 http fetch GET https://registry.npmjs.org/raw-body/-/raw-body-2.5.3.tgz attempt 3 failed with EACCES
+158 http fetch GET https://registry.npmjs.org/qs/-/qs-6.14.2.tgz attempt 3 failed with EACCES
+159 http fetch GET https://registry.npmjs.org/pstree.remy/-/pstree.remy-1.1.8.tgz attempt 3 failed with EACCES
+160 verbose cwd C:\Users\tayte\Downloads\project3-demo\project3-team26
+161 verbose os Windows_NT 10.0.26200
+162 verbose node v22.14.0
+163 verbose npm  v11.2.0
+164 error Exit handler never called!
+165 error This is an error with npm itself. Please report this error at:
+166 error   <https://github.com/npm/cli/issues>
+167 verbose exit 1
+168 verbose code 1
+169 error A complete log of this run can be found in: c:\Users\tayte\Downloads\project3-demo\project3-team26\.npm-cache\_logs\2026-04-22T15_07_54_024Z-debug-0.log

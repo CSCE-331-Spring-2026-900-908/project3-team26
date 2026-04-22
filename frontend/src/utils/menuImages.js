@@ -19,6 +19,14 @@ const imageMap = {
   'mango slush': '/images/menu/mango-slush.png',
   'coffee milk tea': '/images/menu/coffee-milk-tea.png',
   'wintermelon milk tea': '/images/menu/wintermelon-milk-tea.png',
+  'taro coconut latte': '/images/menu/taro-coconut-latte.png',
+  'brown sugar coconut latte': '/images/menu/brown-sugar-coconut-latte.png',
+  'coconut lychee cooler': '/images/menu/coconut-lychee-cooler.png',
+  'strawberry lychee slush': '/images/menu/strawberry-lychee-slush.png',
+  'jasmine coconut milk tea': '/images/menu/jasmine-coconut-milk-tea.png',
+  'oolong coconut milk tea': '/images/menu/oolong-coconut-milk-tea.png',
+  'brown sugar cream latte': '/images/menu/brown-sugar-cream-latte.png',
+  'taro cream latte': '/images/menu/taro-cream-latte.png',
 };
 
 const PLACEHOLDER = '/images/menu/placeholder.jpg';

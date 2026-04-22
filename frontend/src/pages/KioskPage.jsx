@@ -74,7 +74,7 @@ function customizationSummary(custom) {
   if (custom.toppings.length) {
     parts.push(custom.toppings.join(' + '));
   }
-  return parts.join(' - ');
+  return parts.join(' · ');
 }
 
 function includesAnyIngredient(item, terms) {
@@ -218,9 +218,7 @@ export default function KioskPage() {
 
   const visibleItems = useMemo(
     () =>
-      baseFilteredItems
-        .filter((item) => Number(item.price || 0) <= sliderValue)
-        .slice(0, 12),
+      baseFilteredItems.filter((item) => Number(item.price || 0) <= sliderValue),
     [baseFilteredItems, sliderValue]
   );
 
