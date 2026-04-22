@@ -1618,3 +1618,20 @@ body[data-contrast='soft'] .helper-text {
   align-items: flex-start;
   gap: 8px;
 }
+
+.chat-panel {
+  width: min(340px, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+  max-height: 420px;
+}
+
+.chat-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
