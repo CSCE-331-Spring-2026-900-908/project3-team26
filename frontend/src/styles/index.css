@@ -1260,6 +1260,8 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-active .cashier-body {
   flex: 1;
+  overflow: visible;
+  align-items: flex-start;
 }
 
 .kiosk-header {
@@ -1380,18 +1382,16 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-right {
   width: 340px;
-  align-self: flex-start;
-  position: sticky;
-  top: 10px;
-  height: calc(100vh - 20px);
   display: flex;
   flex-direction: column;
 }
 
 .kiosk-order-panel {
+  position: sticky;
+  top: 10px;
+  height: calc(100vh - 20px);
   flex: 1;
   min-height: 0;
-  height: 100%;
 }
 
 .kiosk-cart-list {
@@ -1585,12 +1585,12 @@ body[data-contrast='soft'] .helper-text {
   }
 
   .kiosk-order-panel {
+    position: static;
     height: auto;
     max-height: none;
   }
 
   .kiosk-right {
-    position: static;
     height: auto;
   }
 
