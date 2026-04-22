@@ -3,7 +3,6 @@ import { query } from '../db/pool.js';
 import { getCategoryForName, groupMenuByCategory } from '../utils/menu.js';
 
 const router = Router();
-const hiddenIngredients = new Set(['Cups', 'Lids', 'Straws']);
 
 router.get('/', async (_req, res, next) => {
   try {
@@ -21,23 +20,14 @@ router.get('/', async (_req, res, next) => {
        ORDER BY m.id`
     );
 
-    const items = result.rows.map((row) => {
-      const ingredients = row.ingredients
-        ? row.ingredients
-            .split(', ')
-            .filter(Boolean)
-            .filter((ingredient) => !hiddenIngredients.has(ingredient))
-        : [];
-
-      return {
-        id: Number(row.id),
-        name: row.name,
-        price: Number(row.price),
-        availability: row.availability,
-        ingredients,
-        category: getCategoryForName(row.name),
-      };
-    });
+    const items = result.rows.map((row) => ({
+      id: Number(row.id),
+      name: row.name,
+      price: Number(row.price),
+      availability: row.availability,
+      ingredients: row.ingredients ? row.ingredients.split(', ').filter(Boolean) : [],
+      category: getCategoryForName(row.name),
+    }));
 
     res.json({
       items,
