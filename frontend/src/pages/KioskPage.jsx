@@ -21,8 +21,6 @@ function useKioskBodyFlag(started, hasConfirmation) {
 const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
 const allIngredientsValue = 'all';
 const allIngredientsLabel = 'All Ingredients';
-const hiddenIngredientFilters = new Set(['Ice']);
-const allowedIngredientFilters = new Set(['Nuts']);
 const specialFilterOptions = [
   { value: 'special:dairy-free', label: 'Dairy-free' },
   { value: 'special:caffeine-free', label: 'Caffeine-free' },
@@ -134,29 +132,10 @@ export default function KioskPage() {
       .catch((err) => setError(err.message));
   }, []);
 
-  const filterOptions = useMemo(() => {
-    const matchingItems = menuItems.filter((item) => item.category === activeCategory);
-    const ingredients = [
-      ...new Set(
-        matchingItems
-          .flatMap((item) => item.ingredients || [])
-          .filter(
-            (ingredient) =>
-              !hiddenIngredientFilters.has(ingredient) &&
-              allowedIngredientFilters.has(ingredient)
-          )
-      ),
-    ];
-
-    return [
-      { value: allIngredientsValue, label: allIngredientsLabel },
-      ...specialFilterOptions,
-      ...ingredients.map((ingredient) => ({
-        value: `ingredient:${ingredient}`,
-        label: ingredient,
-      })),
-    ];
-  }, [activeCategory, menuItems]);
+  const filterOptions = useMemo(
+    () => [{ value: allIngredientsValue, label: allIngredientsLabel }, ...specialFilterOptions],
+    []
+  );
 
   const baseFilteredItems = useMemo(
     () =>
