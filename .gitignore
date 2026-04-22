@@ -5,5 +5,5 @@ dist
 frontend/node_modules
 frontend/dist
 backend/node_modules
-backend/.env
+#backend/.env
 backend/coverage
