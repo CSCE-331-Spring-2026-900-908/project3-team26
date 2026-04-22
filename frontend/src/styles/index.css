@@ -1380,6 +1380,13 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-right {
   width: 340px;
+  align-self: flex-start;
+}
+
+.kiosk-order-panel {
+  position: sticky;
+  top: 10px;
+  max-height: calc(100vh - 20px);
 }
 
 .kiosk-cart-list {
@@ -1569,6 +1576,11 @@ body[data-contrast='soft'] .helper-text {
   .cashier-right,
   .kiosk-right {
     width: 100%;
+  }
+
+  .kiosk-order-panel {
+    position: static;
+    max-height: none;
   }
 
   .kiosk-banner-row,
