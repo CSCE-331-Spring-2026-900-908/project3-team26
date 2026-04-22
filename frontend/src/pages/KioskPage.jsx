@@ -22,6 +22,7 @@ const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
 const allIngredientsValue = 'all';
 const allIngredientsLabel = 'All Ingredients';
 const hiddenIngredientFilters = new Set(['Ice']);
+const allowedIngredientFilters = new Set(['Nuts']);
 const specialFilterOptions = [
   { value: 'special:dairy-free', label: 'Dairy-free' },
   { value: 'special:caffeine-free', label: 'Caffeine-free' },
@@ -139,7 +140,11 @@ export default function KioskPage() {
       ...new Set(
         matchingItems
           .flatMap((item) => item.ingredients || [])
-          .filter((ingredient) => !hiddenIngredientFilters.has(ingredient))
+          .filter(
+            (ingredient) =>
+              !hiddenIngredientFilters.has(ingredient) &&
+              allowedIngredientFilters.has(ingredient)
+          )
       ),
     ];
 
