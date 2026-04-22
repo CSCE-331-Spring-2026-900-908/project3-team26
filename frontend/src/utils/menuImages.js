@@ -19,6 +19,10 @@ const imageMap = {
   'mango slush': '/images/menu/mango-slush.png',
   'coffee milk tea': '/images/menu/coffee-milk-tea.png',
   'wintermelon milk tea': '/images/menu/wintermelon-milk-tea.png',
+  'taro coconut latte': '/images/menu/taro-coconut-latte.png',
+  'brown sugar coconut latte': '/images/menu/brown-sugar-coconut-latte.png',
+  'coconut lychee cooler': '/images/menu/coconut-lychee-cooler.png',
+  'strawberry lychee slush': '/images/menu/strawberry-lychee-slush.png',
 };
 
 const PLACEHOLDER = '/images/menu/placeholder.jpg';
