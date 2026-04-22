@@ -2,6 +2,21 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
+import { getMenuImage } from '../utils/menuImages.js';
+
+function useKioskBodyFlag(started, hasConfirmation) {
+  useEffect(() => {
+    const active = started && !hasConfirmation;
+    if (active) {
+      document.body.dataset.page = 'kiosk';
+    }
+    return () => {
+      if (document.body.dataset.page === 'kiosk') {
+        delete document.body.dataset.page;
+      }
+    };
+  }, [started, hasConfirmation]);
+}
 
 const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
 const allIngredientsValue = 'all';
@@ -81,6 +96,10 @@ export default function KioskPage() {
   const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [customizingItem, setCustomizingItem] = useState(null);
+  const [draftCustomization, setDraftCustomization] = useState(DEFAULT_CUSTOMIZATION);
+
+  useKioskBodyFlag(started, Boolean(confirmation));
 
   useEffect(() => {
     api
@@ -185,23 +204,65 @@ export default function KioskPage() {
     [baseFilteredItems, sliderValue]
   );
 
-  function addItem(item) {
-    setCart((current) => {
-      const existing = current.find((line) => line.id === item.id);
-      if (existing) {
-        return current.map((line) =>
-          line.id === item.id ? { ...line, quantity: line.quantity + 1 } : line
-        );
-      }
-      return [...current, { id: item.id, name: item.name, price: Number(item.price), quantity: 1 }];
-    });
+  function openCustomization(item) {
+    setCustomizingItem(item);
+    setDraftCustomization(DEFAULT_CUSTOMIZATION);
   }
 
-  function updateQuantity(id, delta) {
+  function toggleTopping(topping) {
+    setDraftCustomization((current) => ({
+      ...current,
+      toppings: current.toppings.includes(topping)
+        ? current.toppings.filter((entry) => entry !== topping)
+        : [...current.toppings, topping],
+    }));
+  }
+
+  function confirmAddToCart() {
+    if (!customizingItem) {
+      return;
+    }
+
+    const key = JSON.stringify({
+      size: draftCustomization.size,
+      sweetness: draftCustomization.sweetness,
+      ice: draftCustomization.ice,
+      toppings: [...draftCustomization.toppings].sort(),
+    });
+
+    setCart((current) => {
+      const existing = current.find(
+        (line) => line.id === customizingItem.id && line.customKey === key
+      );
+      if (existing) {
+        return current.map((line) =>
+          line === existing ? { ...line, quantity: line.quantity + 1 } : line
+        );
+      }
+      return [
+        ...current,
+        {
+          id: customizingItem.id,
+          name: customizingItem.name,
+          price: Number(customizingItem.price),
+          quantity: 1,
+          customKey: key,
+          customization: draftCustomization,
+        },
+      ];
+    });
+
+    setCustomizingItem(null);
+    setDraftCustomization(DEFAULT_CUSTOMIZATION);
+  }
+
+  function updateQuantity(customKey, id, delta) {
     setCart((current) =>
       current
         .map((line) =>
-          line.id === id ? { ...line, quantity: Math.max(0, line.quantity + delta) } : line
+          line.id === id && line.customKey === customKey
+            ? { ...line, quantity: Math.max(0, line.quantity + delta) }
+            : line
         )
         .filter((line) => line.quantity > 0)
     );
@@ -215,12 +276,17 @@ export default function KioskPage() {
     setSubmitting(true);
     setError('');
     try {
+      const grouped = new Map();
+      for (const line of cart) {
+        grouped.set(line.id, (grouped.get(line.id) || 0) + line.quantity);
+      }
+
       const result = await api.post('/orders', {
         source: 'kiosk',
         paymentMethod: 'CARD',
-        items: cart.map((line) => ({
-          menuItemId: line.id,
-          quantity: line.quantity,
+        items: [...grouped.entries()].map(([menuItemId, quantity]) => ({
+          menuItemId,
+          quantity,
         })),
       });
 
@@ -366,6 +432,29 @@ export default function KioskPage() {
                   No drinks in this category match the selected ingredient filter and price range.
                 </div>
               )}
+              {visibleItems.map((item) => {
+                const imageSrc = getMenuImage(item.name);
+                return (
+                  <button
+                    key={item.id}
+                    className="kiosk-menu-btn"
+                    onClick={() => openCustomization(item)}
+                  >
+                    {imageSrc ? (
+                      <img
+                        src={imageSrc}
+                        alt={item.name}
+                        className="kiosk-menu-image"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    <span>{item.name}</span>
+                    <strong>{formatCurrency(item.price)}</strong>
+                  </button>
+                );
+              })}
             </div>
           </fieldset>
         </div>
@@ -376,15 +465,18 @@ export default function KioskPage() {
             <div className="kiosk-cart-list">
               {cart.length ? (
                 cart.map((item) => (
-                  <div className="kiosk-cart-row" key={item.id}>
-                    <div>
+                  <div className="kiosk-cart-row" key={`${item.id}-${item.customKey}`}>
+                    <div className="kiosk-cart-info">
                       <strong>{item.name}</strong>
+                      <div className="kiosk-cart-custom">
+                        {customizationSummary(item.customization)}
+                      </div>
                       <div>{formatCurrency(item.price)}</div>
                     </div>
                     <div className="kiosk-qty-controls">
-                      <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+                      <button onClick={() => updateQuantity(item.customKey, item.id, -1)}>-</button>
                       <span>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+                      <button onClick={() => updateQuantity(item.customKey, item.id, 1)}>+</button>
                     </div>
                   </div>
                 ))
@@ -402,9 +494,89 @@ export default function KioskPage() {
                 {submitting ? 'PROCESSING...' : 'CHECKOUT'}
               </button>
             </div>
+
+            <div className="kiosk-modal-field">
+              <span>Size</span>
+              <div className="kiosk-modal-options">
+                {sizeOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={draftCustomization.size === option ? 'active bold' : 'bold'}
+                    onClick={() =>
+                      setDraftCustomization((current) => ({ ...current, size: option }))
+                    }
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="kiosk-modal-field">
+              <span>Sweetness</span>
+              <div className="kiosk-modal-options">
+                {sweetnessOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={draftCustomization.sweetness === option ? 'active bold' : 'bold'}
+                    onClick={() =>
+                      setDraftCustomization((current) => ({ ...current, sweetness: option }))
+                    }
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="kiosk-modal-field">
+              <span>Ice</span>
+              <div className="kiosk-modal-options">
+                {iceOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={draftCustomization.ice === option ? 'active bold' : 'bold'}
+                    onClick={() =>
+                      setDraftCustomization((current) => ({ ...current, ice: option }))
+                    }
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="kiosk-modal-field">
+              <span>Toppings</span>
+              <div className="kiosk-modal-options">
+                {toppingOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={
+                      draftCustomization.toppings.includes(option) ? 'active bold' : 'bold'
+                    }
+                    onClick={() => toggleTopping(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="primary bold kiosk-modal-confirm"
+              onClick={confirmAddToCart}
+            >
+              ADD TO CART · {formatCurrency(customizingItem.price)}
+            </button>
           </div>
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }

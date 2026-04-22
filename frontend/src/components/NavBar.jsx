@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { logoutUser } from '../utils/session.js';
+import WeatherWidget from './WeatherWidget.jsx';
 
 const navItems = [
   ['/', 'Home'],
@@ -35,6 +36,7 @@ export default function NavBar() {
         <button className="nav-link" onClick={() => logoutUser(navigate)}>
           Logout
         </button>
+        <WeatherWidget />
       </nav>
     </header>
   );

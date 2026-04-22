@@ -3,9 +3,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 const STORAGE_KEY = 'bubble-tea-accessibility';
 const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
-const LENS_WIDTH = 240;
-const LENS_HEIGHT = 180;
-const LENS_VERTICAL_OFFSET = 44;
+const LENS_SIZE = 200;
+const LENS_RADIUS = LENS_SIZE / 2;
 
 const LANGUAGE_OPTIONS = [
   { value: 'en', label: 'English' },
@@ -92,8 +91,19 @@ function applyGoogleTranslate(language) {
   }
 
   select.value = language === 'en' ? '' : language;
+  select.dispatchEvent(new Event('input', { bubbles: true }));
   select.dispatchEvent(new Event('change', { bubbles: true }));
   return true;
+}
+
+function forceGoogleTranslate(language) {
+  // Apply immediately if ready, and keep retrying for a few seconds.
+  applyGoogleTranslate(language);
+  const delays = [60, 180, 400, 800, 1500];
+  const timers = delays.map((ms) =>
+    window.setTimeout(() => applyGoogleTranslate(language), ms),
+  );
+  return () => timers.forEach((id) => window.clearTimeout(id));
 }
 
 export default function AccessibilityWidget() {
@@ -103,16 +113,18 @@ export default function AccessibilityWidget() {
   const [scale, setScale] = useState(defaults.scale);
   const [contrast, setContrast] = useState(defaults.contrast);
   const [translateReady, setTranslateReady] = useState(false);
-  const [lensPosition, setLensPosition] = useState({ x: 160, y: 160 });
-  const [pointerPosition, setPointerPosition] = useState({ x: 160, y: 160 });
+  const [pointerPosition, setPointerPosition] = useState({ x: 240, y: 240 });
   const [lensVisible, setLensVisible] = useState(false);
   const lensContentRef = useRef(null);
   const mutationObserverRef = useRef(null);
+  const isDraggingRef = useRef(false);
 
   const handleLanguageChange = (nextLanguage) => {
     if (nextLanguage === language) {
       return;
     }
+
+    setLanguage(nextLanguage);
 
     try {
       window.localStorage.setItem(
@@ -120,7 +132,7 @@ export default function AccessibilityWidget() {
         JSON.stringify({ language: nextLanguage, scale, contrast }),
       );
     } catch {
-      // Ignore storage failures and continue with the reload flow.
+      // Ignore storage failures.
     }
 
     if (nextLanguage === 'en') {
@@ -129,7 +141,7 @@ export default function AccessibilityWidget() {
       setGoogleTranslateCookie(nextLanguage);
     }
 
-    window.location.reload();
+    forceGoogleTranslate(nextLanguage);
   };
 
   useEffect(() => {
@@ -189,38 +201,59 @@ export default function AccessibilityWidget() {
       });
     }
 
-    const handlePointerMove = (event) => {
+    const handleMouseMove = (event) => {
       setPointerPosition({ x: event.clientX, y: event.clientY });
-
-      const nextX = Math.min(
-        Math.max(event.clientX - LENS_WIDTH / 2, 12),
-        window.innerWidth - LENS_WIDTH - 12,
-      );
-      const nextY = Math.min(
-        Math.max(event.clientY - LENS_HEIGHT - LENS_VERTICAL_OFFSET, 12),
-        window.innerHeight - LENS_HEIGHT - 12,
-      );
-
-      setLensPosition({ x: nextX, y: nextY });
       setLensVisible(true);
     };
 
-    const handlePointerLeave = () => {
-      setLensVisible(false);
+    const handleMouseLeave = () => {
+      if (!isDraggingRef.current) {
+        setLensVisible(false);
+      }
     };
 
-    window.addEventListener('mousemove', handlePointerMove);
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('mouseleave', handlePointerLeave);
+    const handleTouchMove = (event) => {
+      const touch = event.touches[0];
+      if (!touch) {
+        return;
+      }
+      setPointerPosition({ x: touch.clientX, y: touch.clientY });
+      setLensVisible(true);
+      isDraggingRef.current = true;
+    };
+
+    const handleTouchStart = (event) => {
+      const touch = event.touches[0];
+      if (!touch) {
+        return;
+      }
+      setPointerPosition({ x: touch.clientX, y: touch.clientY });
+      setLensVisible(true);
+      isDraggingRef.current = true;
+    };
+
+    const handleTouchEnd = () => {
+      isDraggingRef.current = false;
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('touchcancel', handleTouchEnd);
 
     return () => {
       if (mutationObserverRef.current) {
         mutationObserverRef.current.disconnect();
         mutationObserverRef.current = null;
       }
-      window.removeEventListener('mousemove', handlePointerMove);
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('mouseleave', handlePointerLeave);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, [scale]);
 
@@ -279,37 +312,30 @@ export default function AccessibilityWidget() {
       return undefined;
     }
 
-    const applyNow = () => applyGoogleTranslate(language);
-    if (applyNow()) {
-      return undefined;
-    }
-
-    let attempts = 0;
-    const interval = window.setInterval(() => {
-      attempts += 1;
-      const applied = applyNow();
-
-      if (applied || attempts > 20) {
-        window.clearInterval(interval);
-      }
-    }, 150);
-
-    return () => {
-      window.clearInterval(interval);
-    };
+    return forceGoogleTranslate(language);
   }, [language, translateReady]);
+
+  // Lens follows the cursor directly, clamped to the viewport.
+  const lensCenterX = Math.min(
+    Math.max(pointerPosition.x, LENS_RADIUS + 12),
+    window.innerWidth - LENS_RADIUS - 12,
+  );
+  const lensCenterY = Math.min(
+    Math.max(pointerPosition.y, LENS_RADIUS + 12),
+    window.innerHeight - LENS_RADIUS - 12,
+  );
 
   return (
     <>
       <div className="google-translate-host" id={GOOGLE_HOST_ID} aria-hidden="true" />
 
-      {scale !== '1' ? (
+      {scale !== '1' && lensVisible ? (
         <div
-          className={`magnifier-lens${lensVisible ? ' active' : ''}`}
+          className="magnifier-lens active"
           aria-hidden="true"
           style={{
-            left: `${lensPosition.x}px`,
-            top: `${lensPosition.y}px`,
+            left: `${lensCenterX - LENS_RADIUS}px`,
+            top: `${lensCenterY - LENS_RADIUS}px`,
           }}
         >
           <div className="magnifier-lens-frame">
@@ -317,10 +343,9 @@ export default function AccessibilityWidget() {
               className="magnifier-lens-content"
               ref={lensContentRef}
               style={{
-                transform: `translate(${-pointerPosition.x * Number(scale) + LENS_WIDTH / 2}px, ${-pointerPosition.y * Number(scale) + LENS_HEIGHT / 2}px) scale(${scale})`,
+                transform: `translate(${-pointerPosition.x * Number(scale) + LENS_RADIUS}px, ${-pointerPosition.y * Number(scale) + LENS_RADIUS}px) scale(${scale})`,
               }}
             />
-            <div className="magnifier-cursor" />
           </div>
         </div>
       ) : null}
