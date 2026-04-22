@@ -19,6 +19,21 @@ function useKioskBodyFlag(started, hasConfirmation) {
 }
 
 const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
+const allIngredientsValue = 'all';
+const allIngredientsLabel = 'All Ingredients';
+const hiddenIngredientFilters = new Set(['Ice']);
+const specialFilterOptions = [
+  { value: 'special:dairy-free', label: 'Dairy-free' },
+  { value: 'special:caffeine-free', label: 'Caffeine-free' },
+  { value: 'special:nut-free', label: 'Nut-free' },
+  { value: 'special:contains-milk', label: 'Contains milk' },
+  { value: 'special:contains-toppings', label: 'Contains toppings' },
+];
+const milkTerms = ['milk'];
+const caffeineTerms = ['black tea', 'green tea', 'oolong tea', 'matcha powder', 'coffee'];
+const nutTerms = ['nuts', 'almond', 'peanut', 'cashew', 'hazelnut', 'walnut', 'pecan', 'pistachio'];
+const toppingTerms = ['tapioca pearls'];
+
 const sizeOptions = ['Small', 'Medium', 'Large'];
 const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%'];
 const iceOptions = ['0%', '25%', '50%', '75%', '100%'];
@@ -54,6 +69,34 @@ function inferCategory(name = '') {
 function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
+
+function includesAnyIngredient(item, terms) {
+  const ingredients = (item.ingredients || []).map((ingredient) => ingredient.toLowerCase());
+  const normalizedName = item.name.toLowerCase();
+
+  return terms.some(
+    (term) =>
+      ingredients.some((ingredient) => ingredient.includes(term)) || normalizedName.includes(term)
+  );
+}
+
+function matchesSpecialFilter(item, filterValue) {
+  switch (filterValue) {
+    case 'special:dairy-free':
+      return !includesAnyIngredient(item, milkTerms);
+    case 'special:caffeine-free':
+      return !includesAnyIngredient(item, caffeineTerms);
+    case 'special:nut-free':
+      return !includesAnyIngredient(item, nutTerms);
+    case 'special:contains-milk':
+      return includesAnyIngredient(item, milkTerms);
+    case 'special:contains-toppings':
+      return includesAnyIngredient(item, toppingTerms);
+    default:
+      return true;
+  }
+}
+
 
 function customizationSummary(custom) {
   const parts = [custom.size, `Sweet ${custom.sweetness}`, `Ice ${custom.ice}`];
