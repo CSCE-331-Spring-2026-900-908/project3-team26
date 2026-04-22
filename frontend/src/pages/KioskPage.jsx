@@ -362,7 +362,7 @@ export default function KioskPage() {
                   </button>
                 ))
               ) : (
-                <div className="helper-text">
+                <div className="kiosk-empty-state helper-text">
                   No drinks in this category match the selected ingredient filter and price range.
                 </div>
               )}
