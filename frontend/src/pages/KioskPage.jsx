@@ -4,6 +4,20 @@ import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
 
 const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
+const allIngredientsValue = 'all';
+const allIngredientsLabel = 'All Ingredients';
+const hiddenIngredientFilters = new Set(['Ice']);
+const specialFilterOptions = [
+  { value: 'special:dairy-free', label: 'Dairy-free' },
+  { value: 'special:caffeine-free', label: 'Caffeine-free' },
+  { value: 'special:nut-free', label: 'Nut-free' },
+  { value: 'special:contains-milk', label: 'Contains milk' },
+  { value: 'special:contains-toppings', label: 'Contains toppings' },
+];
+const milkTerms = ['milk'];
+const caffeineTerms = ['black tea', 'green tea', 'oolong tea', 'matcha powder', 'coffee'];
+const nutTerms = ['nuts', 'almond', 'peanut', 'cashew', 'hazelnut', 'walnut', 'pecan', 'pistachio'];
+const toppingTerms = ['tapioca pearls'];
 
 function inferCategory(name = '') {
   const normalized = name.toLowerCase();
@@ -29,11 +43,40 @@ function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
+function includesAnyIngredient(item, terms) {
+  const ingredients = (item.ingredients || []).map((ingredient) => ingredient.toLowerCase());
+  const normalizedName = item.name.toLowerCase();
+
+  return terms.some(
+    (term) =>
+      ingredients.some((ingredient) => ingredient.includes(term)) || normalizedName.includes(term)
+  );
+}
+
+function matchesSpecialFilter(item, filterValue) {
+  switch (filterValue) {
+    case 'special:dairy-free':
+      return !includesAnyIngredient(item, milkTerms);
+    case 'special:caffeine-free':
+      return !includesAnyIngredient(item, caffeineTerms);
+    case 'special:nut-free':
+      return !includesAnyIngredient(item, nutTerms);
+    case 'special:contains-milk':
+      return includesAnyIngredient(item, milkTerms);
+    case 'special:contains-toppings':
+      return includesAnyIngredient(item, toppingTerms);
+    default:
+      return true;
+  }
+}
+
 export default function KioskPage() {
   const navigate = useNavigate();
   const [started, setStarted] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Milk Tea');
+  const [activeFilterValue, setActiveFilterValue] = useState(allIngredientsValue);
+  const [activeMaxPrice, setActiveMaxPrice] = useState(0);
   const [cart, setCart] = useState([]);
   const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState('');
@@ -52,12 +95,95 @@ export default function KioskPage() {
       .catch((err) => setError(err.message));
   }, []);
 
-  const visibleItems = useMemo(() => {
-    const filtered = menuItems.filter((item) => item.category === activeCategory);
-    return [...filtered.slice(0, 12)];
+  const filterOptions = useMemo(() => {
+    const matchingItems = menuItems.filter((item) => item.category === activeCategory);
+    const ingredients = [
+      ...new Set(
+        matchingItems
+          .flatMap((item) => item.ingredients || [])
+          .filter((ingredient) => !hiddenIngredientFilters.has(ingredient))
+      ),
+    ];
+
+    return [
+      { value: allIngredientsValue, label: allIngredientsLabel },
+      ...specialFilterOptions,
+      ...ingredients.map((ingredient) => ({
+        value: `ingredient:${ingredient}`,
+        label: ingredient,
+      })),
+    ];
   }, [activeCategory, menuItems]);
 
+  const baseFilteredItems = useMemo(
+    () =>
+      menuItems.filter((item) => {
+        if (item.category !== activeCategory) {
+          return false;
+        }
+
+        if (activeFilterValue === allIngredientsValue) {
+          return true;
+        }
+
+        if (activeFilterValue.startsWith('special:')) {
+          return matchesSpecialFilter(item, activeFilterValue);
+        }
+
+        if (activeFilterValue.startsWith('ingredient:')) {
+          const ingredient = activeFilterValue.replace('ingredient:', '');
+          return item.ingredients?.includes(ingredient);
+        }
+
+        return true;
+      }),
+    [activeCategory, activeFilterValue, menuItems]
+  );
+
+  const minPriceLimit = useMemo(() => {
+    if (!baseFilteredItems.length) {
+      return 0;
+    }
+
+    return baseFilteredItems.reduce(
+      (minPrice, item) => Math.min(minPrice, Number(item.price || 0)),
+      Number.POSITIVE_INFINITY
+    );
+  }, [baseFilteredItems]);
+
+  const maxPriceLimit = useMemo(
+    () =>
+      baseFilteredItems.reduce(
+        (maxPrice, item) => Math.max(maxPrice, Number(item.price || 0)),
+        0
+      ),
+    [baseFilteredItems]
+  );
+
+  useEffect(() => {
+    if (!filterOptions.some((option) => option.value === activeFilterValue)) {
+      setActiveFilterValue(allIngredientsValue);
+    }
+  }, [activeFilterValue, filterOptions]);
+
+  useEffect(() => {
+    setActiveMaxPrice(maxPriceLimit);
+  }, [minPriceLimit, maxPriceLimit]);
+
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const sliderValue = baseFilteredItems.length
+    ? Math.min(Math.max(activeMaxPrice, minPriceLimit), maxPriceLimit)
+    : 0;
+  const activeFilterLabel =
+    filterOptions.find((option) => option.value === activeFilterValue)?.label ||
+    allIngredientsLabel;
+  const visibleItems = useMemo(
+    () =>
+      baseFilteredItems
+        .filter((item) => Number(item.price || 0) <= sliderValue)
+        .slice(0, 12),
+    [baseFilteredItems, sliderValue]
+  );
 
   function addItem(item) {
     setCart((current) => {
@@ -112,6 +238,8 @@ export default function KioskPage() {
     setCart([]);
     setConfirmation(null);
     setActiveCategory('Milk Tea');
+    setActiveFilterValue(allIngredientsValue);
+    setActiveMaxPrice(0);
   }
 
   if (!started) {
