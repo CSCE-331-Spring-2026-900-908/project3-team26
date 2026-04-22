@@ -19,6 +19,20 @@ function useKioskBodyFlag(started, hasConfirmation) {
 }
 
 const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
+const allIngredientsValue = 'all';
+const allIngredientsLabel = 'All Ingredients';
+const hiddenIngredientFilters = new Set(['Ice']);
+const specialFilterOptions = [
+  { value: 'special:dairy-free', label: 'Dairy-free' },
+  { value: 'special:caffeine-free', label: 'Caffeine-free' },
+  { value: 'special:nut-free', label: 'Nut-free' },
+  { value: 'special:contains-milk', label: 'Contains milk' },
+  { value: 'special:contains-toppings', label: 'Contains toppings' },
+];
+const milkTerms = ['milk'];
+const caffeineTerms = ['black tea', 'green tea', 'oolong tea', 'matcha powder', 'coffee'];
+const nutTerms = ['nuts', 'almond', 'peanut', 'cashew', 'hazelnut', 'walnut', 'pecan', 'pistachio'];
+const toppingTerms = ['tapioca pearls'];
 const sizeOptions = ['Small', 'Medium', 'Large'];
 const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%'];
 const iceOptions = ['0%', '25%', '50%', '75%', '100%'];
@@ -63,11 +77,40 @@ function customizationSummary(custom) {
   return parts.join(' · ');
 }
 
+function includesAnyIngredient(item, terms) {
+  const ingredients = (item.ingredients || []).map((ingredient) => ingredient.toLowerCase());
+  const normalizedName = item.name.toLowerCase();
+
+  return terms.some(
+    (term) =>
+      ingredients.some((ingredient) => ingredient.includes(term)) || normalizedName.includes(term)
+  );
+}
+
+function matchesSpecialFilter(item, filterValue) {
+  switch (filterValue) {
+    case 'special:dairy-free':
+      return !includesAnyIngredient(item, milkTerms);
+    case 'special:caffeine-free':
+      return !includesAnyIngredient(item, caffeineTerms);
+    case 'special:nut-free':
+      return !includesAnyIngredient(item, nutTerms);
+    case 'special:contains-milk':
+      return includesAnyIngredient(item, milkTerms);
+    case 'special:contains-toppings':
+      return includesAnyIngredient(item, toppingTerms);
+    default:
+      return true;
+  }
+}
+
 export default function KioskPage() {
   const navigate = useNavigate();
   const [started, setStarted] = useState(false);
   const [menuItems, setMenuItems] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Milk Tea');
+  const [activeFilterValue, setActiveFilterValue] = useState(allIngredientsValue);
+  const [activeMaxPrice, setActiveMaxPrice] = useState(0);
   const [cart, setCart] = useState([]);
   const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState('');
@@ -90,10 +133,96 @@ export default function KioskPage() {
       .catch((err) => setError(err.message));
   }, []);
 
-  const visibleItems = useMemo(() => {
-    const filtered = menuItems.filter((item) => item.category === activeCategory);
-    return [...filtered.slice(0, 12)];
+  const filterOptions = useMemo(() => {
+    const matchingItems = menuItems.filter((item) => item.category === activeCategory);
+    const ingredients = [
+      ...new Set(
+        matchingItems
+          .flatMap((item) => item.ingredients || [])
+          .filter((ingredient) => !hiddenIngredientFilters.has(ingredient))
+      ),
+    ];
+
+    return [
+      { value: allIngredientsValue, label: allIngredientsLabel },
+      ...specialFilterOptions,
+      ...ingredients.map((ingredient) => ({
+        value: `ingredient:${ingredient}`,
+        label: ingredient,
+      })),
+    ];
   }, [activeCategory, menuItems]);
+
+  const baseFilteredItems = useMemo(
+    () =>
+      menuItems.filter((item) => {
+        if (item.category !== activeCategory) {
+          return false;
+        }
+
+        if (activeFilterValue === allIngredientsValue) {
+          return true;
+        }
+
+        if (activeFilterValue.startsWith('special:')) {
+          return matchesSpecialFilter(item, activeFilterValue);
+        }
+
+        if (activeFilterValue.startsWith('ingredient:')) {
+          const ingredient = activeFilterValue.replace('ingredient:', '');
+          return item.ingredients?.includes(ingredient);
+        }
+
+        return true;
+      }),
+    [activeCategory, activeFilterValue, menuItems]
+  );
+
+  const minPriceLimit = useMemo(() => {
+    if (!baseFilteredItems.length) {
+      return 0;
+    }
+
+    return baseFilteredItems.reduce(
+      (minPrice, item) => Math.min(minPrice, Number(item.price || 0)),
+      Number.POSITIVE_INFINITY
+    );
+  }, [baseFilteredItems]);
+
+  const maxPriceLimit = useMemo(
+    () =>
+      baseFilteredItems.reduce(
+        (maxPrice, item) => Math.max(maxPrice, Number(item.price || 0)),
+        0
+      ),
+    [baseFilteredItems]
+  );
+
+  useEffect(() => {
+    if (!filterOptions.some((option) => option.value === activeFilterValue)) {
+      setActiveFilterValue(allIngredientsValue);
+    }
+  }, [activeFilterValue, filterOptions]);
+
+  useEffect(() => {
+    setActiveMaxPrice(maxPriceLimit);
+  }, [minPriceLimit, maxPriceLimit]);
+
+  const sliderValue = baseFilteredItems.length
+    ? Math.min(Math.max(activeMaxPrice, minPriceLimit), maxPriceLimit)
+    : 0;
+
+  const activeFilterLabel =
+    filterOptions.find((option) => option.value === activeFilterValue)?.label ||
+    allIngredientsLabel;
+
+  const visibleItems = useMemo(
+    () =>
+      baseFilteredItems
+        .filter((item) => Number(item.price || 0) <= sliderValue)
+        .slice(0, 12),
+    [baseFilteredItems, sliderValue]
+  );
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -132,6 +261,7 @@ export default function KioskPage() {
           line === existing ? { ...line, quantity: line.quantity + 1 } : line
         );
       }
+
       return [
         ...current,
         {
@@ -197,7 +327,10 @@ export default function KioskPage() {
     setCart([]);
     setConfirmation(null);
     setActiveCategory('Milk Tea');
+    setActiveFilterValue(allIngredientsValue);
+    setActiveMaxPrice(0);
     setCustomizingItem(null);
+    setDraftCustomization(DEFAULT_CUSTOMIZATION);
   }
 
   if (!started) {
@@ -239,10 +372,54 @@ export default function KioskPage() {
   return (
     <section id="page-kiosk" className="page active kiosk-page kiosk-active">
       <div className="cashier-header kiosk-header">
-        <h2>KIOSK — SELF ORDERING</h2>
-        <div className="kiosk-header-actions">
-          <button onClick={resetKiosk}>RESET</button>
-          <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
+        <div className="kiosk-banner">
+          <div className="kiosk-banner-row">
+            <h2>KIOSK - SELF ORDERING</h2>
+            <div className="kiosk-header-actions">
+              <button onClick={resetKiosk}>RESET</button>
+              <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
+            </div>
+          </div>
+          <div className="kiosk-banner-row kiosk-banner-row-filter">
+            <div className="kiosk-filter-group">
+              <label className="kiosk-filter-label" htmlFor="ingredient-filter">
+                Ingredient Filter
+              </label>
+              <select
+                id="ingredient-filter"
+                value={activeFilterValue}
+                onChange={(event) => setActiveFilterValue(event.target.value)}
+              >
+                {filterOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="kiosk-filter-group kiosk-filter-group-slider">
+              <label className="kiosk-filter-label" htmlFor="price-filter">
+                Max Price
+              </label>
+              <input
+                id="price-filter"
+                className="kiosk-price-slider"
+                type="range"
+                min={minPriceLimit}
+                max={maxPriceLimit}
+                step="0.01"
+                value={sliderValue}
+                disabled={!baseFilteredItems.length}
+                onChange={(event) => setActiveMaxPrice(Number(event.target.value))}
+              />
+              <span className="kiosk-price-value">{formatCurrency(sliderValue)}</span>
+            </div>
+            <span className="helper-text kiosk-filter-summary">
+              Showing {visibleItems.length} item{visibleItems.length === 1 ? '' : 's'} in{' '}
+              {activeCategory} for {activeFilterLabel} from {formatCurrency(minPriceLimit)} to{' '}
+              {formatCurrency(sliderValue)}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -268,29 +445,35 @@ export default function KioskPage() {
           <fieldset className="panel kiosk-menu-panel">
             <legend>Menu Items</legend>
             <div className="kiosk-menu-grid">
-              {visibleItems.map((item) => {
-                const imageSrc = getMenuImage(item.name);
-                return (
-                  <button
-                    key={item.id}
-                    className="kiosk-menu-btn"
-                    onClick={() => openCustomization(item)}
-                  >
-                    {imageSrc ? (
-                      <img
-                        src={imageSrc}
-                        alt={item.name}
-                        className="kiosk-menu-image"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    ) : null}
-                    <span>{item.name}</span>
-                    <strong>{formatCurrency(item.price)}</strong>
-                  </button>
-                );
-              })}
+              {visibleItems.length ? (
+                visibleItems.map((item) => {
+                  const imageSrc = getMenuImage(item.name);
+                  return (
+                    <button
+                      key={item.id}
+                      className="kiosk-menu-btn"
+                      onClick={() => openCustomization(item)}
+                    >
+                      {imageSrc ? (
+                        <img
+                          src={imageSrc}
+                          alt={item.name}
+                          className="kiosk-menu-image"
+                          onError={(event) => {
+                            event.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : null}
+                      <span>{item.name}</span>
+                      <strong>{formatCurrency(item.price)}</strong>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="kiosk-empty-state helper-text">
+                  No drinks in this category match the selected ingredient filter and price range.
+                </div>
+              )}
             </div>
           </fieldset>
         </div>
@@ -320,27 +503,23 @@ export default function KioskPage() {
                 <div className="helper-text">Your cart is empty.</div>
               )}
             </div>
+            <div className="order-footer">
+              <div className="order-total">TOTAL: {formatCurrency(total)}</div>
+              <button
+                className="primary bold kiosk-checkout-button"
+                disabled={!cart.length || submitting}
+                onClick={checkout}
+              >
+                {submitting ? 'PROCESSING...' : 'CHECKOUT'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="kiosk-checkout-bar">
-        <div className="kiosk-checkout-summary">
-          <span>Items: {cart.reduce((sum, line) => sum + line.quantity, 0)}</span>
-          <strong>TOTAL: {formatCurrency(total)}</strong>
-        </div>
-        <button
-          className="primary bold kiosk-checkout-button"
-          disabled={!cart.length || submitting}
-          onClick={checkout}
-        >
-          {submitting ? 'PROCESSING...' : 'CHECKOUT'}
-        </button>
-      </div>
-
       {customizingItem ? (
         <div className="kiosk-modal-backdrop" onClick={() => setCustomizingItem(null)}>
-          <div className="kiosk-modal panel" onClick={(e) => e.stopPropagation()}>
+          <div className="kiosk-modal panel" onClick={(event) => event.stopPropagation()}>
             <div className="kiosk-modal-header">
               <div>
                 <strong>{customizingItem.name}</strong>
@@ -428,7 +607,7 @@ export default function KioskPage() {
               className="primary bold kiosk-modal-confirm"
               onClick={confirmAddToCart}
             >
-              ADD TO CART · {formatCurrency(customizingItem.price)}
+              ADD TO CART - {formatCurrency(customizingItem.price)}
             </button>
           </div>
         </div>
