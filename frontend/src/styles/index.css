@@ -1665,3 +1665,14 @@ body[data-contrast='soft'] .helper-text {
   background: var(--panel-bg);
   border: 1px solid var(--border);
 }
+
+.chat-input-row {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.chat-input-row input {
+  flex: 1;
+}
