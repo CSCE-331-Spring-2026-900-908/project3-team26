@@ -281,10 +281,54 @@ export default function KioskPage() {
   return (
     <section id="page-kiosk" className="page active kiosk-page kiosk-active">
       <div className="cashier-header kiosk-header">
-        <h2>KIOSK — SELF ORDERING</h2>
-        <div className="kiosk-header-actions">
-          <button onClick={resetKiosk}>RESET</button>
-          <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
+        <div className="kiosk-banner">
+          <div className="kiosk-banner-row">
+            <h2>KIOSK - SELF ORDERING</h2>
+            <div className="kiosk-header-actions">
+              <button onClick={resetKiosk}>RESET</button>
+              <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
+            </div>
+          </div>
+          <div className="kiosk-banner-row kiosk-banner-row-filter">
+            <div className="kiosk-filter-group">
+              <label className="kiosk-filter-label" htmlFor="ingredient-filter">
+                Ingredient Filter
+              </label>
+              <select
+                id="ingredient-filter"
+                value={activeFilterValue}
+                onChange={(event) => setActiveFilterValue(event.target.value)}
+              >
+                {filterOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="kiosk-filter-group kiosk-filter-group-slider">
+              <label className="kiosk-filter-label" htmlFor="price-filter">
+                Max Price
+              </label>
+              <input
+                id="price-filter"
+                className="kiosk-price-slider"
+                type="range"
+                min={minPriceLimit}
+                max={maxPriceLimit}
+                step="0.01"
+                value={sliderValue}
+                disabled={!baseFilteredItems.length}
+                onChange={(event) => setActiveMaxPrice(Number(event.target.value))}
+              />
+              <span className="kiosk-price-value">{formatCurrency(sliderValue)}</span>
+            </div>
+            <span className="helper-text kiosk-filter-summary">
+              Showing {visibleItems.length} item{visibleItems.length === 1 ? '' : 's'} in{' '}
+              {activeCategory} for {activeFilterLabel} from {formatCurrency(minPriceLimit)} to{' '}
+              {formatCurrency(sliderValue)}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -310,12 +354,18 @@ export default function KioskPage() {
           <fieldset className="panel kiosk-menu-panel">
             <legend>Menu Items</legend>
             <div className="kiosk-menu-grid">
-              {visibleItems.map((item) => (
-                <button key={item.id} className="kiosk-menu-btn" onClick={() => addItem(item)}>
-                  <span>{item.name}</span>
-                  <strong>{formatCurrency(item.price)}</strong>
-                </button>
-              ))}
+              {visibleItems.length ? (
+                visibleItems.map((item) => (
+                  <button key={item.id} className="kiosk-menu-btn" onClick={() => addItem(item)}>
+                    <span>{item.name}</span>
+                    <strong>{formatCurrency(item.price)}</strong>
+                  </button>
+                ))
+              ) : (
+                <div className="helper-text">
+                  No drinks in this category match the selected ingredient filter and price range.
+                </div>
+              )}
             </div>
           </fieldset>
         </div>
@@ -344,7 +394,11 @@ export default function KioskPage() {
             </div>
             <div className="order-footer">
               <div className="order-total">TOTAL: {formatCurrency(total)}</div>
-              <button className="primary bold kiosk-checkout-button" disabled={!cart.length || submitting} onClick={checkout}>
+              <button
+                className="primary bold kiosk-checkout-button"
+                disabled={!cart.length || submitting}
+                onClick={checkout}
+              >
                 {submitting ? 'PROCESSING...' : 'CHECKOUT'}
               </button>
             </div>
