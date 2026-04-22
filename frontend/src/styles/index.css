@@ -1383,17 +1383,20 @@ body[data-contrast='soft'] .helper-text {
   align-self: flex-start;
   position: sticky;
   top: 10px;
-  max-height: calc(100vh - 20px);
+  height: calc(100vh - 20px);
   display: flex;
   flex-direction: column;
 }
 
 .kiosk-order-panel {
-  max-height: 100%;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
 }
 
 .kiosk-cart-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   background: #fff;
   padding: 8px;
@@ -1582,11 +1585,13 @@ body[data-contrast='soft'] .helper-text {
   }
 
   .kiosk-order-panel {
+    height: auto;
     max-height: none;
   }
 
   .kiosk-right {
     position: static;
+    height: auto;
   }
 
   .kiosk-banner-row,
