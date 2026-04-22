@@ -10,4 +10,48 @@ export default function ChatWidget() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!input.trim() || loading) return;
+    const userText = input.trim();
+    setInput('');
+    setMessages((prev) => [...prev, { role: 'user', text: userText }]);
+    setLoading(true);
+
+    // Build conversation history in Groq/OpenAI format
+    const messages_payload = [
+      { role: 'system', content: SYSTEM_PROMPT },
+      ...messages.map((m) => ({
+        role: m.role === 'assistant' ? 'assistant' : 'user',
+        content: m.text,
+      })),
+      { role: 'user', content: userText },
+    ];
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: messages_payload }),
+      });
+      const data = await res.json();
+      const reply = data.choices?.[0]?.message?.content ?? 'Sorry, I could not get a response.';
+      setMessages((prev) => [...prev, { role: 'assistant', text: reply }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: 'assistant', text: 'Something went wrong. Please try again.' }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
 }
