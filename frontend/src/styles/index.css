@@ -772,8 +772,63 @@ fieldset.panel legend {
   flex: 1;
 }
 
+.kiosk-header {
+  align-items: stretch;
+}
+
+.kiosk-banner {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kiosk-banner-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.kiosk-banner-row-filter {
+  justify-content: flex-start;
+}
+
 .kiosk-header h2 {
   font-size: 22px;
+}
+
+.kiosk-filter-label {
+  font-weight: bold;
+}
+
+.kiosk-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.kiosk-filter-group-slider {
+  min-width: 260px;
+}
+
+.kiosk-banner-row select {
+  min-width: 220px;
+}
+
+.kiosk-price-slider {
+  width: min(280px, 100%);
+}
+
+.kiosk-price-value {
+  min-width: 64px;
+  font-weight: bold;
+}
+
+.kiosk-filter-summary {
+  font-size: 12px;
 }
 
 .kiosk-menu-panel {
@@ -802,6 +857,18 @@ fieldset.panel legend {
 
 .kiosk-menu-btn strong {
   font-size: 18px;
+}
+
+.kiosk-empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  padding: 16px;
+  text-align: center;
+  background: #fff;
+  border: 1px dashed #9aa1ae;
 }
 
 .kiosk-right {
@@ -867,6 +934,27 @@ fieldset.panel legend {
   .cashier-right,
   .kiosk-right {
     width: 100%;
+  }
+
+  .kiosk-banner-row,
+  .kiosk-banner-row-filter {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .kiosk-filter-group {
+    align-items: flex-start;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .kiosk-price-slider {
+    width: 100%;
+  }
+
+  .kiosk-banner-row select {
+    width: 100%;
+    min-width: 0;
   }
 
   .manager-metrics,
