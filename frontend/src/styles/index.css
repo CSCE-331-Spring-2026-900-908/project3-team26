@@ -1261,7 +1261,6 @@ body[data-contrast='soft'] .helper-text {
 .kiosk-active .cashier-body {
   flex: 1;
   overflow: visible;
-  align-items: flex-start;
 }
 
 .kiosk-header {
@@ -1389,8 +1388,8 @@ body[data-contrast='soft'] .helper-text {
 .kiosk-order-panel {
   position: sticky;
   top: 10px;
-  height: calc(100vh - 20px);
-  flex: 1;
+  flex: 0 0 auto;
+  max-height: calc(100vh - 20px);
   min-height: 0;
 }
 
@@ -1588,6 +1587,7 @@ body[data-contrast='soft'] .helper-text {
     position: static;
     height: auto;
     max-height: none;
+    flex: 1;
   }
 
   .kiosk-right {
