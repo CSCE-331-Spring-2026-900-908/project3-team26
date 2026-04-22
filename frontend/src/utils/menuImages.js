@@ -25,6 +25,8 @@ const imageMap = {
   'strawberry lychee slush': '/images/menu/strawberry-lychee-slush.png',
   'jasmine coconut milk tea': '/images/menu/jasmine-coconut-milk-tea.png',
   'oolong coconut milk tea': '/images/menu/oolong-coconut-milk-tea.png',
+  'brown sugar cream latte': '/images/menu/brown-sugar-cream-latte.png',
+  'taro cream latte': '/images/menu/taro-cream-latte.png',
 };
 
 const PLACEHOLDER = '/images/menu/placeholder.jpg';
