@@ -11,6 +11,9 @@ export default function HomePage() {
         <Link className="minimal-home-link" to="/kiosk">
           Kiosk
         </Link>
+        <Link className="minimal-home-link" to="/menu-board">
+          Menu Board
+        </Link>
       </div>
 
       <div className="minimal-home-weather">
