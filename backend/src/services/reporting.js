@@ -16,6 +16,41 @@ function normalizeMethod(value = '') {
   return 'OTHER';
 }
 
+function emptyReport(businessDate, signature = 'Manager', closedAt = null) {
+  return {
+    businessDate,
+    sales: money(0),
+    tax: money(0),
+    cashPayments: money(0),
+    cardPayments: money(0),
+    otherPayments: money(0),
+    voids: 0,
+    hourly: [],
+    signature,
+    closedAt,
+  };
+}
+
+export async function getZReportCloseStatus(businessDate) {
+  const support = await getSchemaSupport();
+  if (!support.hasReportDailyTotals) {
+    return { closed: false, closedAt: null, signature: null };
+  }
+
+  const result = await query(
+    `SELECT z_generated, z_generated_at, z_signature
+     FROM report_daily_totals
+     WHERE business_date = $1`,
+    [businessDate]
+  );
+  const row = result.rows[0];
+  return {
+    closed: Boolean(row?.z_generated),
+    closedAt: row?.z_generated_at || null,
+    signature: row?.z_signature || null,
+  };
+}
+
 export async function getDailyTotals(businessDate) {
   const support = await getSchemaSupport();
   const salesSql = support.hasOrderVoids
@@ -111,6 +146,11 @@ export async function getHourlySalesSummary(businessDate) {
 }
 
 export async function buildXReport(businessDate) {
+  const closeStatus = await getZReportCloseStatus(businessDate);
+  if (closeStatus.closed) {
+    return emptyReport(businessDate, closeStatus.signature || 'Manager', closeStatus.closedAt);
+  }
+
   const totals = await getDailyTotals(businessDate);
   const hourly = await getHourlySalesSummary(businessDate);
 
@@ -128,28 +168,14 @@ export async function buildXReport(businessDate) {
 
 export async function buildZPreview(businessDate, signature = 'Manager') {
   const report = await buildXReport(businessDate);
-  const support = await getSchemaSupport();
-  let closedAt = null;
-
-  if (support.hasReportDailyTotals) {
-    const result = await query(
-      `SELECT z_generated, z_generated_at, z_signature
-       FROM report_daily_totals
-       WHERE business_date = $1`,
-      [businessDate]
-    );
-    const row = result.rows[0];
-    if (row?.z_generated) {
-      closedAt = row.z_generated_at;
-      signature = row.z_signature || signature;
-    }
-  }
+  const closeStatus = await getZReportCloseStatus(businessDate);
+  const closedAt = closeStatus.closedAt;
 
   return {
     ...report,
-    signature,
+    signature: closeStatus.signature || signature,
     closedAt,
-    status: closedAt ? 'closed' : 'ready-to-close',
+    status: closeStatus.closed ? 'closed' : 'ready-to-close',
   };
 }
 
@@ -263,4 +289,45 @@ export async function closeZReport(businessDate, signature = 'Manager') {
     closedAt,
     status: 'closed',
   };
+}
+
+export async function reopenZReport(businessDate) {
+  const support = await getSchemaSupport();
+  if (!support.hasReportDailyTotals || !support.hasZReportArchive) {
+    throw new Error('Z report reset requires the report tables. Run database/migrations.sql first.');
+  }
+
+  await withClient(async (client) => {
+    await client.query('BEGIN');
+    try {
+      const existing = await client.query(
+        `SELECT z_generated
+         FROM report_daily_totals
+         WHERE business_date = $1
+         FOR UPDATE`,
+        [businessDate]
+      );
+
+      if (!existing.rows[0]?.z_generated) {
+        throw new Error('Z report is not currently reset.');
+      }
+
+      await client.query(
+        `UPDATE report_daily_totals
+         SET z_generated = FALSE,
+             z_generated_at = NULL,
+             z_signature = NULL
+         WHERE business_date = $1`,
+        [businessDate]
+      );
+      await client.query('DELETE FROM z_report_archive WHERE business_date = $1', [businessDate]);
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    }
+  });
+
+  return buildZPreview(businessDate);
 }

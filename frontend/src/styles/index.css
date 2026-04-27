@@ -1330,6 +1330,13 @@ body[data-contrast='soft'] .helper-text {
   border-bottom: 1px solid #c8cdd6;
 }
 
+.manager-report-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding-top: 8px;
+}
+
 /* Kiosk */
 #page-kiosk {
   padding: 10px;

@@ -31,6 +31,7 @@ export default function ManagerPage() {
   const [employeeForm, setEmployeeForm] = useState(initialEmployeeForm);
   const [voidOrderId, setVoidOrderId] = useState('');
   const [zClosing, setZClosing] = useState(false);
+  const [zReopening, setZReopening] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
 
@@ -197,6 +198,25 @@ export default function ManagerPage() {
       setError(err.message);
     } finally {
       setZClosing(false);
+    }
+  }
+
+  async function handleZResetUndo() {
+    if (!window.confirm('Undo today\'s Z report reset and restore the live X/Z reports?')) {
+      return;
+    }
+
+    setZReopening(true);
+    setFeedback('');
+    setError('');
+    try {
+      await api.post('/manager/reports/z-reset/undo', {});
+      setFeedback('Z report reset was undone. Live reports are active again.');
+      await loadPage();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setZReopening(false);
     }
   }
 
@@ -457,14 +477,24 @@ export default function ManagerPage() {
                   <p>Closed: {new Date(zPreview.closedAt).toLocaleString()}</p>
                 ) : null}
               </div>
-              <button
-                type="button"
-                className="swing-primary"
-                disabled={zClosing || zPreview?.status === 'closed'}
-                onClick={handleZReset}
-              >
-                {zClosing ? 'RESETTING...' : 'RESET Z REPORT'}
-              </button>
+              <div className="manager-report-actions">
+                <button
+                  type="button"
+                  className="swing-primary"
+                  disabled={zClosing || zReopening || zPreview?.status === 'closed'}
+                  onClick={handleZReset}
+                >
+                  {zClosing ? 'RESETTING...' : 'RESET Z REPORT'}
+                </button>
+                <button
+                  type="button"
+                  className="swing-secondary"
+                  disabled={zClosing || zReopening || zPreview?.status !== 'closed'}
+                  onClick={handleZResetUndo}
+                >
+                  {zReopening ? 'RESTORING...' : 'UNDO Z RESET'}
+                </button>
+              </div>
             </article>
           </div>
 
