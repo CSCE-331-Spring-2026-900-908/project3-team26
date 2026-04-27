@@ -1153,14 +1153,20 @@ body[data-contrast='soft'] .helper-text {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(18, 24, 38, 0.48);
-  padding: 20px;
+  background: rgba(10, 14, 24, 0.72);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  padding: 24px;
 }
 
 .cashier-modal {
-  width: min(560px, 100%);
+  width: min(640px, 100%);
   max-height: calc(100vh - 40px);
   overflow-y: auto;
+  background: #ffffff;
+  border: 3px solid var(--primary);
+  box-shadow: 0 24px 60px rgba(5, 10, 20, 0.42);
+  padding: 0;
 }
 
 .cashier-modal-header {
@@ -1168,42 +1174,58 @@ body[data-contrast='soft'] .helper-text {
   justify-content: space-between;
   gap: 16px;
   align-items: flex-start;
-  padding: 8px;
-  border-bottom: 1px solid var(--border);
+  padding: 16px 18px;
+  color: var(--primary-fg);
+  background: linear-gradient(180deg, var(--primary-alt), var(--primary));
+  border-bottom: 2px solid var(--border);
+}
+
+.cashier-modal-header button {
+  color: var(--text);
+  background: #ffffff;
+  border-color: #ffffff;
+  font-weight: bold;
 }
 
 .cashier-modal-header strong {
   display: block;
-  font-size: 18px;
+  font-size: 24px;
+  line-height: 1.2;
 }
 
 .cashier-modal-header p {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-weight: bold;
+  font-size: 16px;
 }
 
 .cashier-modal-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  padding: 10px 8px 6px;
+  gap: 14px;
+  padding: 18px;
 }
 
 .cashier-modal-grid input,
 .cashier-modal-grid select {
   width: 100%;
+  min-height: 42px;
+  font-size: 15px;
 }
 
 .cashier-modal-addons {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 18px;
-  padding: 6px 8px 10px;
+  gap: 12px 20px;
+  padding: 0 18px 18px;
+  font-size: 15px;
 }
 
 .cashier-modal-submit {
-  width: calc(100% - 16px);
-  margin: 0 8px 8px;
+  width: calc(100% - 36px);
+  min-height: 52px;
+  margin: 0 18px 18px;
+  font-size: 17px;
 }
 
 /* Manager */

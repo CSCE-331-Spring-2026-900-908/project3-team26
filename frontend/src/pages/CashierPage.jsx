@@ -6,11 +6,13 @@ import { getMenuImage } from '../utils/menuImages.js';
 import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
 
 const sizes = ['Small', 'Medium', 'Large'];
+const temperatureOptions = ['Cold', 'Hot'];
 const sugarLevels = ['0%', '25%', '50%', '75%', '100%'];
 const iceLevels = ['No Ice', 'Less Ice', 'Regular'];
 const addOnOptions = ['Boba', 'Jelly', 'Cheese Foam'];
 const defaultCustomization = {
   size: 'Medium',
+  temperature: 'Cold',
   sugar: '75%',
   ice: 'Regular',
   addons: [],
@@ -28,6 +30,7 @@ function formatCurrency(value) {
 function getCustomizationKey(customization) {
   return JSON.stringify({
     size: customization.size,
+    temperature: customization.temperature,
     sugar: customization.sugar,
     ice: customization.ice,
     addons: [...customization.addons].sort(),
@@ -113,6 +116,7 @@ export default function CashierPage() {
       },
       draft: {
         size: line.size,
+        temperature: line.temperature || 'Cold',
         sugar: line.sugar,
         ice: line.ice,
         addons: [...line.addons],
@@ -169,6 +173,7 @@ export default function CashierPage() {
           price: Number(menuItem.price),
           quantity,
           size: draft.size,
+          temperature: draft.temperature,
           sugar: draft.sugar,
           ice: draft.ice,
           addons: [...draft.addons],
@@ -318,7 +323,7 @@ export default function CashierPage() {
                       {line.quantity} x {line.name}
                     </strong>
                     <p>
-                      {line.size}, {line.sugar}, {line.ice}
+                      {line.size}, {line.temperature || 'Cold'}, {line.sugar}, {line.ice}
                       {line.addons.length ? ` | Add-ons: ${line.addons.join(', ')}` : ' | Add-ons: None'}
                     </p>
                   </div>
@@ -392,6 +397,17 @@ export default function CashierPage() {
                   onChange={(event) => updateModalDraft({ sugar: event.target.value })}
                 >
                   {sugarLevels.map((entry) => (
+                    <option key={entry}>{entry}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="swing-field">
+                <span>Temperature</span>
+                <select
+                  value={modalDraft.temperature}
+                  onChange={(event) => updateModalDraft({ temperature: event.target.value })}
+                >
+                  {temperatureOptions.map((entry) => (
                     <option key={entry}>{entry}</option>
                   ))}
                 </select>
