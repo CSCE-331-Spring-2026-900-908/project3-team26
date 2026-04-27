@@ -302,6 +302,10 @@ fieldset.panel legend {
   gap: 8px;
 }
 
+body[data-chat-page='true'] .accessibility-widget {
+  left: 278px;
+}
+
 body[data-page='kiosk'] .accessibility-widget {
   bottom: 18px;
   left: 210px;
@@ -1054,12 +1058,19 @@ body[data-contrast='soft'] .helper-text {
   }
 
   .accessibility-widget {
+    left: 170px;
     right: 12px;
     bottom: 12px;
   }
 
+  body[data-chat-page='true'] .accessibility-widget,
+  body[data-page='kiosk'] .accessibility-widget {
+    left: 170px;
+  }
+
   .accessibility-trigger {
-    min-width: 132px;
+    min-width: 126px;
+    padding-inline: 14px;
   }
 }
 

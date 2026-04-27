@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import NavBar from './components/NavBar.jsx';
 import HomePage from './pages/HomePage.jsx';
@@ -16,6 +17,18 @@ export default function App() {
   const showNav = chromePages.has(location.pathname);
   const chatPages = new Set(['/', '/kiosk']);
   const showChat = chatPages.has(location.pathname);
+
+  useEffect(() => {
+    if (showChat) {
+      document.body.dataset.chatPage = 'true';
+    } else {
+      delete document.body.dataset.chatPage;
+    }
+
+    return () => {
+      delete document.body.dataset.chatPage;
+    };
+  }, [showChat]);
 
   return (
     <>
