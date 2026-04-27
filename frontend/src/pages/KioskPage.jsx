@@ -35,7 +35,7 @@ const toppingTerms = ['tapioca pearls'];
 const sizeOptions = ['Small', 'Medium', 'Large'];
 const temperatureOptions = ['Cold', 'Hot'];
 const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
-const iceOptions = ['0%', '25%', '50%', '75%', '100%'];
+const iceOptions = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
 const toppingOptions = ['Boba', 'Jelly', 'Cheese Foam', 'Lychee Popping'];
 
 const DEFAULT_CUSTOMIZATION = {
@@ -600,7 +600,7 @@ export default function KioskPage() {
 
             <div className="kiosk-modal-field">
               <span>Ice</span>
-              <div className="kiosk-modal-options">
+              <div className="kiosk-modal-options kiosk-modal-options-even">
                 {iceOptions.map((option) => (
                   <button
                     key={option}

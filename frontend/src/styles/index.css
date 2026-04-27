@@ -1638,11 +1638,13 @@ body[data-contrast='soft'] .helper-text {
   font-size: 14px;
 }
 
+.kiosk-modal-options-even,
 .kiosk-modal-options-sweetness {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
+.kiosk-modal-options-even button,
 .kiosk-modal-options-sweetness button {
   min-width: 0;
   padding-inline: 6px;
