@@ -1053,6 +1053,10 @@ body[data-contrast='soft'] .helper-text {
   gap: 8px;
 }
 
+.kiosk-header-actions {
+  justify-self: end;
+}
+
 .cashier-body,
 .cashier-layout {
   display: flex;
@@ -1562,19 +1566,47 @@ body[data-contrast='soft'] .helper-text {
 }
 
 .kiosk-banner-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
 .kiosk-banner-row-filter {
+  display: flex;
   justify-content: flex-start;
+  flex-wrap: wrap;
 }
 
 .kiosk-header h2 {
+  justify-self: center;
   font-size: 22px;
+  letter-spacing: 0.4px;
+  text-align: center;
+}
+
+.kiosk-brand-wordmark {
+  justify-self: start;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.kiosk-brand-wordmark span {
+  color: #5a2d0c;
+  font-size: 28px;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.85);
+}
+
+.kiosk-brand-wordmark strong {
+  color: #f05275;
+  font-size: 26px;
+  font-style: italic;
+  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.9);
 }
 
 .kiosk-filter-label {
@@ -2024,7 +2056,16 @@ body[data-contrast='soft'] .helper-text {
     height: auto;
   }
 
-  .kiosk-banner-row,
+  .kiosk-banner-row {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .kiosk-header h2,
+  .kiosk-header-actions {
+    justify-self: start;
+  }
+
   .kiosk-banner-row-filter {
     align-items: flex-start;
     flex-direction: column;
