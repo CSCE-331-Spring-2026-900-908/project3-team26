@@ -44,8 +44,32 @@ const DEFAULT_CUSTOMIZATION = {
   toppings: [],
 };
 
+const SIZE_PRICE_DELTA = { Small: -1.10, Medium: 0, Large: 1.10 };
+const TOPPING_PRICES = {
+  Boba: 0.75,
+  Jelly: 0.75,
+  'Cheese Foam': 1.00,
+  'Lychee Popping': 0.75,
+};
+
+function computeItemPrice(basePrice, customization) {
+  const sizeDelta = SIZE_PRICE_DELTA[customization?.size] ?? 0;
+  const toppingsTotal = (customization?.toppings || []).reduce(
+    (sum, topping) => sum + (TOPPING_PRICES[topping] || 0),
+    0
+  );
+  return Number((Number(basePrice || 0) + sizeDelta + toppingsTotal).toFixed(2));
+}
+
+const SPECIALTY_OVERRIDES = new Set([
+  'creme brulee milk tea',
+]);
+
 function inferCategory(name = '') {
-  const normalized = name.toLowerCase();
+  const normalized = name.toLowerCase().trim();
+  if (SPECIALTY_OVERRIDES.has(normalized)) {
+    return 'Specialty';
+  }
   if (normalized.includes('milk tea') || normalized.includes('latte')) {
     return 'Milk Tea';
   }
@@ -249,7 +273,7 @@ export default function KioskPage() {
         {
           id: customizingItem.id,
           name: customizingItem.name,
-          price: Number(customizingItem.price),
+          price: computeItemPrice(customizingItem.price, draftCustomization),
           quantity: 1,
           customKey: key,
           customization: draftCustomization,
@@ -589,7 +613,7 @@ export default function KioskPage() {
               className="primary bold kiosk-modal-confirm"
               onClick={confirmAddToCart}
             >
-              ADD TO CART - {formatCurrency(customizingItem.price)}
+              ADD TO CART - {formatCurrency(computeItemPrice(customizingItem.price, draftCustomization))}
             </button>
           </div>
         </div>

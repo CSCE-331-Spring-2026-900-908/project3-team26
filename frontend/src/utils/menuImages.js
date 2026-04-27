@@ -27,6 +27,11 @@ const imageMap = {
   'oolong coconut milk tea': '/images/menu/oolong-coconut-milk-tea.png',
   'brown sugar cream latte': '/images/menu/brown-sugar-cream-latte.png',
   'taro cream latte': '/images/menu/taro-cream-latte.png',
+  'pineapple coconut slush': '/images/menu/pineapple-coconut-slush.png',
+  'watermelon lime slush': '/images/menu/watermelon-lime-slush.png',
+  'peach mango slush': '/images/menu/peach-mango-slush.png',
+  'strawberry matcha cream': '/images/menu/strawberry-matcha-cream.png',
+  'creme brulee milk tea': '/images/menu/creme-brulee-milk-tea.png',
 };
 
 const PLACEHOLDER = '/images/menu/placeholder.jpg';
