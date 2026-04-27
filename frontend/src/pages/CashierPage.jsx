@@ -7,7 +7,7 @@ import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
 
 const sizes = ['Small', 'Medium', 'Large'];
 const temperatureOptions = ['Cold', 'Hot'];
-const sugarLevels = ['0%', '25%', '50%', '75%', '100%'];
+const sugarLevels = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
 const iceLevels = ['No Ice', 'Less Ice', 'Regular'];
 const addOnOptions = ['Boba', 'Jelly', 'Cheese Foam'];
 const defaultCustomization = {
