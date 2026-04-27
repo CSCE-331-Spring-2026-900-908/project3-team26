@@ -299,7 +299,8 @@ fieldset.panel legend {
 }
 
 body[data-page='kiosk'] .accessibility-widget {
-  bottom: 96px;
+  bottom: 18px;
+  left: 210px;
 }
 
 .language-select {
@@ -1466,32 +1467,39 @@ body[data-contrast='soft'] .helper-text {
 }
 
 .kiosk-menu-btn {
-  min-height: 200px;
-  padding: 12px;
+  min-height: 240px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 16px;
+  align-items: stretch;
+  font-size: 14px;
   font-weight: bold;
-  gap: 6px;
+  gap: 0;
   text-align: center;
+  overflow: hidden;
 }
 
 .kiosk-menu-image {
   width: 100%;
-  max-width: 180px;
-  height: 140px;
-  object-fit: contain;
+  max-width: none;
+  height: 190px;
+  object-fit: cover;
   display: block;
+  background: #f4f4f4;
 }
 
 .kiosk-menu-btn span {
   display: block;
+  padding: 6px 8px 0;
+  font-size: 13px;
+  line-height: 1.25;
 }
 
 .kiosk-menu-btn strong {
-  font-size: 18px;
+  display: block;
+  font-size: 15px;
+  padding: 2px 8px 8px;
+  line-height: 1.2;
 }
 
 .kiosk-empty-state {
