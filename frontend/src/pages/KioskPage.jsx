@@ -496,7 +496,7 @@ export default function KioskPage() {
       <div className="cashier-header kiosk-header" ref={kioskHeaderRef}>
         <div className="kiosk-banner">
           <div className="kiosk-banner-row">
-            <div className="kiosk-brand-wordmark" aria-label="DATS Boba">
+            <div className="kiosk-brand-wordmark notranslate" translate="no" aria-label="DATS Boba">
               <span>DATS</span>
               <strong>Boba</strong>
             </div>

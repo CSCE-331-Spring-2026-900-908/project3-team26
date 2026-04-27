@@ -49,11 +49,14 @@ body[data-contrast='high'] {
   --panel-bg: #171717;
   --active-btn: #2b2b2b;
   --border: #f7f7f7;
+  --border-soft: #f7f7f7;
   --text: #ffffff;
   --btn-bg: #111111;
   --btn-hover: #303030;
+  --primary-alt: #ffe680;
   --primary: #ffd84d;
   --primary-fg: #111111;
+  --accent: #7dd3fc;
 }
 
 body[data-contrast='soft'] {
@@ -78,6 +81,7 @@ input,
 select,
 textarea {
   font: inherit;
+  color: var(--text);
 }
 
 button {
@@ -414,6 +418,46 @@ body[data-contrast='high'] .brand-lockup p,
 body[data-contrast='high'] .page-copy,
 body[data-contrast='high'] .helper-text {
   color: #e7e7e7;
+}
+
+body[data-contrast='high'] input,
+body[data-contrast='high'] select,
+body[data-contrast='high'] textarea {
+  background: #ffffff;
+  color: #111111;
+  border-color: #ffffff;
+}
+
+body[data-contrast='high'] button {
+  color: #ffffff;
+  background: #151515;
+  border-color: #f7f7f7;
+}
+
+body[data-contrast='high'] button:hover {
+  background: #2b2b2b;
+  border-color: #ffd84d;
+}
+
+body[data-contrast='high'] button.active {
+  color: #111111;
+  background: #ffd84d;
+  border-color: #ffd84d;
+}
+
+body[data-contrast='high'] button.primary,
+body[data-contrast='high'] .action-button {
+  color: #111111;
+  background: #ffd84d;
+  border-color: #ffd84d;
+}
+
+body[data-contrast='high'] button:disabled,
+body[data-contrast='high'] .kiosk-checkout-button:disabled {
+  opacity: 1;
+  color: #2b2b2b;
+  background: #b8c0cc;
+  border-color: #dfe6f0;
 }
 
 body[data-contrast='soft'] .accessibility-panel-header p,
@@ -1914,6 +1958,68 @@ body[data-contrast='soft'] .helper-text {
   font-size: 11px;
   color: #6b7489;
   line-height: 1.3;
+}
+
+body[data-contrast='high'] .kiosk-page,
+body[data-contrast='high'] #page-kiosk.kiosk-active::before {
+  background: #0b0b0b;
+}
+
+body[data-contrast='high'] .kiosk-header,
+body[data-contrast='high'] .kiosk-categories-panel,
+body[data-contrast='high'] .kiosk-menu-panel,
+body[data-contrast='high'] .kiosk-order-panel,
+body[data-contrast='high'] .kiosk-modal {
+  background: #141414;
+  color: #ffffff;
+  border-color: #f7f7f7;
+}
+
+body[data-contrast='high'] .kiosk-menu-btn {
+  background: #111111;
+  color: #ffffff;
+  border-color: #f7f7f7;
+}
+
+body[data-contrast='high'] .kiosk-menu-btn span,
+body[data-contrast='high'] .kiosk-menu-btn strong,
+body[data-contrast='high'] .kiosk-cart-info,
+body[data-contrast='high'] .kiosk-cart-info strong,
+body[data-contrast='high'] .kiosk-cart-custom,
+body[data-contrast='high'] .kiosk-price-value,
+body[data-contrast='high'] .kiosk-filter-summary,
+body[data-contrast='high'] .order-total,
+body[data-contrast='high'] .panel-title,
+body[data-contrast='high'] .order-panel-title {
+  color: #ffffff;
+}
+
+body[data-contrast='high'] .kiosk-cart-list {
+  background: #111111;
+  color: #ffffff;
+}
+
+body[data-contrast='high'] .kiosk-cart-row {
+  border-bottom-color: #f7f7f7;
+}
+
+body[data-contrast='high'] .kiosk-edit-button,
+body[data-contrast='high'] .kiosk-qty-controls button {
+  color: #111111;
+  background: #ffd84d;
+  border-color: #ffd84d;
+}
+
+body[data-contrast='high'] .kiosk-brand-wordmark span {
+  color: #ff7a4f;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+body[data-contrast='high'] .kiosk-brand-wordmark strong {
+  color: #ff6d8b;
+  background: none;
+  -webkit-text-fill-color: currentColor;
 }
 
 .kiosk-modal-backdrop {
