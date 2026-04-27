@@ -33,12 +33,14 @@ const caffeineTerms = ['black tea', 'green tea', 'oolong tea', 'matcha powder', 
 const nutTerms = ['nuts', 'almond', 'peanut', 'cashew', 'hazelnut', 'walnut', 'pecan', 'pistachio'];
 const toppingTerms = ['tapioca pearls'];
 const sizeOptions = ['Small', 'Medium', 'Large'];
-const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%'];
+const temperatureOptions = ['Cold', 'Hot'];
+const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
 const iceOptions = ['0%', '25%', '50%', '75%', '100%'];
 const toppingOptions = ['Boba', 'Jelly', 'Cheese Foam', 'Lychee Popping'];
 
 const DEFAULT_CUSTOMIZATION = {
   size: 'Medium',
+  temperature: 'Cold',
   sweetness: '100%',
   ice: '100%',
   toppings: [],
@@ -93,7 +95,12 @@ function formatCurrency(value) {
 }
 
 function customizationSummary(custom) {
-  const parts = [custom.size, `Sweet ${custom.sweetness}`, `Ice ${custom.ice}`];
+  const parts = [
+    custom.size,
+    custom.temperature || 'Cold',
+    `Sweet ${custom.sweetness}`,
+    `Ice ${custom.ice}`,
+  ];
   if (custom.toppings.length) {
     parts.push(custom.toppings.join(' + '));
   }
@@ -253,6 +260,7 @@ export default function KioskPage() {
 
     const key = JSON.stringify({
       size: draftCustomization.size,
+      temperature: draftCustomization.temperature,
       sweetness: draftCustomization.sweetness,
       ice: draftCustomization.ice,
       toppings: [...draftCustomization.toppings].sort(),
@@ -546,6 +554,24 @@ export default function KioskPage() {
                     className={draftCustomization.size === option ? 'active bold' : 'bold'}
                     onClick={() =>
                       setDraftCustomization((current) => ({ ...current, size: option }))
+                    }
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="kiosk-modal-field">
+              <span>Temperature</span>
+              <div className="kiosk-modal-options">
+                {temperatureOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={draftCustomization.temperature === option ? 'active bold' : 'bold'}
+                    onClick={() =>
+                      setDraftCustomization((current) => ({ ...current, temperature: option }))
                     }
                   >
                     {option}
