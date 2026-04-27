@@ -582,7 +582,7 @@ export default function KioskPage() {
 
             <div className="kiosk-modal-field">
               <span>Sweetness</span>
-              <div className="kiosk-modal-options">
+              <div className="kiosk-modal-options kiosk-modal-options-sweetness">
                 {sweetnessOptions.map((option) => (
                   <button
                     key={option}
