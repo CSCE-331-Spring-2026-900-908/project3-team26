@@ -962,6 +962,27 @@ body[data-contrast='soft'] .helper-text {
   flex-direction: column;
 }
 
+.cashier-right.kiosk-right {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  bottom: 10px;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.cashier-right.kiosk-right > .order-panel {
+  flex: 1;
+  min-height: 0;
+}
+
+.kiosk-active {
+  padding-right: 360px;
+}
+
 .cat-row,
 .cashier-categories {
   display: grid;
@@ -1587,12 +1608,17 @@ body[data-contrast='soft'] .helper-text {
     padding-right: 10px;
   }
 
-  .current-order-panel {
+  .current-order-panel,
+  .cashier-right.kiosk-right {
     position: static;
     width: 100%;
     top: auto;
     right: auto;
     bottom: auto;
+  }
+
+  .kiosk-active {
+    padding-right: 10px;
   }
 
   .kiosk-banner-row,
