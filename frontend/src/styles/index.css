@@ -1589,24 +1589,28 @@ body[data-contrast='soft'] .helper-text {
   justify-self: start;
   display: inline-flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 10px;
   font-weight: 900;
   line-height: 1;
   white-space: nowrap;
 }
 
 .kiosk-brand-wordmark span {
-  color: #5a2d0c;
+  color: transparent;
+  background: linear-gradient(90deg, #5b2a0c 0%, #7a3a12 38%, #f05275 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
   font-size: 28px;
   letter-spacing: 1px;
-  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.85);
 }
 
 .kiosk-brand-wordmark strong {
-  color: #f05275;
+  color: transparent;
+  background: linear-gradient(90deg, #f05275 0%, #ff6d8b 42%, #ff9a3d 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
   font-size: 26px;
   font-style: italic;
-  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.9);
 }
 
 .kiosk-filter-label {
