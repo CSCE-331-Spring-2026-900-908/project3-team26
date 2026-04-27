@@ -90,7 +90,21 @@ function applyGoogleTranslate(language) {
     return false;
   }
 
-  select.value = language === 'en' ? '' : language;
+  const options = Array.from(select.options || []);
+  const targetIndex =
+    language === 'en'
+      ? Math.max(
+          options.findIndex((option) => option.value === 'en'),
+          0,
+        )
+      : options.findIndex((option) => option.value === language);
+
+  if (targetIndex < 0 || !options[targetIndex]) {
+    return false;
+  }
+
+  select.selectedIndex = targetIndex;
+  select.value = options[targetIndex].value;
   select.dispatchEvent(new Event('input', { bubbles: true }));
   select.dispatchEvent(new Event('change', { bubbles: true }));
   return true;
@@ -99,7 +113,7 @@ function applyGoogleTranslate(language) {
 function forceGoogleTranslate(language) {
   // Apply immediately if ready, and keep retrying for a few seconds.
   applyGoogleTranslate(language);
-  const delays = [60, 180, 400, 800, 1500];
+  const delays = [60, 180, 400, 800, 1500, 2500, 4000];
   const timers = delays.map((ms) =>
     window.setTimeout(() => applyGoogleTranslate(language), ms),
   );
@@ -137,10 +151,13 @@ export default function AccessibilityWidget() {
 
     if (nextLanguage === 'en') {
       clearGoogleTranslateCookie();
-    } else {
-      setGoogleTranslateCookie(nextLanguage);
+      if (translateReady) {
+        forceGoogleTranslate(nextLanguage);
+      }
+      return;
     }
 
+    setGoogleTranslateCookie(nextLanguage);
     forceGoogleTranslate(nextLanguage);
   };
 
@@ -258,6 +275,10 @@ export default function AccessibilityWidget() {
   }, [scale]);
 
   useEffect(() => {
+    if (language === 'en') {
+      return undefined;
+    }
+
     if (window.google?.translate?.TranslateElement) {
       if (!document.getElementById(GOOGLE_HOST_ID)?.childElementCount) {
         new window.google.translate.TranslateElement(
@@ -305,10 +326,10 @@ export default function AccessibilityWidget() {
     return () => {
       delete window.googleTranslateElementInit;
     };
-  }, []);
+  }, [language]);
 
   useEffect(() => {
-    if (!translateReady || language === 'en') {
+    if (!translateReady) {
       return undefined;
     }
 

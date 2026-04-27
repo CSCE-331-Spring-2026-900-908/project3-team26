@@ -6,6 +6,7 @@ import CashierPage from './pages/CashierPage.jsx';
 import ManagerPage from './pages/ManagerPage.jsx';
 import SalesPage from './pages/SalesPage.jsx';
 import KioskPage from './pages/KioskPage.jsx';
+import MenuBoardPage from './pages/MenuBoardPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import AccessibilityWidget from './components/AccessibilityWidget.jsx';
 
@@ -26,6 +27,7 @@ export default function App() {
             <Route path="/manager" element={<ManagerPage />} />
             <Route path="/sales" element={<SalesPage />} />
             <Route path="/kiosk" element={<KioskPage />} />
+            <Route path="/menu-board" element={<MenuBoardPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
