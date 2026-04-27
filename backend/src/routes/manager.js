@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { query, withClient } from '../db/pool.js';
 import { getSchemaSupport } from '../db/compat.js';
-import { buildXReport, buildZPreview } from '../services/reporting.js';
+import { buildXReport, buildZPreview, closeZReport } from '../services/reporting.js';
 import { getCategoryForName } from '../utils/menu.js';
 
 const router = Router();
@@ -393,6 +393,17 @@ router.get('/reports/z-preview', async (_req, res, next) => {
   try {
     const businessDate = new Date().toISOString().slice(0, 10);
     const report = await buildZPreview(businessDate);
+    res.json({ report });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/reports/z-reset', async (req, res, next) => {
+  try {
+    const businessDate = new Date().toISOString().slice(0, 10);
+    const signature = req.body?.signature || `Manager #${req.body?.managerId || 'unknown'}`;
+    const report = await closeZReport(businessDate, signature);
     res.json({ report });
   } catch (error) {
     next(error);

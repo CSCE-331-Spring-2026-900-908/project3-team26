@@ -1114,11 +1114,96 @@ body[data-contrast='soft'] .helper-text {
   border-bottom: 1px solid #c8cdd6;
 }
 
-.cashier-bottom,
-.cashier-bottom-bar {
+.order-line-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 78px;
+}
+
+.order-line-actions button {
+  width: 100%;
+  font-size: 10px;
+  padding: 3px 5px;
+}
+
+.order-qty-controls {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  width: 100%;
+}
+
+.cashier-bottom,
+.cashier-bottom-bar {
+  display: flex;
+  justify-content: flex-end;
   gap: 8px;
+}
+
+.cashier-bottom-bar button {
+  min-width: 160px;
+}
+
+.cashier-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(18, 24, 38, 0.48);
+  padding: 20px;
+}
+
+.cashier-modal {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.cashier-modal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cashier-modal-header strong {
+  display: block;
+  font-size: 18px;
+}
+
+.cashier-modal-header p {
+  margin: 4px 0 0;
+  font-weight: bold;
+}
+
+.cashier-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 10px 8px 6px;
+}
+
+.cashier-modal-grid input,
+.cashier-modal-grid select {
+  width: 100%;
+}
+
+.cashier-modal-addons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 6px 8px 10px;
+}
+
+.cashier-modal-submit {
+  width: calc(100% - 16px);
+  margin: 0 8px 8px;
 }
 
 /* Manager */

@@ -30,6 +30,7 @@ export default function ManagerPage() {
   const [menuForm, setMenuForm] = useState(initialMenuForm);
   const [employeeForm, setEmployeeForm] = useState(initialEmployeeForm);
   const [voidOrderId, setVoidOrderId] = useState('');
+  const [zClosing, setZClosing] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
 
@@ -175,6 +176,27 @@ export default function ManagerPage() {
       await loadPage();
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  async function handleZReset() {
+    if (!window.confirm('Reset and close today\'s Z report? This can only be done once per day.')) {
+      return;
+    }
+
+    setZClosing(true);
+    setFeedback('');
+    setError('');
+    try {
+      const managerId = Number(localStorage.getItem('team26-employee-id') || 1);
+      const result = await api.post('/manager/reports/z-reset', { managerId });
+      setZPreview(result.report);
+      setFeedback('Z report reset and archived for end of day.');
+      await loadPage();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setZClosing(false);
     }
   }
 
@@ -431,7 +453,18 @@ export default function ManagerPage() {
                 <p>Tax: {zPreview ? `$${zPreview.tax}` : '-'}</p>
                 <p>Total Cash: {zPreview ? `$${zPreview.cashPayments}` : '-'}</p>
                 <p>Status: {zPreview?.status || '-'}</p>
+                {zPreview?.closedAt ? (
+                  <p>Closed: {new Date(zPreview.closedAt).toLocaleString()}</p>
+                ) : null}
               </div>
+              <button
+                type="button"
+                className="swing-primary"
+                disabled={zClosing || zPreview?.status === 'closed'}
+                onClick={handleZReset}
+              >
+                {zClosing ? 'RESETTING...' : 'RESET Z REPORT'}
+              </button>
             </article>
           </div>
 
