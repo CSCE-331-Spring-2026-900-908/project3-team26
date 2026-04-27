@@ -63,6 +63,16 @@ function computeItemPrice(basePrice, customization) {
   return Number((Number(basePrice || 0) + sizeDelta + toppingsTotal).toFixed(2));
 }
 
+function getCustomizationKey(customization) {
+  return JSON.stringify({
+    size: customization.size,
+    temperature: customization.temperature,
+    sweetness: customization.sweetness,
+    ice: customization.ice,
+    toppings: [...customization.toppings].sort(),
+  });
+}
+
 function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
@@ -119,6 +129,7 @@ export default function KioskPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [customizingItem, setCustomizingItem] = useState(null);
+  const [editingLine, setEditingLine] = useState(null);
   const [draftCustomization, setDraftCustomization] = useState(DEFAULT_CUSTOMIZATION);
   const kioskHeaderRef = useRef(null);
   const kioskCategoriesRef = useRef(null);
@@ -274,8 +285,30 @@ export default function KioskPage() {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   function openCustomization(item) {
+    setEditingLine(null);
     setCustomizingItem(item);
     setDraftCustomization(DEFAULT_CUSTOMIZATION);
+  }
+
+  function closeCustomization() {
+    setCustomizingItem(null);
+    setEditingLine(null);
+    setDraftCustomization(DEFAULT_CUSTOMIZATION);
+  }
+
+  function openCartEdit(line) {
+    const menuItem = menuItems.find((item) => item.id === line.id) || {
+      id: line.id,
+      name: line.name,
+      price: line.basePrice ?? line.price,
+    };
+
+    setCustomizingItem(menuItem);
+    setEditingLine({ id: line.id, customKey: line.customKey });
+    setDraftCustomization({
+      ...line.customization,
+      toppings: [...line.customization.toppings],
+    });
   }
 
   function toggleTopping(topping) {
@@ -292,15 +325,50 @@ export default function KioskPage() {
       return;
     }
 
-    const key = JSON.stringify({
-      size: draftCustomization.size,
-      temperature: draftCustomization.temperature,
-      sweetness: draftCustomization.sweetness,
-      ice: draftCustomization.ice,
-      toppings: [...draftCustomization.toppings].sort(),
-    });
+    const key = getCustomizationKey(draftCustomization);
+    const price = computeItemPrice(customizingItem.price, draftCustomization);
+    const customization = {
+      ...draftCustomization,
+      toppings: [...draftCustomization.toppings],
+    };
 
     setCart((current) => {
+      if (editingLine) {
+        const lineBeingEdited = current.find(
+          (line) => line.id === editingLine.id && line.customKey === editingLine.customKey
+        );
+        if (!lineBeingEdited) {
+          return current;
+        }
+
+        const remainingLines = current.filter(
+          (line) => !(line.id === editingLine.id && line.customKey === editingLine.customKey)
+        );
+        const matchingLine = remainingLines.find(
+          (line) => line.id === customizingItem.id && line.customKey === key
+        );
+
+        if (matchingLine) {
+          return remainingLines.map((line) =>
+            line === matchingLine
+              ? { ...line, quantity: line.quantity + lineBeingEdited.quantity }
+              : line
+          );
+        }
+
+        return [
+          ...remainingLines,
+          {
+            ...lineBeingEdited,
+            name: customizingItem.name,
+            price,
+            customKey: key,
+            customization,
+            basePrice: customizingItem.price,
+          },
+        ];
+      }
+
       const existing = current.find(
         (line) => line.id === customizingItem.id && line.customKey === key
       );
@@ -315,16 +383,16 @@ export default function KioskPage() {
         {
           id: customizingItem.id,
           name: customizingItem.name,
-          price: computeItemPrice(customizingItem.price, draftCustomization),
+          price,
           quantity: 1,
           customKey: key,
-          customization: draftCustomization,
+          customization,
+          basePrice: customizingItem.price,
         },
       ];
     });
 
-    setCustomizingItem(null);
-    setDraftCustomization(DEFAULT_CUSTOMIZATION);
+    closeCustomization();
   }
 
   function updateQuantity(customKey, id, delta) {
@@ -377,8 +445,7 @@ export default function KioskPage() {
     setActiveCategory('Milk Tea');
     setActiveFilterValue(allIngredientsValue);
     setActiveMaxPrice(0);
-    setCustomizingItem(null);
-    setDraftCustomization(DEFAULT_CUSTOMIZATION);
+    closeCustomization();
   }
 
   if (!started) {
@@ -548,10 +615,29 @@ export default function KioskPage() {
                       </div>
                       <div>{formatCurrency(item.price)}</div>
                     </div>
-                    <div className="kiosk-qty-controls">
-                      <button onClick={() => updateQuantity(item.customKey, item.id, -1)}>-</button>
-                      <span>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.customKey, item.id, 1)}>+</button>
+                    <div className="kiosk-cart-actions">
+                      <button
+                        type="button"
+                        className="kiosk-edit-button"
+                        onClick={() => openCartEdit(item)}
+                      >
+                        Edit
+                      </button>
+                      <div className="kiosk-qty-controls">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.customKey, item.id, -1)}
+                        >
+                          -
+                        </button>
+                        <span>{item.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.customKey, item.id, 1)}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -574,14 +660,14 @@ export default function KioskPage() {
       </div>
 
       {customizingItem ? (
-        <div className="kiosk-modal-backdrop" onClick={() => setCustomizingItem(null)}>
+        <div className="kiosk-modal-backdrop" onClick={closeCustomization}>
           <div className="kiosk-modal panel" onClick={(event) => event.stopPropagation()}>
             <div className="kiosk-modal-header">
               <div>
                 <strong>{customizingItem.name}</strong>
                 <p>{formatCurrency(customizingItem.price)}</p>
               </div>
-              <button type="button" onClick={() => setCustomizingItem(null)}>
+              <button type="button" onClick={closeCustomization}>
                 Close
               </button>
             </div>
@@ -681,7 +767,8 @@ export default function KioskPage() {
               className="primary bold kiosk-modal-confirm"
               onClick={confirmAddToCart}
             >
-              ADD TO CART - {formatCurrency(computeItemPrice(customizingItem.price, draftCustomization))}
+              {editingLine ? 'SAVE CHANGES' : 'ADD TO CART'} -{' '}
+              {formatCurrency(computeItemPrice(customizingItem.price, draftCustomization))}
             </button>
           </div>
         </div>
