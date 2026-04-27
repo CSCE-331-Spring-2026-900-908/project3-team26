@@ -6,6 +6,7 @@ import inventoryRoutes from './routes/inventory.js';
 import orderRoutes from './routes/orders.js';
 import salesRoutes from './routes/sales.js';
 import managerRoutes from './routes/manager.js';
+import chatRouter from './routes/chat.js';
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/sales', salesRoutes);
 app.use('/api/manager', managerRoutes);
+app.use('/api', chatRouter);
 
 app.use((error, _req, res, _next) => {
   console.error('[API ERROR]', error);
