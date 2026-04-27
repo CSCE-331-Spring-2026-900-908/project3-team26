@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
@@ -147,8 +147,41 @@ export default function KioskPage() {
   const [submitting, setSubmitting] = useState(false);
   const [customizingItem, setCustomizingItem] = useState(null);
   const [draftCustomization, setDraftCustomization] = useState(DEFAULT_CUSTOMIZATION);
+  const kioskHeaderRef = useRef(null);
+  const [kioskHeaderHeight, setKioskHeaderHeight] = useState(0);
 
   useKioskBodyFlag(started, Boolean(confirmation));
+
+  useEffect(() => {
+    if (!started || confirmation) {
+      setKioskHeaderHeight(0);
+      return undefined;
+    }
+
+    const header = kioskHeaderRef.current;
+    if (!header) {
+      return undefined;
+    }
+
+    const updateHeaderHeight = () => {
+      setKioskHeaderHeight(header.getBoundingClientRect().height);
+    };
+
+    updateHeaderHeight();
+    window.addEventListener('resize', updateHeaderHeight);
+
+    if (typeof ResizeObserver === 'undefined') {
+      return () => window.removeEventListener('resize', updateHeaderHeight);
+    }
+
+    const resizeObserver = new ResizeObserver(updateHeaderHeight);
+    resizeObserver.observe(header);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateHeaderHeight);
+    };
+  }, [started, confirmation]);
 
   useEffect(() => {
     api
@@ -384,8 +417,12 @@ export default function KioskPage() {
   }
 
   return (
-    <section id="page-kiosk" className="page active kiosk-page kiosk-active">
-      <div className="cashier-header kiosk-header">
+    <section
+      id="page-kiosk"
+      className="page active kiosk-page kiosk-active"
+      style={{ '--kiosk-header-height': `${kioskHeaderHeight}px` }}
+    >
+      <div className="cashier-header kiosk-header" ref={kioskHeaderRef}>
         <div className="kiosk-banner">
           <div className="kiosk-banner-row">
             <h2>KIOSK - SELF ORDERING</h2>
@@ -441,7 +478,7 @@ export default function KioskPage() {
 
       <div className="cashier-body kiosk-body">
         <div className="cashier-left">
-          <fieldset className="panel">
+          <fieldset className="panel kiosk-categories-panel">
             <legend>Categories</legend>
             <div className="cat-row kiosk-cat-row">
               {categoryNames.map((category) => (

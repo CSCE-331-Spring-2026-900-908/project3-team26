@@ -1272,8 +1272,15 @@ body[data-contrast='soft'] .helper-text {
   overflow: visible;
 }
 
+.kiosk-active .cashier-left {
+  overflow: visible;
+}
+
 .kiosk-header {
   align-items: stretch;
+  position: sticky;
+  top: 10px;
+  z-index: 45;
 }
 
 .kiosk-banner {
@@ -1316,6 +1323,12 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-banner-row select {
   min-width: 220px;
+}
+
+.kiosk-categories-panel {
+  position: sticky;
+  top: calc(var(--kiosk-header-height, 0px) + 18px);
+  z-index: 40;
 }
 
 .kiosk-price-slider {
@@ -1474,9 +1487,9 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-order-panel {
   position: sticky;
-  top: 10px;
+  top: calc(var(--kiosk-header-height, 0px) + 18px);
   flex: 0 0 auto;
-  max-height: calc(100vh - 20px);
+  max-height: calc(100vh - var(--kiosk-header-height, 0px) - 28px);
   min-height: 0;
 }
 
@@ -1680,6 +1693,11 @@ body[data-contrast='soft'] .helper-text {
   .cashier-right,
   .kiosk-right {
     width: 100%;
+  }
+
+  .kiosk-header,
+  .kiosk-categories-panel {
+    position: static;
   }
 
   .kiosk-order-panel {
