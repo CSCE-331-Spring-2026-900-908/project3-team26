@@ -9,11 +9,14 @@ import KioskPage from './pages/KioskPage.jsx';
 import MenuBoardPage from './pages/MenuBoardPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 import AccessibilityWidget from './components/AccessibilityWidget.jsx';
+import ChatWidget from './components/ChatWidget.jsx';
 
 export default function App() {
   const location = useLocation();
   const chromePages = new Set(['/sales']);
   const showNav = chromePages.has(location.pathname);
+  const chatPages = new Set(['/', '/kiosk']);
+  const showChat = chatPages.has(location.pathname);
 
   return (
     <>
@@ -33,6 +36,7 @@ export default function App() {
         </main>
       </div>
       <AccessibilityWidget />
+      {showChat ? <ChatWidget /> : null}
     </>
   );
 }
