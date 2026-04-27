@@ -148,38 +148,47 @@ export default function KioskPage() {
   const [customizingItem, setCustomizingItem] = useState(null);
   const [draftCustomization, setDraftCustomization] = useState(DEFAULT_CUSTOMIZATION);
   const kioskHeaderRef = useRef(null);
-  const [kioskHeaderHeight, setKioskHeaderHeight] = useState(0);
+  const kioskCategoriesRef = useRef(null);
+  const [kioskFixedHeights, setKioskFixedHeights] = useState({
+    header: 0,
+    categories: 0,
+  });
 
   useKioskBodyFlag(started, Boolean(confirmation));
 
   useEffect(() => {
     if (!started || confirmation) {
-      setKioskHeaderHeight(0);
+      setKioskFixedHeights({ header: 0, categories: 0 });
       return undefined;
     }
 
     const header = kioskHeaderRef.current;
-    if (!header) {
+    const categories = kioskCategoriesRef.current;
+    if (!header || !categories) {
       return undefined;
     }
 
-    const updateHeaderHeight = () => {
-      setKioskHeaderHeight(header.getBoundingClientRect().height);
+    const updateFixedHeights = () => {
+      setKioskFixedHeights({
+        header: header.getBoundingClientRect().height,
+        categories: categories.getBoundingClientRect().height,
+      });
     };
 
-    updateHeaderHeight();
-    window.addEventListener('resize', updateHeaderHeight);
+    updateFixedHeights();
+    window.addEventListener('resize', updateFixedHeights);
 
     if (typeof ResizeObserver === 'undefined') {
-      return () => window.removeEventListener('resize', updateHeaderHeight);
+      return () => window.removeEventListener('resize', updateFixedHeights);
     }
 
-    const resizeObserver = new ResizeObserver(updateHeaderHeight);
+    const resizeObserver = new ResizeObserver(updateFixedHeights);
     resizeObserver.observe(header);
+    resizeObserver.observe(categories);
 
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener('resize', updateHeaderHeight);
+      window.removeEventListener('resize', updateFixedHeights);
     };
   }, [started, confirmation]);
 
@@ -420,7 +429,10 @@ export default function KioskPage() {
     <section
       id="page-kiosk"
       className="page active kiosk-page kiosk-active"
-      style={{ '--kiosk-header-height': `${kioskHeaderHeight}px` }}
+      style={{
+        '--kiosk-header-height': `${kioskFixedHeights.header}px`,
+        '--kiosk-categories-height': `${kioskFixedHeights.categories}px`,
+      }}
     >
       <div className="cashier-header kiosk-header" ref={kioskHeaderRef}>
         <div className="kiosk-banner">
@@ -478,7 +490,7 @@ export default function KioskPage() {
 
       <div className="cashier-body kiosk-body">
         <div className="cashier-left">
-          <fieldset className="panel kiosk-categories-panel">
+          <fieldset className="panel kiosk-categories-panel" ref={kioskCategoriesRef}>
             <legend>Categories</legend>
             <div className="cat-row kiosk-cat-row">
               {categoryNames.map((category) => (

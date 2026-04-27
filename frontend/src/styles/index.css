@@ -1235,6 +1235,10 @@ body[data-contrast='soft'] .helper-text {
   gap: 8px;
 }
 
+#page-kiosk.kiosk-active {
+  padding-top: calc(var(--kiosk-header-height, 0px) + 18px);
+}
+
 .kiosk-page {
   background: var(--page-bg);
 }
@@ -1278,7 +1282,9 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-header {
   align-items: stretch;
-  position: sticky;
+  position: fixed;
+  left: 10px;
+  right: 10px;
   top: 10px;
   z-index: 45;
 }
@@ -1326,7 +1332,9 @@ body[data-contrast='soft'] .helper-text {
 }
 
 .kiosk-categories-panel {
-  position: sticky;
+  position: fixed;
+  left: 10px;
+  right: 358px;
   top: calc(var(--kiosk-header-height, 0px) + 18px);
   z-index: 40;
 }
@@ -1426,6 +1434,7 @@ body[data-contrast='soft'] .helper-text {
   flex: 1;
   display: flex;
   flex-direction: column;
+  margin-top: calc(var(--kiosk-categories-height, 0px) + 8px);
   min-height: 0;
 }
 
@@ -1486,11 +1495,14 @@ body[data-contrast='soft'] .helper-text {
 }
 
 .kiosk-order-panel {
-  position: sticky;
+  position: fixed;
   top: calc(var(--kiosk-header-height, 0px) + 18px);
+  right: 10px;
+  width: 340px;
   flex: 0 0 auto;
   max-height: calc(100vh - var(--kiosk-header-height, 0px) - 28px);
   min-height: 0;
+  z-index: 40;
 }
 
 .kiosk-cart-list {
@@ -1695,13 +1707,22 @@ body[data-contrast='soft'] .helper-text {
     width: 100%;
   }
 
+  #page-kiosk.kiosk-active {
+    padding-top: 10px;
+  }
+
   .kiosk-header,
   .kiosk-categories-panel {
     position: static;
   }
 
+  .kiosk-menu-panel {
+    margin-top: 0;
+  }
+
   .kiosk-order-panel {
     position: static;
+    width: auto;
     height: auto;
     max-height: none;
     flex: 1;
