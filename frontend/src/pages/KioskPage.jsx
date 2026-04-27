@@ -220,6 +220,11 @@ export default function KioskPage() {
     ? Math.min(Math.max(activeMaxPrice, minPriceLimit), maxPriceLimit)
     : 0;
 
+  const sliderFillPercent =
+    maxPriceLimit > minPriceLimit
+      ? ((sliderValue - minPriceLimit) / (maxPriceLimit - minPriceLimit)) * 100
+      : 100;
+
   const activeFilterLabel =
     filterOptions.find((option) => option.value === activeFilterValue)?.label ||
     allIngredientsLabel;
@@ -417,6 +422,7 @@ export default function KioskPage() {
                 value={sliderValue}
                 disabled={!baseFilteredItems.length}
                 onChange={(event) => setActiveMaxPrice(Number(event.target.value))}
+                style={{ '--slider-fill': `${sliderFillPercent}%` }}
               />
               <span className="kiosk-price-value">{formatCurrency(sliderValue)}</span>
             </div>
