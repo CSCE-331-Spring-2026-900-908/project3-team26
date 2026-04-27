@@ -1597,7 +1597,7 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-brand-wordmark span {
   color: transparent;
-  background: linear-gradient(90deg, #5b2a0c 0%, #7a3a12 38%, #f05275 100%);
+  background: linear-gradient(90deg, #ff5d7d 0%, #f05275 44%, #ff7a4f 100%);
   background-clip: text;
   -webkit-background-clip: text;
   font-size: 28px;
