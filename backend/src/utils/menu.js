@@ -1,5 +1,12 @@
+const SPECIALTY_OVERRIDES = new Set([
+  'creme brulee milk tea',
+]);
+
 export function getCategoryForName(name = '') {
-  const normalized = name.toLowerCase();
+  const normalized = name.toLowerCase().trim();
+  if (SPECIALTY_OVERRIDES.has(normalized)) {
+    return 'Specialty';
+  }
   if (normalized.includes('slush')) {
     return 'Slush';
   }
