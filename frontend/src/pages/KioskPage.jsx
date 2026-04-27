@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
 import { getMenuImage } from '../utils/menuImages.js';
+import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
 
 function useKioskBodyFlag(started, hasConfirmation) {
   useEffect(() => {
@@ -18,7 +19,6 @@ function useKioskBodyFlag(started, hasConfirmation) {
   }, [started, hasConfirmation]);
 }
 
-const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
 const allIngredientsValue = 'all';
 const allIngredientsLabel = 'All Ingredients';
 const specialFilterOptions = [
@@ -61,33 +61,6 @@ function computeItemPrice(basePrice, customization) {
     0
   );
   return Number((Number(basePrice || 0) + sizeDelta + toppingsTotal).toFixed(2));
-}
-
-const SPECIALTY_OVERRIDES = new Set([
-  'creme brulee milk tea',
-]);
-
-function inferCategory(name = '') {
-  const normalized = name.toLowerCase().trim();
-  if (SPECIALTY_OVERRIDES.has(normalized)) {
-    return 'Specialty';
-  }
-  if (normalized.includes('milk tea') || normalized.includes('latte')) {
-    return 'Milk Tea';
-  }
-  if (
-    normalized.includes('green tea') ||
-    normalized.includes('black tea') ||
-    normalized.includes('oolong tea') ||
-    normalized.includes('lychee') ||
-    normalized.includes('passionfruit')
-  ) {
-    return 'Fruit Tea';
-  }
-  if (normalized.includes('slush')) {
-    return 'Slush';
-  }
-  return 'Specialty';
 }
 
 function formatCurrency(value) {
@@ -193,16 +166,30 @@ export default function KioskPage() {
   }, [started, confirmation]);
 
   useEffect(() => {
-    api
-      .get('/menu')
-      .then((data) =>
-        setMenuItems(
-          data.items
-            .filter((item) => item.availability)
-            .map((item) => ({ ...item, category: inferCategory(item.name) }))
-        )
-      )
-      .catch((err) => setError(err.message));
+    let active = true;
+
+    async function loadMenu() {
+      try {
+        const data = await api.get('/menu');
+        if (active) {
+          setMenuItems(data.items.filter((item) => item.availability).map(normalizeMenuItem));
+        }
+      } catch (err) {
+        if (active) {
+          setError(err.message);
+        }
+      }
+    }
+
+    loadMenu();
+    const intervalId = window.setInterval(loadMenu, 10000);
+    window.addEventListener('focus', loadMenu);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', loadMenu);
+    };
   }, []);
 
   const filterOptions = useMemo(

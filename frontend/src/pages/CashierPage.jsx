@@ -3,32 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
 import { getMenuImage } from '../utils/menuImages.js';
+import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
 
-const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
 const sizes = ['Small', 'Medium', 'Large'];
 const sugarLevels = ['0%', '25%', '50%', '75%', '100%'];
 const iceLevels = ['No Ice', 'Less Ice', 'Regular'];
 const addOnOptions = ['Boba', 'Jelly', 'Cheese Foam'];
-
-function getCategory(name = '') {
-  const normalized = name.toLowerCase();
-  if (normalized.includes('milk tea') || normalized.includes('latte')) {
-    return 'Milk Tea';
-  }
-  if (
-    normalized.includes('green tea') ||
-    normalized.includes('black tea') ||
-    normalized.includes('oolong tea') ||
-    normalized.includes('lychee') ||
-    normalized.includes('passionfruit')
-  ) {
-    return 'Fruit Tea';
-  }
-  if (normalized.includes('slush')) {
-    return 'Slush';
-  }
-  return 'Specialty';
-}
 
 function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
@@ -50,22 +30,42 @@ export default function CashierPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api
-      .get('/menu')
-      .then((data) =>
-        setMenuItems(
-          data.items
-            .filter((item) => item.availability)
-            .map((item) => ({ ...item, category: getCategory(item.name) }))
-        )
-      )
-      .catch((err) => setError(err.message));
+    let active = true;
+
+    async function loadMenu() {
+      try {
+        const data = await api.get('/menu');
+        if (active) {
+          setMenuItems(data.items.filter((item) => item.availability).map(normalizeMenuItem));
+        }
+      } catch (err) {
+        if (active) {
+          setError(err.message);
+        }
+      }
+    }
+
+    loadMenu();
+    const intervalId = window.setInterval(loadMenu, 10000);
+    window.addEventListener('focus', loadMenu);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', loadMenu);
+    };
   }, []);
 
-  const visibleItems = useMemo(() => {
-    const filtered = menuItems.filter((item) => item.category === activeCategory);
-    return [...filtered.slice(0, 9), ...Array(Math.max(0, 9 - filtered.length)).fill(null)];
-  }, [menuItems, activeCategory]);
+  useEffect(() => {
+    if (selectedItemId && !menuItems.some((item) => item.id === selectedItemId)) {
+      setSelectedItemId(null);
+    }
+  }, [menuItems, selectedItemId]);
+
+  const visibleItems = useMemo(
+    () => menuItems.filter((item) => item.category === activeCategory),
+    [menuItems, activeCategory]
+  );
 
   const selectedItem = menuItems.find((item) => item.id === selectedItemId) || null;
 
@@ -200,35 +200,35 @@ export default function CashierPage() {
           <section className="swing-panel">
             <div className="panel-title">MENU ITEMS</div>
             <div className="cashier-menu-grid">
-              {visibleItems.map((item, index) => {
-                const imageSrc = item ? getMenuImage(item.name) : null;
-                return (
-                  <button
-                    key={item ? item.id : `empty-${index}`}
-                    className={item?.id === selectedItemId ? 'menu-tile active' : 'menu-tile'}
-                    disabled={!item}
-                    onClick={() => setSelectedItemId(item.id)}
-                  >
-                    {item ? (
-                      <>
-                        {imageSrc ? (
-                          <img
-                            src={imageSrc}
-                            alt={item.name}
-                            className="menu-tile-image"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : null}
-                        <span className="menu-tile-name">{item.name}</span>
-                      </>
-                    ) : (
-                      '-'
-                    )}
-                  </button>
-                );
-              })}
+              {visibleItems.length ? (
+                visibleItems.map((item) => {
+                  const imageSrc = getMenuImage(item.name);
+                  return (
+                    <button
+                      key={item.id}
+                      className={item.id === selectedItemId ? 'menu-tile active' : 'menu-tile'}
+                      onClick={() => setSelectedItemId(item.id)}
+                    >
+                      {imageSrc ? (
+                        <img
+                          src={imageSrc}
+                          alt={item.name}
+                          className="menu-tile-image"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : null}
+                      <span className="menu-tile-name">{item.name}</span>
+                      <strong>{formatCurrency(item.price)}</strong>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="cashier-empty-state helper-text">
+                  No available menu items in this category.
+                </div>
+              )}
             </div>
           </section>
 

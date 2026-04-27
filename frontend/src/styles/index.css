@@ -973,6 +973,11 @@ body[data-contrast='soft'] .helper-text {
   flex: 1;
 }
 
+.cashier-menu-grid {
+  align-content: start;
+  overflow-y: auto;
+}
+
 .menu-btn,
 .menu-tile {
   height: 130px;
@@ -1001,6 +1006,11 @@ body[data-contrast='soft'] .helper-text {
   line-height: 1.2;
   white-space: normal;
   word-break: break-word;
+}
+
+.cashier-empty-state {
+  grid-column: 1 / -1;
+  padding: 12px;
 }
 
 .menu-btn.active,
@@ -1202,6 +1212,11 @@ body[data-contrast='soft'] .helper-text {
 .compact-field span {
   font-weight: bold;
   font-size: 12px;
+}
+
+.compact-checkbox input {
+  width: auto;
+  align-self: flex-start;
 }
 
 .manager-action-row {

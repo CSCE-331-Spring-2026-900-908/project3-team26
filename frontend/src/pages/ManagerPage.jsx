@@ -102,19 +102,24 @@ export default function ManagerPage() {
     setFeedback('');
     setError('');
     try {
+      const hasIngredientIds = menuForm.ingredientIds.trim() !== '';
       const ingredientIds = menuForm.ingredientIds
         .split(',')
         .map((part) => part.trim())
         .filter(Boolean)
-        .map(Number);
+        .map(Number)
+        .filter(Number.isFinite);
 
       if (menuForm.id) {
-        await api.patch(`/manager/menu/${menuForm.id}`, {
+        const body = {
           name: menuForm.name || undefined,
           price: menuForm.price ? Number(menuForm.price) : undefined,
-          ingredientIds,
           availability: menuForm.availability,
-        });
+        };
+        if (hasIngredientIds) {
+          body.ingredientIds = ingredientIds;
+        }
+        await api.patch(`/manager/menu/${menuForm.id}`, body);
       } else {
         await api.post('/manager/menu', {
           name: menuForm.name,
@@ -325,6 +330,7 @@ export default function ManagerPage() {
               <label className="compact-field"><span>Name</span><input value={menuForm.name} onChange={(event) => setMenuForm({ ...menuForm, name: event.target.value })} /></label>
               <label className="compact-field"><span>Price</span><input value={menuForm.price} onChange={(event) => setMenuForm({ ...menuForm, price: event.target.value })} /></label>
               <label className="compact-field"><span>Ingredient IDs</span><input value={menuForm.ingredientIds} onChange={(event) => setMenuForm({ ...menuForm, ingredientIds: event.target.value })} placeholder="1, 4, 6" /></label>
+              <label className="compact-field compact-checkbox"><span>Available</span><input type="checkbox" checked={menuForm.availability} onChange={(event) => setMenuForm({ ...menuForm, availability: event.target.checked })} /></label>
             </div>
             <button className="swing-primary">{menuForm.id ? 'UPDATE' : 'ADD'}</button>
 
@@ -334,6 +340,7 @@ export default function ManagerPage() {
                   <tr>
                     <th>ID</th>
                     <th>Name</th>
+                    <th>Category</th>
                     <th>Price</th>
                     <th>Available</th>
                     <th>Ingredients</th>
@@ -344,6 +351,7 @@ export default function ManagerPage() {
                     <tr key={item.id}>
                       <td>{item.id}</td>
                       <td>{item.name}</td>
+                      <td>{item.category || '-'}</td>
                       <td>{formatCurrency(item.price)}</td>
                       <td>{String(item.availability)}</td>
                       <td>{item.ingredient_ids || '-'}</td>

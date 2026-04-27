@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { query, withClient } from '../db/pool.js';
 import { getSchemaSupport } from '../db/compat.js';
 import { buildXReport, buildZPreview } from '../services/reporting.js';
+import { getCategoryForName } from '../utils/menu.js';
 
 const router = Router();
 
@@ -230,7 +231,14 @@ router.get('/menu', async (_req, res, next) => {
        GROUP BY m.id, m.name, m.price, m.availability
        ORDER BY m.id`
     );
-    res.json({ items: result.rows });
+    res.json({
+      items: result.rows.map((row) => ({
+        ...row,
+        id: Number(row.id),
+        price: Number(row.price),
+        category: getCategoryForName(row.name),
+      })),
+    });
   } catch (error) {
     next(error);
   }
