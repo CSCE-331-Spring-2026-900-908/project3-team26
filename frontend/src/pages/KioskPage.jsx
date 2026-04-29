@@ -322,6 +322,39 @@ export default function KioskPage() {
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  // Builds the stable key used to dedupe identical customizations in the cart.
+  function getCustomizationKey(customization) {
+    return JSON.stringify({
+      size: customization.size,
+      temperature: customization.temperature,
+      sweetness: customization.sweetness,
+      ice: customization.ice,
+      toppings: [...(customization.toppings || [])].sort(),
+    });
+  }
+
+  // Closes the customization modal and clears the in-progress edit/draft.
+  function closeCustomization() {
+    setCustomizingItem(null);
+    setEditingLine(null);
+    setDraftCustomization(DEFAULT_CUSTOMIZATION);
+  }
+
+  // Opens the modal for an existing cart line so the customer can edit it in place.
+  function openCartEdit(line) {
+    setEditingLine({ id: line.id, customKey: line.customKey });
+    setCustomizingItem({
+      id: line.id,
+      name: line.name,
+      price: line.basePrice ?? line.price,
+    });
+    setDraftCustomization({
+      ...DEFAULT_CUSTOMIZATION,
+      ...line.customization,
+      toppings: [...(line.customization?.toppings || [])],
+    });
+  }
+
   // Opens the customization modal for the chosen menu item with default options.
   function openCustomization(item) {
     setEditingLine(null);

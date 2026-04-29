@@ -119,15 +119,17 @@ export default function CashierPage() {
     ? Number(modalItem.price) * Math.max(1, Number(modalDraft.quantity) || 1)
     : 0;
 
+  // Opens the customization modal for a brand-new menu-item selection with default options.
   function openAddModal(item) {
     setConfirmation(null);
     setCustomizationModal({
       mode: 'add',
       menuItem: item,
-      draft: createDefaultCustomization(),
+      draft: { ...defaultCustomization, addons: [] },
     });
   }
 
+  // Opens the modal pre-filled with the chosen cart line so the cashier can edit it.
   function openEditModal(line) {
     setCustomizationModal({
       mode: 'edit',
@@ -148,24 +150,37 @@ export default function CashierPage() {
     });
   }
 
-  // Toggles an add-on (Boba, Jelly, etc.) on or off for the in-progress drink.
-  function toggleAddon(addon) {
-    setAddons((current) =>
-      current.includes(addon) ? current.filter((entry) => entry !== addon) : [...current, addon]
+  // Patches the in-progress modal draft (size/sugar/ice/temperature/quantity).
+  function updateModalDraft(patch) {
+    setCustomizationModal((current) =>
+      current ? { ...current, draft: { ...current.draft, ...patch } } : current
     );
   }
 
-  // Pushes the currently selected drink + customization onto the order. Identical
-  // customizations of the same drink stack into a single line with a higher quantity.
-  function addSelectedToOrder() {
-    if (!selectedItem) {
-      window.alert('Choose a menu item first.');
+  // Toggles a single add-on (Boba, Jelly, Cheese Foam) on the in-progress modal draft.
+  function toggleModalAddon(addon) {
+    setCustomizationModal((current) => {
+      if (!current) {
+        return current;
+      }
+      const addons = current.draft.addons.includes(addon)
+        ? current.draft.addons.filter((entry) => entry !== addon)
+        : [...current.draft.addons, addon];
+      return { ...current, draft: { ...current.draft, addons } };
+    });
+  }
+
+  // Saves the modal draft into the order. New drinks stack with identical customizations,
+  // edited drinks replace the original line.
+  function saveCustomization() {
+    if (!customizationModal) {
       return;
     }
 
     const { mode, lineId, menuItem, draft } = customizationModal;
     const quantity = Math.max(1, Number(draft.quantity) || 1);
     const customizationKey = getCustomizationKey(draft);
+
     setOrderLines((current) => {
       const withoutEditedLine =
         mode === 'edit' ? current.filter((line) => line.id !== lineId) : current;
