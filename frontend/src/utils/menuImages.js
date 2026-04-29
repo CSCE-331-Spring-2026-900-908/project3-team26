@@ -1,6 +1,7 @@
 // Maps menu item names from the database to their image files.
 // Images live in frontend/public/images/menu/ and are served at /images/menu/<file>
 // To add a new image: drop the file into public/images/menu/ and add an entry below.
+// Lookups are case-insensitive (see normalize() below) so DB rows can use any casing.
 
 const imageMap = {
   'classic milk tea': '/images/menu/classic-milk-tea.jpg',
@@ -36,15 +37,19 @@ const imageMap = {
 
 const PLACEHOLDER = '/images/menu/placeholder.jpg';
 
+// Lower-cases and trims the lookup key so the map matches DB rows regardless of casing/whitespace.
 function normalize(name) {
   return String(name || '').trim().toLowerCase();
 }
 
+// Returns the image path for the given drink, or null if no entry exists.
+// Used by KioskPage and CashierPage to render menu thumbnails.
 export function getMenuImage(name) {
   const key = normalize(name);
   return imageMap[key] || null;
 }
 
+// Same as getMenuImage but falls back to a generic placeholder image when no entry matches.
 export function getMenuImageOrPlaceholder(name) {
   return getMenuImage(name) || PLACEHOLDER;
 }
