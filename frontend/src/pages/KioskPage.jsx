@@ -62,6 +62,14 @@ const TOPPING_PRICES = {
   'Lychee Popping': 0.75,
 };
 
+// Texas state sales tax (6.25%) plus typical College Station local rate (2.0%) = 8.25%.
+// Backend mirrors this so the total stored in the database matches what the customer sees.
+const TEXAS_TAX_RATE = 0.0825;
+
+function roundCurrency(value) {
+  return Math.round(Number(value) * 100) / 100;
+}
+
 // Computes the per-line price for a customized drink: base + size delta + sum(topping prices).
 function computeItemPrice(basePrice, customization) {
   const sizeDelta = SIZE_PRICE_DELTA[customization?.size] ?? 0;
@@ -163,6 +171,10 @@ export default function KioskPage() {
   const [customizingItem, setCustomizingItem] = useState(null);
   const [editingLine, setEditingLine] = useState(null);
   const [draftCustomization, setDraftCustomization] = useState(DEFAULT_CUSTOMIZATION);
+  // Drives the checkout flow: null = normal cart view, 'confirm' = "Continue?" popup,
+  // 'payment' = full-screen Cash/Card picker. After a successful submit, `confirmation`
+  // takes over and shows the receipt with the tax breakdown.
+  const [checkoutStep, setCheckoutStep] = useState(null);
   const kioskHeaderRef = useRef(null);
   const kioskCategoriesRef = useRef(null);
   const [kioskFixedHeights, setKioskFixedHeights] = useState({
@@ -462,9 +474,10 @@ export default function KioskPage() {
     );
   }
 
-  // Submits the cart to the backend's /orders endpoint, which writes the order and
-  // its line items to PostgreSQL and returns the saved order. Shows a confirmation on success.
-  async function checkout() {
+  // Submits the cart to the backend's /orders endpoint with the customer's chosen payment
+  // method. The backend recomputes the subtotal from menu prices, adds Texas sales tax, and
+  // returns the breakdown so the receipt screen can display it.
+  async function checkout(paymentMethod) {
     if (!cart.length) {
       return;
     }
@@ -479,7 +492,7 @@ export default function KioskPage() {
 
       const result = await api.post('/orders', {
         source: 'kiosk',
-        paymentMethod: 'CARD',
+        paymentMethod,
         items: [...grouped.entries()].map(([menuItemId, quantity]) => ({
           menuItemId,
           quantity,
@@ -488,6 +501,7 @@ export default function KioskPage() {
 
       setConfirmation(result.order);
       setCart([]);
+      setCheckoutStep(null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -495,11 +509,19 @@ export default function KioskPage() {
     }
   }
 
+  // Pre-tax subtotal of everything currently in the cart.
+  const cartSubtotal = roundCurrency(total);
+  // Texas sales tax displayed to the customer; backend recomputes the same value before storing.
+  const cartTax = roundCurrency(cartSubtotal * TEXAS_TAX_RATE);
+  // Grand total including tax — what gets charged and stored as orders.total_amount.
+  const cartGrandTotal = roundCurrency(cartSubtotal + cartTax);
+
   // Returns the kiosk to the welcome screen and clears any in-progress order/customization.
   function resetKiosk() {
     setStarted(false);
     setCart([]);
     setConfirmation(null);
+    setCheckoutStep(null);
     setActiveCategory('Milk Tea');
     setActiveFilterValue(allIngredientsValue);
     setActiveMaxPrice(0);
@@ -524,6 +546,11 @@ export default function KioskPage() {
   }
 
   if (confirmation) {
+    // Backend returns subtotal/tax/totalAmount; falls back to client-computed values if not.
+    const receiptSubtotal =
+      confirmation.subtotal != null ? Number(confirmation.subtotal) : cartSubtotal;
+    const receiptTax = confirmation.tax != null ? Number(confirmation.tax) : cartTax;
+    const receiptTotal = Number(confirmation.totalAmount);
     return (
       <section id="page-kiosk" className="page active kiosk-page">
         <div className="kiosk-confirm panel">
@@ -531,11 +558,100 @@ export default function KioskPage() {
             <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
           </div>
           <div className="confirm-check">&#10003;</div>
-          <h1>ORDER SUBMITTED</h1>
+          <h1>PURCHASE CONFIRMED</h1>
           <p>Order #{confirmation.id}</p>
-          <p>Total: {formatCurrency(confirmation.totalAmount)}</p>
+          <p>Paid by {confirmation.paymentMethod === 'CARD' ? 'Card' : 'Cash'}</p>
+          <div className="kiosk-receipt-totals">
+            <div>
+              <span>Subtotal</span>
+              <strong>{formatCurrency(receiptSubtotal)}</strong>
+            </div>
+            <div>
+              <span>Sales Tax (8.25%)</span>
+              <strong>{formatCurrency(receiptTax)}</strong>
+            </div>
+            <div className="kiosk-receipt-grand">
+              <span>Total</span>
+              <strong>{formatCurrency(receiptTotal)}</strong>
+            </div>
+          </div>
           <button className="primary bold kiosk-start-button" onClick={resetKiosk}>
             NEW CUSTOMER
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  // Full-screen payment view: customer reviews the cart and chooses Cash or Card.
+  if (checkoutStep === 'payment') {
+    return (
+      <section id="page-kiosk" className="page active kiosk-page">
+        <div className="kiosk-confirm panel kiosk-payment-panel">
+          <div className="page-action-row page-action-row-right">
+            <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
+          </div>
+          <h1>CHECKOUT</h1>
+          <p>Review your order and choose a payment method.</p>
+          {error ? <div className="kiosk-error">{error}</div> : null}
+
+          <div className="kiosk-payment-cart">
+            {cart.map((item) => (
+              <div className="kiosk-cart-row" key={`pay-${item.id}-${item.customKey}`}>
+                <div className="kiosk-cart-info">
+                  <strong>
+                    {item.quantity} × {item.name}
+                  </strong>
+                  <div className="kiosk-cart-custom">
+                    {customizationSummary(item.customization)}
+                  </div>
+                </div>
+                <strong>{formatCurrency(item.price * item.quantity)}</strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="kiosk-receipt-totals">
+            <div>
+              <span>Subtotal</span>
+              <strong>{formatCurrency(cartSubtotal)}</strong>
+            </div>
+            <div>
+              <span>Sales Tax (8.25%)</span>
+              <strong>{formatCurrency(cartTax)}</strong>
+            </div>
+            <div className="kiosk-receipt-grand">
+              <span>Total</span>
+              <strong>{formatCurrency(cartGrandTotal)}</strong>
+            </div>
+          </div>
+
+          <div className="kiosk-payment-actions">
+            <button
+              type="button"
+              className="primary bold kiosk-start-button"
+              disabled={submitting}
+              onClick={() => checkout('CASH')}
+            >
+              {submitting ? 'PROCESSING...' : 'PAY WITH CASH'}
+            </button>
+            <button
+              type="button"
+              className="primary bold kiosk-start-button"
+              disabled={submitting}
+              onClick={() => checkout('CARD')}
+            >
+              {submitting ? 'PROCESSING...' : 'PAY WITH CARD'}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className="kiosk-payment-back"
+            disabled={submitting}
+            onClick={() => setCheckoutStep(null)}
+          >
+            ← Back to ordering
           </button>
         </div>
       </section>
@@ -712,7 +828,7 @@ export default function KioskPage() {
               <button
                 className="primary bold kiosk-checkout-button"
                 disabled={!cart.length || submitting}
-                onClick={checkout}
+                onClick={() => setCheckoutStep('confirm')}
               >
                 {submitting ? 'PROCESSING...' : 'CHECKOUT'}
               </button>
@@ -832,6 +948,39 @@ export default function KioskPage() {
               {editingLine ? 'SAVE CHANGES' : 'ADD TO CART'} -{' '}
               {formatCurrency(computeItemPrice(customizingItem.price, draftCustomization))}
             </button>
+          </div>
+        </div>
+      ) : null}
+
+      {/* "Continue to checkout?" popup. Closes silently on Return; advances to the
+          payment screen on Continue. */}
+      {checkoutStep === 'confirm' ? (
+        <div
+          className="kiosk-modal-backdrop"
+          onClick={() => setCheckoutStep(null)}
+        >
+          <div
+            className="kiosk-modal panel kiosk-checkout-confirm"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="kiosk-modal-header">
+              <strong>Continue to checkout?</strong>
+            </div>
+            <p>
+              You can return to keep adding items, or continue to choose a payment method.
+            </p>
+            <div className="kiosk-modal-options kiosk-checkout-confirm-actions">
+              <button type="button" className="bold" onClick={() => setCheckoutStep(null)}>
+                RETURN TO ORDERING
+              </button>
+              <button
+                type="button"
+                className="primary bold"
+                onClick={() => setCheckoutStep('payment')}
+              >
+                CONTINUE TO CHECKOUT
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
