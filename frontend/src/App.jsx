@@ -1,3 +1,5 @@
+// App: top-level component that defines every route in the app and decides which
+// global widgets (NavBar, AccessibilityWidget, ChatWidget) appear on which pages.
 import { Route, Routes, useLocation } from 'react-router-dom';
 import NavBar from './components/NavBar.jsx';
 import HomePage from './pages/HomePage.jsx';
@@ -12,8 +14,10 @@ import ChatWidget from './components/ChatWidget.jsx';
 
 export default function App() {
   const location = useLocation();
+  // Pages that show the top NavBar. Full-screen views (kiosk, cashier, manager) hide it.
   const chromePages = new Set(['/sales']);
   const showNav = chromePages.has(location.pathname);
+  // Pages that get the floating Order Help chat widget (customer-facing pages only).
   const chatPages = new Set(['/', '/kiosk']);
   const showChat = chatPages.has(location.pathname);
 
