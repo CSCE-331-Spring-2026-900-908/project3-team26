@@ -1,3 +1,6 @@
+// InventoryTable: read-only table of ingredients used by ManagerPage's Inventory tab.
+// Receives an array of inventory rows already joined with ingredient names, and flags
+// each row as "Low Stock" or "Healthy" based on quantity vs threshold.
 export default function InventoryTable({ items }) {
   return (
     <div className="table-wrap">

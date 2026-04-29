@@ -1,5 +1,9 @@
+// ChatWidget: floating "Order Help" chat panel rendered on the home and kiosk pages.
+// Sends the conversation to the backend's /chat endpoint, which proxies it to the LLM
+// (Groq/OpenAI-compatible API). The reply is appended to the message list.
 import { useState, useRef, useEffect } from 'react';
 
+// System prompt that scopes the assistant to bubble-tea ordering questions only.
 const SYSTEM_PROMPT = `You are a friendly ordering assistant for a bubble tea shop. Help customers choose drinks, explain menu items, suggest customizations (milk tea, fruit tea, toppings, sweetness levels, ice levels), and guide them through placing their order. Keep responses concise and friendly. Only answer questions related to the menu and ordering process.`;
 
 export default function ChatWidget() {
@@ -11,10 +15,13 @@ export default function ChatWidget() {
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
 
+  // Auto-scrolls the message list to the bottom whenever a new message is added.
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Sends the user's input plus the prior conversation to the backend /chat route,
+  // then appends the assistant's reply (or an error message) to the messages array.
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
     const userText = input.trim();
@@ -50,6 +57,7 @@ export default function ChatWidget() {
     }
   };
 
+  // Submits the message on Enter (without Shift, which keeps the newline behavior intuitive).
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();

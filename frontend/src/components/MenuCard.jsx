@@ -1,3 +1,6 @@
+// MenuCard: reusable card showing one drink (name, category, price, ingredients) with
+// an "Add to Order" button. Used by OrderStation. The compact prop enables a tighter
+// layout used inside the kiosk.
 export default function MenuCard({ item, onAdd, compact = false }) {
   return (
     <article className={`menu-card ${compact ? 'compact' : ''}`}>
