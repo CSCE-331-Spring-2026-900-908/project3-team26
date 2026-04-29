@@ -1,3 +1,6 @@
+// SalesPage: public analytics view at "/sales". Calls three /sales/* endpoints in parallel
+// to render weekly totals, top items, hourly activity, peak day, and order-source breakdown.
+// Reuses the SQL reporting logic from Project 2.
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
@@ -15,6 +18,8 @@ export default function SalesPage() {
   const [peakDay, setPeakDay] = useState(null);
   const [error, setError] = useState('');
 
+  // Fetch all three sales reports in parallel on mount. Each endpoint runs a SQL query
+  // against the orders/order_items tables in PostgreSQL and returns aggregated results.
   useEffect(() => {
     Promise.all([api.get('/sales/weekly'), api.get('/sales/summary'), api.get('/sales/peak-day')])
       .then(([weeklyData, summaryData, peakData]) => {

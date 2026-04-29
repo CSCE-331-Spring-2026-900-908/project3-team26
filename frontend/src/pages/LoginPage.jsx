@@ -1,3 +1,7 @@
+// LoginPage: staff entry point at "/login" with two sign-in paths.
+// 1) PIN keypad (hard-coded mapping below) for fast in-store login.
+// 2) Google Sign-In via the Google Identity Services script for managers/cashiers.
+// On success, saves the session via utils/session.js and navigates to the role's page.
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveUserSession } from '../utils/session.js';
@@ -5,17 +9,21 @@ import { saveUserSession } from '../utils/session.js';
 const PIN_LENGTH = 5;
 const GOOGLE_SCRIPT_ID = 'team26-google-identity';
 
+// Demo PINs mapped to roles + redirect target. Real deploys would look these up from the database.
 const PIN_ROLES = {
   '55555': { role: 'manager', employeeId: '1', redirect: '/manager' },
   '44444': { role: 'cashier', employeeId: '2', redirect: '/cashier' },
   '33333': { role: 'cashier', employeeId: '3', redirect: '/cashier' },
 };
 
+// Roles selectable from the Google sign-in tab so the same Google account can sign in as either role.
 const LOGIN_ROLE_OPTIONS = [
   { key: 'cashier', label: 'Cashier', employeeId: '2', redirect: '/cashier' },
   { key: 'manager', label: 'Manager', employeeId: '1', redirect: '/manager' },
 ];
 
+// Pulls the user profile (email, name) out of the Google JWT credential without verifying signature.
+// Verification happens server-side; this is just for displaying the user's info in the UI.
 function decodeJwtPayload(token) {
   const payload = token.split('.')[1];
   if (!payload) {
@@ -36,6 +44,7 @@ export default function LoginPage() {
   const [googleReady, setGoogleReady] = useState(false);
   const [googleError, setGoogleError] = useState('');
 
+  // Persists the session in localStorage and routes to the role's landing page.
   function finishLogin(match, extra = {}) {
     saveUserSession({
       employeeId: match.employeeId,
@@ -47,6 +56,7 @@ export default function LoginPage() {
     navigate(match.redirect);
   }
 
+  // Auto-submits the PIN once five digits are entered. Clears after a short delay on a bad PIN.
   useEffect(() => {
     if (pin.length !== PIN_LENGTH) {
       return;
@@ -63,6 +73,7 @@ export default function LoginPage() {
     finishLogin(match);
   }, [pin, navigate]);
 
+  // Loads Google's Identity Services script the first time the page mounts.
   useEffect(() => {
     if (window.google?.accounts?.id) {
       setGoogleReady(true);
@@ -94,6 +105,8 @@ export default function LoginPage() {
     return undefined;
   }, []);
 
+  // Initializes Google Sign-In and renders the button once the script is ready
+  // and the user has chosen a role (cashier vs manager) for the Google login path.
   useEffect(() => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     if (!googleReady || !googleButtonRef.current) {
@@ -139,6 +152,7 @@ export default function LoginPage() {
     });
   }, [googleReady, selectedRole]);
 
+  // PIN keypad handlers: press appends a digit, backspace removes the last, clear empties the PIN.
   function press(digit) {
     setError('');
     setPin((current) => (current.length < PIN_LENGTH ? current + digit : current));

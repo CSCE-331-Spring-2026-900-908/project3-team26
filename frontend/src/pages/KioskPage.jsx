@@ -1,9 +1,15 @@
+// KioskPage: customer-facing self-order screen at "/kiosk".
+// Loads the menu via api.get('/menu'), lets the customer filter by category / ingredient / price,
+// customize a drink (size, sweetness, ice, toppings) in a modal, then checkout — which POSTs the
+// cart to /orders and shows a confirmation screen.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
 import { getMenuImage } from '../utils/menuImages.js';
 
+// Tags <body> with data-page="kiosk" while the kiosk is active so kiosk-specific CSS can apply
+// (e.g., repositioning the accessibility/chat buttons). Cleans up on unmount.
 function useKioskBodyFlag(started, hasConfirmation) {
   useEffect(() => {
     const active = started && !hasConfirmation;
@@ -46,6 +52,8 @@ const DEFAULT_CUSTOMIZATION = {
   toppings: [],
 };
 
+// Price modifiers applied on top of the menu item's base price. Sizes shift up/down,
+// toppings add a flat fee. Backend mirrors this logic so totals are recomputed server-side.
 const SIZE_PRICE_DELTA = { Small: -1.10, Medium: 0, Large: 1.10 };
 const TOPPING_PRICES = {
   Boba: 0.75,
@@ -54,6 +62,7 @@ const TOPPING_PRICES = {
   'Lychee Popping': 0.75,
 };
 
+// Computes the per-line price for a customized drink: base + size delta + sum(topping prices).
 function computeItemPrice(basePrice, customization) {
   const sizeDelta = SIZE_PRICE_DELTA[customization?.size] ?? 0;
   const toppingsTotal = (customization?.toppings || []).reduce(
@@ -63,10 +72,12 @@ function computeItemPrice(basePrice, customization) {
   return Number((Number(basePrice || 0) + sizeDelta + toppingsTotal).toFixed(2));
 }
 
+// Drinks that should appear under "Specialty" even though their name matches another category's keywords.
 const SPECIALTY_OVERRIDES = new Set([
   'creme brulee milk tea',
 ]);
 
+// Buckets a drink into one of the four kiosk categories based on keywords in its name.
 function inferCategory(name = '') {
   const normalized = name.toLowerCase().trim();
   if (SPECIALTY_OVERRIDES.has(normalized)) {
@@ -94,6 +105,7 @@ function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
+// Builds the human-readable line shown under each cart item (e.g. "Medium · Cold · Sweet 75% · Ice 100% · Boba").
 function customizationSummary(custom) {
   const parts = [
     custom.size,
@@ -107,6 +119,8 @@ function customizationSummary(custom) {
   return parts.join(' · ');
 }
 
+// Returns true if any of the search terms appears in the drink's ingredient list or name.
+// Used by the dietary filters below.
 function includesAnyIngredient(item, terms) {
   const ingredients = (item.ingredients || []).map((ingredient) => ingredient.toLowerCase());
   const normalizedName = item.name.toLowerCase();
@@ -117,6 +131,7 @@ function includesAnyIngredient(item, terms) {
   );
 }
 
+// Maps the dropdown's "special:*" filter values to the actual ingredient checks.
 function matchesSpecialFilter(item, filterValue) {
   switch (filterValue) {
     case 'special:dairy-free':
@@ -156,6 +171,8 @@ export default function KioskPage() {
 
   useKioskBodyFlag(started, Boolean(confirmation));
 
+  // Measures the heights of the sticky header and category bar so the menu grid below
+  // them can offset itself. Re-runs on resize via ResizeObserver.
   useEffect(() => {
     if (!started || confirmation) {
       setKioskFixedHeights({ header: 0, categories: 0 });
@@ -192,6 +209,8 @@ export default function KioskPage() {
     };
   }, [started, confirmation]);
 
+  // Fetches the menu from the backend on mount. Filters to available items and
+  // tags each item with its inferred category so the category buttons can filter locally.
   useEffect(() => {
     api
       .get('/menu')
@@ -210,6 +229,8 @@ export default function KioskPage() {
     []
   );
 
+  // Items that match the active category and ingredient filter. The price slider
+  // narrows this further into `visibleItems` below.
   const baseFilteredItems = useMemo(
     () =>
       menuItems.filter((item) => {
@@ -286,11 +307,13 @@ export default function KioskPage() {
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
+  // Opens the customization modal for the chosen menu item with default options.
   function openCustomization(item) {
     setCustomizingItem(item);
     setDraftCustomization(DEFAULT_CUSTOMIZATION);
   }
 
+  // Adds or removes a topping from the in-progress customization.
   function toggleTopping(topping) {
     setDraftCustomization((current) => ({
       ...current,
@@ -300,6 +323,8 @@ export default function KioskPage() {
     }));
   }
 
+  // Adds the customized drink to the cart. Drinks with identical customizations stack
+  // into one line (quantity++); different customizations of the same drink stay separate.
   function confirmAddToCart() {
     if (!customizingItem) {
       return;
@@ -340,6 +365,7 @@ export default function KioskPage() {
     setDraftCustomization(DEFAULT_CUSTOMIZATION);
   }
 
+  // Increments or decrements the quantity for a specific cart line. Lines that hit zero are removed.
   function updateQuantity(customKey, id, delta) {
     setCart((current) =>
       current
@@ -352,6 +378,8 @@ export default function KioskPage() {
     );
   }
 
+  // Submits the cart to the backend's /orders endpoint, which writes the order and
+  // its line items to PostgreSQL and returns the saved order. Shows a confirmation on success.
   async function checkout() {
     if (!cart.length) {
       return;
@@ -383,6 +411,7 @@ export default function KioskPage() {
     }
   }
 
+  // Returns the kiosk to the welcome screen and clears any in-progress order/customization.
   function resetKiosk() {
     setStarted(false);
     setCart([]);

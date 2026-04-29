@@ -1,3 +1,5 @@
+// NotFoundPage: catch-all route ("*" in App.jsx) shown when a URL doesn't match any defined route.
+// Provides a single link back to the home page.
 import { Link } from 'react-router-dom';
 
 export default function NotFoundPage() {

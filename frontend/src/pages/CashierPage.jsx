@@ -1,3 +1,7 @@
+// CashierPage: in-store POS view at "/cashier" used by employees to ring up walk-in orders.
+// Loads the menu from /menu, lets the cashier pick a drink + customization, build a list of
+// order lines, and submit the order via POST /orders. The submitted order is written to the
+// orders + order_items tables in PostgreSQL.
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
@@ -10,6 +14,7 @@ const sugarLevels = ['0%', '25%', '50%', '75%', '100%'];
 const iceLevels = ['No Ice', 'Less Ice', 'Regular'];
 const addOnOptions = ['Boba', 'Jelly', 'Cheese Foam'];
 
+// Buckets a drink into one of four categories based on keywords in its name.
 function getCategory(name = '') {
   const normalized = name.toLowerCase();
   if (normalized.includes('milk tea') || normalized.includes('latte')) {
@@ -36,6 +41,7 @@ function formatCurrency(value) {
 
 export default function CashierPage() {
   const navigate = useNavigate();
+  // Employee ID is saved in localStorage at login by saveUserSession() in utils/session.js.
   const employeeId = localStorage.getItem('team26-employee-id') || '2';
   const [menuItems, setMenuItems] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Milk Tea');
@@ -49,6 +55,7 @@ export default function CashierPage() {
   const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState('');
 
+  // Loads the menu from the backend on mount; only available items are shown.
   useEffect(() => {
     api
       .get('/menu')
@@ -71,12 +78,15 @@ export default function CashierPage() {
 
   const total = orderLines.reduce((sum, line) => sum + line.price * line.quantity, 0);
 
+  // Toggles an add-on (Boba, Jelly, etc.) on or off for the in-progress drink.
   function toggleAddon(addon) {
     setAddons((current) =>
       current.includes(addon) ? current.filter((entry) => entry !== addon) : [...current, addon]
     );
   }
 
+  // Pushes the currently selected drink + customization onto the order. Identical
+  // customizations of the same drink stack into a single line with a higher quantity.
   function addSelectedToOrder() {
     if (!selectedItem) {
       window.alert('Choose a menu item first.');
@@ -113,6 +123,7 @@ export default function CashierPage() {
     });
   }
 
+  // Empties the cart and resets the customization form back to defaults.
   function clearOrder() {
     setOrderLines([]);
     setSelectedItemId(null);
@@ -123,6 +134,8 @@ export default function CashierPage() {
     setConfirmation(null);
   }
 
+  // Submits the cart to the backend's /orders endpoint, which inserts the order plus
+  // its line items into PostgreSQL inside a transaction. Shows a confirmation on success.
   async function submitOrder() {
     if (!orderLines.length) {
       window.alert('Add at least one item to order.');
