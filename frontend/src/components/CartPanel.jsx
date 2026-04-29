@@ -1,3 +1,6 @@
+// CartPanel: side panel that lists the in-progress order, lets the user adjust line
+// quantities, choose a payment method, and submit. Pure UI — all state and the
+// submit handler are passed in as props by the parent (OrderStation).
 export default function CartPanel({
   cart,
   total,

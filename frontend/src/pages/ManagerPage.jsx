@@ -1,3 +1,7 @@
+// ManagerPage: manager-only dashboard at "/manager". Six sections (Dashboard, Orders,
+// Inventory, Menu, Employees, Reports), each backed by an API endpoint under /manager/*.
+// All forms (inventory create/update, menu CRUD, employee CRUD, void order) round-trip to
+// the backend and re-fetch the page data so the UI stays in sync with PostgreSQL.
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
@@ -35,6 +39,8 @@ export default function ManagerPage() {
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
 
+  // Pulls every section's data in parallel from the backend. Called on mount and
+  // again after any mutation (create, update, void) so the UI stays in sync with PostgreSQL.
   async function loadPage() {
     try {
       const [dashboardData, inventoryData, menuData, employeeData, orderData, xData, zData] =
@@ -63,6 +69,7 @@ export default function ManagerPage() {
     loadPage();
   }, []);
 
+  // POSTs a new ingredient + inventory row to /manager/inventory, then refreshes the page.
   async function handleInventoryCreate(event) {
     event.preventDefault();
     setFeedback('');
@@ -82,6 +89,7 @@ export default function ManagerPage() {
     }
   }
 
+  // PATCHes an existing inventory row to add/remove stock or change the low-stock threshold.
   async function handleInventoryUpdate(event) {
     event.preventDefault();
     setFeedback('');
@@ -99,6 +107,8 @@ export default function ManagerPage() {
     }
   }
 
+  // Creates or updates a menu item depending on whether menuForm.id was filled in.
+  // POST /manager/menu for a new item, PATCH /manager/menu/:id for an edit.
   async function handleMenuSubmit(event) {
     event.preventDefault();
     setFeedback('');
@@ -138,6 +148,8 @@ export default function ManagerPage() {
     }
   }
 
+  // Creates a new employee or updates an existing one. Detects which by looking up the ID
+  // in the already-loaded employees list.
   async function handleEmployeeSubmit(event) {
     event.preventDefault();
     setFeedback('');
@@ -165,6 +177,8 @@ export default function ManagerPage() {
     }
   }
 
+  // Voids an order by ID. Backend records the void with the manager's employee ID
+  // so the audit trail in order_voids stays correct.
   async function handleVoidOrder(event) {
     event.preventDefault();
     setFeedback('');

@@ -1,3 +1,7 @@
+// CashierPage: in-store POS view at "/cashier" used by employees to ring up walk-in orders.
+// Loads the menu from /menu, lets the cashier pick a drink + customization, build a list of
+// order lines, and submit the order via POST /orders. The submitted order is written to the
+// orders + order_items tables in PostgreSQL.
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
@@ -19,8 +23,25 @@ const defaultCustomization = {
   quantity: 1,
 };
 
-function createDefaultCustomization() {
-  return { ...defaultCustomization, addons: [] };
+// Buckets a drink into one of four categories based on keywords in its name.
+function getCategory(name = '') {
+  const normalized = name.toLowerCase();
+  if (normalized.includes('milk tea') || normalized.includes('latte')) {
+    return 'Milk Tea';
+  }
+  if (
+    normalized.includes('green tea') ||
+    normalized.includes('black tea') ||
+    normalized.includes('oolong tea') ||
+    normalized.includes('lychee') ||
+    normalized.includes('passionfruit')
+  ) {
+    return 'Fruit Tea';
+  }
+  if (normalized.includes('slush')) {
+    return 'Slush';
+  }
+  return 'Specialty';
 }
 
 function formatCurrency(value) {
@@ -39,6 +60,7 @@ function getCustomizationKey(customization) {
 
 export default function CashierPage() {
   const navigate = useNavigate();
+  // Employee ID is saved in localStorage at login by saveUserSession() in utils/session.js.
   const employeeId = localStorage.getItem('team26-employee-id') || '2';
   const [menuItems, setMenuItems] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Milk Tea');
@@ -48,6 +70,7 @@ export default function CashierPage() {
   const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState('');
 
+  // Loads the menu from the backend on mount; only available items are shown.
   useEffect(() => {
     let active = true;
 
@@ -125,26 +148,18 @@ export default function CashierPage() {
     });
   }
 
-  function updateModalDraft(updates) {
-    setCustomizationModal((current) =>
-      current ? { ...current, draft: { ...current.draft, ...updates } } : current
+  // Toggles an add-on (Boba, Jelly, etc.) on or off for the in-progress drink.
+  function toggleAddon(addon) {
+    setAddons((current) =>
+      current.includes(addon) ? current.filter((entry) => entry !== addon) : [...current, addon]
     );
   }
 
-  function toggleModalAddon(addon) {
-    setCustomizationModal((current) => {
-      if (!current) {
-        return current;
-      }
-      const addons = current.draft.addons.includes(addon)
-        ? current.draft.addons.filter((entry) => entry !== addon)
-        : [...current.draft.addons, addon];
-      return { ...current, draft: { ...current.draft, addons } };
-    });
-  }
-
-  function saveCustomization() {
-    if (!customizationModal) {
+  // Pushes the currently selected drink + customization onto the order. Identical
+  // customizations of the same drink stack into a single line with a higher quantity.
+  function addSelectedToOrder() {
+    if (!selectedItem) {
+      window.alert('Choose a menu item first.');
       return;
     }
 
@@ -198,12 +213,15 @@ export default function CashierPage() {
     setOrderLines((current) => current.filter((line) => line.id !== lineId));
   }
 
+  // Empties the cart and resets the customization form back to defaults.
   function clearOrder() {
     setOrderLines([]);
     setCustomizationModal(null);
     setConfirmation(null);
   }
 
+  // Submits the cart to the backend's /orders endpoint, which inserts the order plus
+  // its line items into PostgreSQL inside a transaction. Shows a confirmation on success.
   async function submitOrder() {
     if (!orderLines.length) {
       window.alert('Add at least one item to order.');

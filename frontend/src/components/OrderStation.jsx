@@ -1,8 +1,13 @@
+// OrderStation: shared order-building UI used by the simpler kiosk/cashier flows.
+// Loads the menu, lets the user add items to a cart, and submits the cart to /orders.
+// The `source` prop ("kiosk" or "cashier") tags the order on the backend so reports
+// can split kiosk vs cashier sales.
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client.js';
 import MenuCard from './MenuCard.jsx';
 import CartPanel from './CartPanel.jsx';
 
+// Loads the menu from the backend on mount and exposes it to the component.
 function useMenu() {
   const [menu, setMenu] = useState([]);
   const [error, setError] = useState('');
@@ -45,6 +50,7 @@ export default function OrderStation({
 
   const total = cart.reduce((sum, line) => sum + line.price * line.quantity, 0);
 
+  // Adds an item to the cart, or bumps its quantity if it's already there.
   function addToCart(item) {
     setCart((current) => {
       const existing = current.find((line) => line.id === item.id);
@@ -57,6 +63,7 @@ export default function OrderStation({
     });
   }
 
+  // Increments or decrements a line. Lines that hit zero are removed from the cart.
   function updateQuantity(id, delta) {
     setCart((current) =>
       current
@@ -67,6 +74,8 @@ export default function OrderStation({
     );
   }
 
+  // POSTs the cart to the backend's /orders endpoint and stores the saved order
+  // for the confirmation screen. cashierId is only sent when source === 'cashier'.
   async function submitOrder() {
     setLoading(true);
     try {

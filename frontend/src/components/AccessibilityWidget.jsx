@@ -1,3 +1,8 @@
+// AccessibilityWidget: floating button + panel offering three tools:
+//   1) Translation (loads Google Translate's element script and sets its language cookie)
+//   2) Magnifier (renders a circular lens that follows the cursor and shows a scaled clone of the page)
+//   3) Contrast (writes data-contrast on <body> so CSS can swap color schemes)
+// User preferences persist in localStorage so the choices survive page reloads.
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'bubble-tea-accessibility';
@@ -32,6 +37,9 @@ const CONTRAST_OPTIONS = [
   { value: 'soft', label: 'Soft Contrast' },
 ];
 
+// Reads saved preferences from localStorage, falling back to sensible defaults.
+// Translation language is cross-checked against the Google Translate cookie so the
+// widget stays in sync if the user changed the language outside our UI.
 function getStoredPreferences() {
   if (typeof window === 'undefined') {
     return { language: 'en', scale: '1', contrast: 'default' };
@@ -50,6 +58,7 @@ function getStoredPreferences() {
   }
 }
 
+// Sets the googtrans cookie so Google Translate picks up the requested language on load.
 function setGoogleTranslateCookie(language) {
   const value = language === 'en' ? '/auto/en' : `/auto/${language}`;
   const cookie = `googtrans=${value};path=/`;
@@ -60,6 +69,7 @@ function setGoogleTranslateCookie(language) {
   }
 }
 
+// Expires the googtrans cookie so Google Translate reverts to the original English page.
 function clearGoogleTranslateCookie() {
   const expired = 'googtrans=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
   document.cookie = expired;
@@ -84,6 +94,8 @@ function getLanguageFromGoogleTranslateCookie() {
   return parts[2] || null;
 }
 
+// Drives Google Translate's hidden <select> programmatically so changing the language
+// in our panel actually triggers a translation.
 function applyGoogleTranslate(language) {
   const select = document.querySelector('.goog-te-combo');
   if (!select) {
@@ -115,6 +127,8 @@ function applyGoogleTranslate(language) {
   return true;
 }
 
+// Google Translate's <select> sometimes mounts after we try to drive it, so we retry
+// on a backoff for a few seconds until it sticks. Returns a cleanup that cancels timers.
 function forceGoogleTranslate(language) {
   // Try until the hidden Google select exists, then stop so it does not re-translate repeatedly.
   let applied = false;
@@ -145,6 +159,7 @@ export default function AccessibilityWidget() {
   const mutationObserverRef = useRef(null);
   const isDraggingRef = useRef(false);
 
+  // Saves the chosen language, sets/clears the Google Translate cookie, and triggers a translation.
   const handleLanguageChange = (nextLanguage) => {
     if (nextLanguage === language) {
       return;
@@ -169,6 +184,8 @@ export default function AccessibilityWidget() {
     setGoogleTranslateCookie(nextLanguage);
   };
 
+  // Mirrors the contrast choice onto <body data-contrast="..."> so our CSS can react,
+  // and persists all three preferences to localStorage on every change.
   useEffect(() => {
     document.body.dataset.contrast = contrast;
 
@@ -182,6 +199,9 @@ export default function AccessibilityWidget() {
     }
   }, [contrast, language, scale]);
 
+  // Magnifier setup: when scale > 1, clones the app DOM into a circular lens that
+  // follows the cursor/touch. A MutationObserver re-clones the DOM whenever the page
+  // changes so the lens stays in sync with the live UI. Cleans up on unmount/scale=1.
   useEffect(() => {
     if (scale === '1') {
       setLensVisible(false);
@@ -282,6 +302,8 @@ export default function AccessibilityWidget() {
     };
   }, [scale]);
 
+  // Lazily loads Google Translate's element script the first time a non-English language
+  // is selected. Skips loading on subsequent visits if the global is already present.
   useEffect(() => {
     if (language === 'en') {
       return undefined;
