@@ -1,5 +1,6 @@
 // App: top-level component that defines every route in the app and decides which
 // global widgets (NavBar, AccessibilityWidget, ChatWidget) appear on which pages.
+import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import NavBar from './components/NavBar.jsx';
 import HomePage from './pages/HomePage.jsx';
