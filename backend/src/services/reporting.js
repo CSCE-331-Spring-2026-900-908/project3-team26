@@ -1,4 +1,4 @@
-import { query } from '../db/pool.js';
+import { query, withClient } from '../db/pool.js';
 import { getSchemaSupport } from '../db/compat.js';
 
 function money(value) {
@@ -14,6 +14,41 @@ function normalizeMethod(value = '') {
     return 'CASH';
   }
   return 'OTHER';
+}
+
+function emptyReport(businessDate, signature = 'Manager', closedAt = null) {
+  return {
+    businessDate,
+    sales: money(0),
+    tax: money(0),
+    cashPayments: money(0),
+    cardPayments: money(0),
+    otherPayments: money(0),
+    voids: 0,
+    hourly: [],
+    signature,
+    closedAt,
+  };
+}
+
+export async function getZReportCloseStatus(businessDate) {
+  const support = await getSchemaSupport();
+  if (!support.hasReportDailyTotals) {
+    return { closed: false, closedAt: null, signature: null };
+  }
+
+  const result = await query(
+    `SELECT z_generated, z_generated_at, z_signature
+     FROM report_daily_totals
+     WHERE business_date = $1`,
+    [businessDate]
+  );
+  const row = result.rows[0];
+  return {
+    closed: Boolean(row?.z_generated),
+    closedAt: row?.z_generated_at || null,
+    signature: row?.z_signature || null,
+  };
 }
 
 export async function getDailyTotals(businessDate) {
@@ -111,6 +146,11 @@ export async function getHourlySalesSummary(businessDate) {
 }
 
 export async function buildXReport(businessDate) {
+  const closeStatus = await getZReportCloseStatus(businessDate);
+  if (closeStatus.closed) {
+    return emptyReport(businessDate, closeStatus.signature || 'Manager', closeStatus.closedAt);
+  }
+
   const totals = await getDailyTotals(businessDate);
   const hourly = await getHourlySalesSummary(businessDate);
 
@@ -128,9 +168,166 @@ export async function buildXReport(businessDate) {
 
 export async function buildZPreview(businessDate, signature = 'Manager') {
   const report = await buildXReport(businessDate);
+  const closeStatus = await getZReportCloseStatus(businessDate);
+  const closedAt = closeStatus.closedAt;
+
   return {
     ...report,
-    signature,
-    status: 'ready-to-close',
+    signature: closeStatus.signature || signature,
+    closedAt,
+    status: closeStatus.closed ? 'closed' : 'ready-to-close',
   };
+}
+
+export async function closeZReport(businessDate, signature = 'Manager') {
+  const support = await getSchemaSupport();
+  if (!support.hasReportDailyTotals || !support.hasZReportArchive) {
+    throw new Error('Z report reset requires the report tables. Run database/migrations.sql first.');
+  }
+
+  const totals = await getDailyTotals(businessDate);
+  const normalizedSignature = String(signature || 'Manager').trim() || 'Manager';
+
+  const closedAt = await withClient(async (client) => {
+    await client.query('BEGIN');
+    try {
+      const existing = await client.query(
+        `SELECT z_generated
+         FROM report_daily_totals
+         WHERE business_date = $1
+         FOR UPDATE`,
+        [businessDate]
+      );
+
+      if (existing.rows[0]?.z_generated) {
+        throw new Error('Z report has already been reset for today.');
+      }
+
+      const closedResult = await client.query(
+        `INSERT INTO report_daily_totals (
+           business_date,
+           sales,
+           voids,
+           cash_payments,
+           card_payments,
+           other_payments,
+           tax,
+           total_cash,
+           z_generated,
+           z_generated_at,
+           z_signature
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, NOW(), $9)
+         ON CONFLICT (business_date)
+         DO UPDATE SET
+           sales = EXCLUDED.sales,
+           voids = EXCLUDED.voids,
+           cash_payments = EXCLUDED.cash_payments,
+           card_payments = EXCLUDED.card_payments,
+           other_payments = EXCLUDED.other_payments,
+           tax = EXCLUDED.tax,
+           total_cash = EXCLUDED.total_cash,
+           z_generated = TRUE,
+           z_generated_at = NOW(),
+           z_signature = EXCLUDED.z_signature
+         RETURNING z_generated_at`,
+        [
+          businessDate,
+          totals.sales,
+          totals.voids,
+          totals.cashPayments,
+          totals.cardPayments,
+          totals.otherPayments,
+          totals.tax,
+          totals.totalCash,
+          normalizedSignature,
+        ]
+      );
+
+      await client.query(
+        `INSERT INTO z_report_archive (
+           business_date,
+           generated_at,
+           signature,
+           sales,
+           returns_amount,
+           returns_count,
+           voids,
+           discards,
+           cash_payments,
+           card_payments,
+           other_payments,
+           tax,
+           total_cash,
+           discounts,
+           service_charges
+         )
+         VALUES ($1, NOW(), $2, $3, 0, 0, $4, 0, $5, $6, $7, $8, $9, 0, 0)`,
+        [
+          businessDate,
+          normalizedSignature,
+          totals.sales,
+          totals.voids,
+          totals.cashPayments,
+          totals.cardPayments,
+          totals.otherPayments,
+          totals.tax,
+          totals.totalCash,
+        ]
+      );
+
+      await client.query('COMMIT');
+      return closedResult.rows[0].z_generated_at;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    }
+  });
+
+  return {
+    ...(await buildZPreview(businessDate, normalizedSignature)),
+    closedAt,
+    status: 'closed',
+  };
+}
+
+export async function reopenZReport(businessDate) {
+  const support = await getSchemaSupport();
+  if (!support.hasReportDailyTotals || !support.hasZReportArchive) {
+    throw new Error('Z report reset requires the report tables. Run database/migrations.sql first.');
+  }
+
+  await withClient(async (client) => {
+    await client.query('BEGIN');
+    try {
+      const existing = await client.query(
+        `SELECT z_generated
+         FROM report_daily_totals
+         WHERE business_date = $1
+         FOR UPDATE`,
+        [businessDate]
+      );
+
+      if (!existing.rows[0]?.z_generated) {
+        throw new Error('Z report is not currently reset.');
+      }
+
+      await client.query(
+        `UPDATE report_daily_totals
+         SET z_generated = FALSE,
+             z_generated_at = NULL,
+             z_signature = NULL
+         WHERE business_date = $1`,
+        [businessDate]
+      );
+      await client.query('DELETE FROM z_report_archive WHERE business_date = $1', [businessDate]);
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    }
+  });
+
+  return buildZPreview(businessDate);
 }

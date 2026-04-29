@@ -21,6 +21,18 @@ export default function App() {
   const chatPages = new Set(['/', '/kiosk']);
   const showChat = chatPages.has(location.pathname);
 
+  useEffect(() => {
+    if (showChat) {
+      document.body.dataset.chatPage = 'true';
+    } else {
+      delete document.body.dataset.chatPage;
+    }
+
+    return () => {
+      delete document.body.dataset.chatPage;
+    };
+  }, [showChat]);
+
   return (
     <>
       <div className="app-shell">

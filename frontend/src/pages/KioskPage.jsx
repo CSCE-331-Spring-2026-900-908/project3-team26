@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
 import { getMenuImage } from '../utils/menuImages.js';
+import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
 
 // Tags <body> with data-page="kiosk" while the kiosk is active so kiosk-specific CSS can apply
 // (e.g., repositioning the accessibility/chat buttons). Cleans up on unmount.
@@ -24,7 +25,6 @@ function useKioskBodyFlag(started, hasConfirmation) {
   }, [started, hasConfirmation]);
 }
 
-const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
 const allIngredientsValue = 'all';
 const allIngredientsLabel = 'All Ingredients';
 const specialFilterOptions = [
@@ -161,6 +161,7 @@ export default function KioskPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [customizingItem, setCustomizingItem] = useState(null);
+  const [editingLine, setEditingLine] = useState(null);
   const [draftCustomization, setDraftCustomization] = useState(DEFAULT_CUSTOMIZATION);
   const kioskHeaderRef = useRef(null);
   const kioskCategoriesRef = useRef(null);
@@ -212,16 +213,30 @@ export default function KioskPage() {
   // Fetches the menu from the backend on mount. Filters to available items and
   // tags each item with its inferred category so the category buttons can filter locally.
   useEffect(() => {
-    api
-      .get('/menu')
-      .then((data) =>
-        setMenuItems(
-          data.items
-            .filter((item) => item.availability)
-            .map((item) => ({ ...item, category: inferCategory(item.name) }))
-        )
-      )
-      .catch((err) => setError(err.message));
+    let active = true;
+
+    async function loadMenu() {
+      try {
+        const data = await api.get('/menu');
+        if (active) {
+          setMenuItems(data.items.filter((item) => item.availability).map(normalizeMenuItem));
+        }
+      } catch (err) {
+        if (active) {
+          setError(err.message);
+        }
+      }
+    }
+
+    loadMenu();
+    const intervalId = window.setInterval(loadMenu, 10000);
+    window.addEventListener('focus', loadMenu);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', loadMenu);
+    };
   }, []);
 
   const filterOptions = useMemo(
@@ -309,6 +324,7 @@ export default function KioskPage() {
 
   // Opens the customization modal for the chosen menu item with default options.
   function openCustomization(item) {
+    setEditingLine(null);
     setCustomizingItem(item);
     setDraftCustomization(DEFAULT_CUSTOMIZATION);
   }
@@ -330,15 +346,50 @@ export default function KioskPage() {
       return;
     }
 
-    const key = JSON.stringify({
-      size: draftCustomization.size,
-      temperature: draftCustomization.temperature,
-      sweetness: draftCustomization.sweetness,
-      ice: draftCustomization.ice,
-      toppings: [...draftCustomization.toppings].sort(),
-    });
+    const key = getCustomizationKey(draftCustomization);
+    const price = computeItemPrice(customizingItem.price, draftCustomization);
+    const customization = {
+      ...draftCustomization,
+      toppings: [...draftCustomization.toppings],
+    };
 
     setCart((current) => {
+      if (editingLine) {
+        const lineBeingEdited = current.find(
+          (line) => line.id === editingLine.id && line.customKey === editingLine.customKey
+        );
+        if (!lineBeingEdited) {
+          return current;
+        }
+
+        const remainingLines = current.filter(
+          (line) => !(line.id === editingLine.id && line.customKey === editingLine.customKey)
+        );
+        const matchingLine = remainingLines.find(
+          (line) => line.id === customizingItem.id && line.customKey === key
+        );
+
+        if (matchingLine) {
+          return remainingLines.map((line) =>
+            line === matchingLine
+              ? { ...line, quantity: line.quantity + lineBeingEdited.quantity }
+              : line
+          );
+        }
+
+        return [
+          ...remainingLines,
+          {
+            ...lineBeingEdited,
+            name: customizingItem.name,
+            price,
+            customKey: key,
+            customization,
+            basePrice: customizingItem.price,
+          },
+        ];
+      }
+
       const existing = current.find(
         (line) => line.id === customizingItem.id && line.customKey === key
       );
@@ -353,16 +404,16 @@ export default function KioskPage() {
         {
           id: customizingItem.id,
           name: customizingItem.name,
-          price: computeItemPrice(customizingItem.price, draftCustomization),
+          price,
           quantity: 1,
           customKey: key,
-          customization: draftCustomization,
+          customization,
+          basePrice: customizingItem.price,
         },
       ];
     });
 
-    setCustomizingItem(null);
-    setDraftCustomization(DEFAULT_CUSTOMIZATION);
+    closeCustomization();
   }
 
   // Increments or decrements the quantity for a specific cart line. Lines that hit zero are removed.
@@ -419,8 +470,7 @@ export default function KioskPage() {
     setActiveCategory('Milk Tea');
     setActiveFilterValue(allIngredientsValue);
     setActiveMaxPrice(0);
-    setCustomizingItem(null);
-    setDraftCustomization(DEFAULT_CUSTOMIZATION);
+    closeCustomization();
   }
 
   if (!started) {
@@ -471,6 +521,10 @@ export default function KioskPage() {
       <div className="cashier-header kiosk-header" ref={kioskHeaderRef}>
         <div className="kiosk-banner">
           <div className="kiosk-banner-row">
+            <div className="kiosk-brand-wordmark notranslate" translate="no" aria-label="DATS Boba">
+              <span>DATS</span>
+              <strong>Boba</strong>
+            </div>
             <h2>KIOSK - SELF ORDERING</h2>
             <div className="kiosk-header-actions">
               <button onClick={resetKiosk}>RESET</button>
@@ -590,10 +644,29 @@ export default function KioskPage() {
                       </div>
                       <div>{formatCurrency(item.price)}</div>
                     </div>
-                    <div className="kiosk-qty-controls">
-                      <button onClick={() => updateQuantity(item.customKey, item.id, -1)}>-</button>
-                      <span>{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.customKey, item.id, 1)}>+</button>
+                    <div className="kiosk-cart-actions">
+                      <button
+                        type="button"
+                        className="kiosk-edit-button"
+                        onClick={() => openCartEdit(item)}
+                      >
+                        Edit
+                      </button>
+                      <div className="kiosk-qty-controls">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.customKey, item.id, -1)}
+                        >
+                          -
+                        </button>
+                        <span>{item.quantity}</span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.customKey, item.id, 1)}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -616,14 +689,14 @@ export default function KioskPage() {
       </div>
 
       {customizingItem ? (
-        <div className="kiosk-modal-backdrop" onClick={() => setCustomizingItem(null)}>
+        <div className="kiosk-modal-backdrop" onClick={closeCustomization}>
           <div className="kiosk-modal panel" onClick={(event) => event.stopPropagation()}>
             <div className="kiosk-modal-header">
               <div>
                 <strong>{customizingItem.name}</strong>
                 <p>{formatCurrency(customizingItem.price)}</p>
               </div>
-              <button type="button" onClick={() => setCustomizingItem(null)}>
+              <button type="button" onClick={closeCustomization}>
                 Close
               </button>
             </div>
@@ -723,7 +796,8 @@ export default function KioskPage() {
               className="primary bold kiosk-modal-confirm"
               onClick={confirmAddToCart}
             >
-              ADD TO CART - {formatCurrency(computeItemPrice(customizingItem.price, draftCustomization))}
+              {editingLine ? 'SAVE CHANGES' : 'ADD TO CART'} -{' '}
+              {formatCurrency(computeItemPrice(customizingItem.price, draftCustomization))}
             </button>
           </div>
         </div>

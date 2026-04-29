@@ -34,6 +34,8 @@ export default function ManagerPage() {
   const [menuForm, setMenuForm] = useState(initialMenuForm);
   const [employeeForm, setEmployeeForm] = useState(initialEmployeeForm);
   const [voidOrderId, setVoidOrderId] = useState('');
+  const [zClosing, setZClosing] = useState(false);
+  const [zReopening, setZReopening] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
 
@@ -112,19 +114,24 @@ export default function ManagerPage() {
     setFeedback('');
     setError('');
     try {
+      const hasIngredientIds = menuForm.ingredientIds.trim() !== '';
       const ingredientIds = menuForm.ingredientIds
         .split(',')
         .map((part) => part.trim())
         .filter(Boolean)
-        .map(Number);
+        .map(Number)
+        .filter(Number.isFinite);
 
       if (menuForm.id) {
-        await api.patch(`/manager/menu/${menuForm.id}`, {
+        const body = {
           name: menuForm.name || undefined,
           price: menuForm.price ? Number(menuForm.price) : undefined,
-          ingredientIds,
           availability: menuForm.availability,
-        });
+        };
+        if (hasIngredientIds) {
+          body.ingredientIds = ingredientIds;
+        }
+        await api.patch(`/manager/menu/${menuForm.id}`, body);
       } else {
         await api.post('/manager/menu', {
           name: menuForm.name,
@@ -184,6 +191,46 @@ export default function ManagerPage() {
       await loadPage();
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+  async function handleZReset() {
+    if (!window.confirm('Reset and close today\'s Z report? This can only be done once per day.')) {
+      return;
+    }
+
+    setZClosing(true);
+    setFeedback('');
+    setError('');
+    try {
+      const managerId = Number(localStorage.getItem('team26-employee-id') || 1);
+      const result = await api.post('/manager/reports/z-reset', { managerId });
+      setZPreview(result.report);
+      setFeedback('Z report reset and archived for end of day.');
+      await loadPage();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setZClosing(false);
+    }
+  }
+
+  async function handleZResetUndo() {
+    if (!window.confirm('Undo today\'s Z report reset and restore the live X/Z reports?')) {
+      return;
+    }
+
+    setZReopening(true);
+    setFeedback('');
+    setError('');
+    try {
+      await api.post('/manager/reports/z-reset/undo', {});
+      setFeedback('Z report reset was undone. Live reports are active again.');
+      await loadPage();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setZReopening(false);
     }
   }
 
@@ -339,6 +386,7 @@ export default function ManagerPage() {
               <label className="compact-field"><span>Name</span><input value={menuForm.name} onChange={(event) => setMenuForm({ ...menuForm, name: event.target.value })} /></label>
               <label className="compact-field"><span>Price</span><input value={menuForm.price} onChange={(event) => setMenuForm({ ...menuForm, price: event.target.value })} /></label>
               <label className="compact-field"><span>Ingredient IDs</span><input value={menuForm.ingredientIds} onChange={(event) => setMenuForm({ ...menuForm, ingredientIds: event.target.value })} placeholder="1, 4, 6" /></label>
+              <label className="compact-field compact-checkbox"><span>Available</span><input type="checkbox" checked={menuForm.availability} onChange={(event) => setMenuForm({ ...menuForm, availability: event.target.checked })} /></label>
             </div>
             <button className="swing-primary">{menuForm.id ? 'UPDATE' : 'ADD'}</button>
 
@@ -348,6 +396,7 @@ export default function ManagerPage() {
                   <tr>
                     <th>ID</th>
                     <th>Name</th>
+                    <th>Category</th>
                     <th>Price</th>
                     <th>Available</th>
                     <th>Ingredients</th>
@@ -358,6 +407,7 @@ export default function ManagerPage() {
                     <tr key={item.id}>
                       <td>{item.id}</td>
                       <td>{item.name}</td>
+                      <td>{item.category || '-'}</td>
                       <td>{formatCurrency(item.price)}</td>
                       <td>{String(item.availability)}</td>
                       <td>{item.ingredient_ids || '-'}</td>
@@ -437,6 +487,27 @@ export default function ManagerPage() {
                 <p>Tax: {zPreview ? `$${zPreview.tax}` : '-'}</p>
                 <p>Total Cash: {zPreview ? `$${zPreview.cashPayments}` : '-'}</p>
                 <p>Status: {zPreview?.status || '-'}</p>
+                {zPreview?.closedAt ? (
+                  <p>Closed: {new Date(zPreview.closedAt).toLocaleString()}</p>
+                ) : null}
+              </div>
+              <div className="manager-report-actions">
+                <button
+                  type="button"
+                  className="swing-primary"
+                  disabled={zClosing || zReopening || zPreview?.status === 'closed'}
+                  onClick={handleZReset}
+                >
+                  {zClosing ? 'RESETTING...' : 'RESET Z REPORT'}
+                </button>
+                <button
+                  type="button"
+                  className="swing-secondary"
+                  disabled={zClosing || zReopening || zPreview?.status !== 'closed'}
+                  onClick={handleZResetUndo}
+                >
+                  {zReopening ? 'RESTORING...' : 'UNDO Z RESET'}
+                </button>
               </div>
             </article>
           </div>

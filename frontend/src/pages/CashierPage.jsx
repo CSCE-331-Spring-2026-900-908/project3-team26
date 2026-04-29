@@ -7,12 +7,21 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
 import { getMenuImage } from '../utils/menuImages.js';
+import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
 
-const categoryNames = ['Milk Tea', 'Fruit Tea', 'Slush', 'Specialty'];
 const sizes = ['Small', 'Medium', 'Large'];
-const sugarLevels = ['0%', '25%', '50%', '75%', '100%'];
+const temperatureOptions = ['Cold', 'Hot'];
+const sugarLevels = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
 const iceLevels = ['No Ice', 'Less Ice', 'Regular'];
 const addOnOptions = ['Boba', 'Jelly', 'Cheese Foam'];
+const defaultCustomization = {
+  size: 'Medium',
+  temperature: 'Cold',
+  sugar: '75%',
+  ice: 'Regular',
+  addons: [],
+  quantity: 1,
+};
 
 // Buckets a drink into one of four categories based on keywords in its name.
 function getCategory(name = '') {
@@ -39,17 +48,23 @@ function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
+function getCustomizationKey(customization) {
+  return JSON.stringify({
+    size: customization.size,
+    temperature: customization.temperature,
+    sugar: customization.sugar,
+    ice: customization.ice,
+    addons: [...customization.addons].sort(),
+  });
+}
+
 export default function CashierPage() {
   const navigate = useNavigate();
   // Employee ID is saved in localStorage at login by saveUserSession() in utils/session.js.
   const employeeId = localStorage.getItem('team26-employee-id') || '2';
   const [menuItems, setMenuItems] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Milk Tea');
-  const [selectedItemId, setSelectedItemId] = useState(null);
-  const [size, setSize] = useState('Medium');
-  const [sugar, setSugar] = useState('75%');
-  const [ice, setIce] = useState('Regular');
-  const [addons, setAddons] = useState([]);
+  const [customizationModal, setCustomizationModal] = useState(null);
   const [orderLines, setOrderLines] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [confirmation, setConfirmation] = useState(null);
@@ -57,26 +72,81 @@ export default function CashierPage() {
 
   // Loads the menu from the backend on mount; only available items are shown.
   useEffect(() => {
-    api
-      .get('/menu')
-      .then((data) =>
-        setMenuItems(
-          data.items
-            .filter((item) => item.availability)
-            .map((item) => ({ ...item, category: getCategory(item.name) }))
-        )
-      )
-      .catch((err) => setError(err.message));
+    let active = true;
+
+    async function loadMenu() {
+      try {
+        const data = await api.get('/menu');
+        if (active) {
+          setMenuItems(data.items.filter((item) => item.availability).map(normalizeMenuItem));
+        }
+      } catch (err) {
+        if (active) {
+          setError(err.message);
+        }
+      }
+    }
+
+    loadMenu();
+    const intervalId = window.setInterval(loadMenu, 10000);
+    window.addEventListener('focus', loadMenu);
+
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', loadMenu);
+    };
   }, []);
 
-  const visibleItems = useMemo(() => {
-    const filtered = menuItems.filter((item) => item.category === activeCategory);
-    return [...filtered.slice(0, 9), ...Array(Math.max(0, 9 - filtered.length)).fill(null)];
-  }, [menuItems, activeCategory]);
+  useEffect(() => {
+    if (
+      customizationModal?.mode === 'add' &&
+      !menuItems.some((item) => item.id === customizationModal.menuItem.id)
+    ) {
+      setCustomizationModal(null);
+    }
+  }, [customizationModal, menuItems]);
 
-  const selectedItem = menuItems.find((item) => item.id === selectedItemId) || null;
+  const visibleItems = useMemo(
+    () => menuItems.filter((item) => item.category === activeCategory),
+    [menuItems, activeCategory]
+  );
 
   const total = orderLines.reduce((sum, line) => sum + line.price * line.quantity, 0);
+  const modalItem = customizationModal?.menuItem || null;
+  const modalDraft = customizationModal?.draft || defaultCustomization;
+  const modalLineTotal = modalItem
+    ? Number(modalItem.price) * Math.max(1, Number(modalDraft.quantity) || 1)
+    : 0;
+
+  function openAddModal(item) {
+    setConfirmation(null);
+    setCustomizationModal({
+      mode: 'add',
+      menuItem: item,
+      draft: createDefaultCustomization(),
+    });
+  }
+
+  function openEditModal(line) {
+    setCustomizationModal({
+      mode: 'edit',
+      lineId: line.id,
+      menuItem: {
+        id: line.menuItemId,
+        name: line.name,
+        price: line.price,
+      },
+      draft: {
+        size: line.size,
+        temperature: line.temperature || 'Cold',
+        sugar: line.sugar,
+        ice: line.ice,
+        addons: [...line.addons],
+        quantity: line.quantity,
+      },
+    });
+  }
 
   // Toggles an add-on (Boba, Jelly, etc.) on or off for the in-progress drink.
   function toggleAddon(addon) {
@@ -93,44 +163,60 @@ export default function CashierPage() {
       return;
     }
 
-    const customizationKey = JSON.stringify({ size, sugar, ice, addons: [...addons].sort() });
+    const { mode, lineId, menuItem, draft } = customizationModal;
+    const quantity = Math.max(1, Number(draft.quantity) || 1);
+    const customizationKey = getCustomizationKey(draft);
     setOrderLines((current) => {
-      const existing = current.find(
-        (line) => line.menuItemId === selectedItem.id && line.customizationKey === customizationKey
+      const withoutEditedLine =
+        mode === 'edit' ? current.filter((line) => line.id !== lineId) : current;
+      const existing = withoutEditedLine.find(
+        (line) => line.menuItemId === menuItem.id && line.customizationKey === customizationKey
       );
 
       if (existing) {
-        return current.map((line) =>
-          line.id === existing.id ? { ...line, quantity: line.quantity + 1 } : line
+        return withoutEditedLine.map((line) =>
+          line.id === existing.id ? { ...line, quantity: line.quantity + quantity } : line
         );
       }
 
       return [
-        ...current,
+        ...withoutEditedLine,
         {
-          id: `${selectedItem.id}-${Date.now()}`,
-          menuItemId: selectedItem.id,
-          name: selectedItem.name,
-          price: Number(selectedItem.price),
-          quantity: 1,
-          size,
-          sugar,
-          ice,
-          addons,
+          id: mode === 'edit' ? lineId : `${menuItem.id}-${Date.now()}`,
+          menuItemId: menuItem.id,
+          name: menuItem.name,
+          price: Number(menuItem.price),
+          quantity,
+          size: draft.size,
+          temperature: draft.temperature,
+          sugar: draft.sugar,
+          ice: draft.ice,
+          addons: [...draft.addons],
           customizationKey,
         },
       ];
     });
+    setCustomizationModal(null);
+  }
+
+  function updateLineQuantity(lineId, delta) {
+    setOrderLines((current) =>
+      current
+        .map((line) =>
+          line.id === lineId ? { ...line, quantity: Math.max(0, line.quantity + delta) } : line
+        )
+        .filter((line) => line.quantity > 0)
+    );
+  }
+
+  function removeLine(lineId) {
+    setOrderLines((current) => current.filter((line) => line.id !== lineId));
   }
 
   // Empties the cart and resets the customization form back to defaults.
   function clearOrder() {
     setOrderLines([]);
-    setSelectedItemId(null);
-    setSize('Medium');
-    setSugar('75%');
-    setIce('Regular');
-    setAddons([]);
+    setCustomizationModal(null);
     setConfirmation(null);
   }
 
@@ -199,10 +285,7 @@ export default function CashierPage() {
                 <button
                   key={category}
                   className={category === activeCategory ? 'swing-button active' : 'swing-button'}
-                  onClick={() => {
-                    setActiveCategory(category);
-                    setSelectedItemId(null);
-                  }}
+                  onClick={() => setActiveCategory(category)}
                 >
                   {category}
                 </button>
@@ -213,79 +296,38 @@ export default function CashierPage() {
           <section className="swing-panel">
             <div className="panel-title">MENU ITEMS</div>
             <div className="cashier-menu-grid">
-              {visibleItems.map((item, index) => {
-                const imageSrc = item ? getMenuImage(item.name) : null;
-                return (
-                  <button
-                    key={item ? item.id : `empty-${index}`}
-                    className={item?.id === selectedItemId ? 'menu-tile active' : 'menu-tile'}
-                    disabled={!item}
-                    onClick={() => setSelectedItemId(item.id)}
-                  >
-                    {item ? (
-                      <>
-                        {imageSrc ? (
-                          <img
-                            src={imageSrc}
-                            alt={item.name}
-                            className="menu-tile-image"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : null}
-                        <span className="menu-tile-name">{item.name}</span>
-                      </>
-                    ) : (
-                      '-'
-                    )}
-                  </button>
-                );
-              })}
+              {visibleItems.length ? (
+                visibleItems.map((item) => {
+                  const imageSrc = getMenuImage(item.name);
+                  return (
+                    <button
+                      key={item.id}
+                      className="menu-tile"
+                      onClick={() => openAddModal(item)}
+                    >
+                      {imageSrc ? (
+                        <img
+                          src={imageSrc}
+                          alt={item.name}
+                          className="menu-tile-image"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      ) : null}
+                      <span className="menu-tile-name">{item.name}</span>
+                      <strong>{formatCurrency(item.price)}</strong>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="cashier-empty-state helper-text">
+                  No available menu items in this category.
+                </div>
+              )}
             </div>
           </section>
 
-          <section className="swing-panel">
-            <div className="panel-title">CUSTOMIZATION</div>
-            <div className="cashier-customization">
-              <label className="swing-field">
-                <span>Size</span>
-                <select value={size} onChange={(event) => setSize(event.target.value)}>
-                  {sizes.map((entry) => (
-                    <option key={entry}>{entry}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="swing-field">
-                <span>Sugar</span>
-                <select value={sugar} onChange={(event) => setSugar(event.target.value)}>
-                  {sugarLevels.map((entry) => (
-                    <option key={entry}>{entry}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="swing-field">
-                <span>Ice</span>
-                <select value={ice} onChange={(event) => setIce(event.target.value)}>
-                  {iceLevels.map((entry) => (
-                    <option key={entry}>{entry}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="addon-row">
-              {addOnOptions.map((addon) => (
-                <label key={addon} className="addon-option">
-                  <input
-                    type="checkbox"
-                    checked={addons.includes(addon)}
-                    onChange={() => toggleAddon(addon)}
-                  />
-                  <span>{addon}</span>
-                </label>
-              ))}
-            </div>
-          </section>
         </div>
 
         <aside className="swing-panel current-order-panel">
@@ -299,11 +341,27 @@ export default function CashierPage() {
                       {line.quantity} x {line.name}
                     </strong>
                     <p>
-                      {line.size}, {line.sugar}, {line.ice}
+                      {line.size}, {line.temperature || 'Cold'}, {line.sugar}, {line.ice}
                       {line.addons.length ? ` | Add-ons: ${line.addons.join(', ')}` : ' | Add-ons: None'}
                     </p>
                   </div>
-                  <span>{formatCurrency(line.price * line.quantity)}</span>
+                  <div className="order-line-actions">
+                    <span>{formatCurrency(line.price * line.quantity)}</span>
+                    <div className="order-qty-controls">
+                      <button type="button" onClick={() => updateLineQuantity(line.id, -1)}>
+                        -
+                      </button>
+                      <button type="button" onClick={() => updateLineQuantity(line.id, 1)}>
+                        +
+                      </button>
+                    </div>
+                    <button type="button" onClick={() => openEditModal(line)}>
+                      EDIT
+                    </button>
+                    <button type="button" onClick={() => removeLine(line.id)}>
+                      REMOVE
+                    </button>
+                  </div>
                 </div>
               ))
             ) : (
@@ -320,13 +378,100 @@ export default function CashierPage() {
       </div>
 
       <div className="cashier-bottom-bar">
-        <button className="swing-primary" onClick={addSelectedToOrder}>
-          ADD TO ORDER
-        </button>
         <button className="swing-secondary" onClick={clearOrder}>
           CLEAR
         </button>
       </div>
+
+      {customizationModal ? (
+        <div className="cashier-modal-backdrop" onClick={() => setCustomizationModal(null)}>
+          <div className="cashier-modal swing-panel" onClick={(event) => event.stopPropagation()}>
+            <div className="cashier-modal-header">
+              <div>
+                <strong>{modalItem.name}</strong>
+                <p>{formatCurrency(modalItem.price)}</p>
+              </div>
+              <button type="button" onClick={() => setCustomizationModal(null)}>
+                CLOSE
+              </button>
+            </div>
+
+            <div className="cashier-modal-grid">
+              <label className="swing-field">
+                <span>Size</span>
+                <select
+                  value={modalDraft.size}
+                  onChange={(event) => updateModalDraft({ size: event.target.value })}
+                >
+                  {sizes.map((entry) => (
+                    <option key={entry}>{entry}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="swing-field">
+                <span>Sugar</span>
+                <select
+                  value={modalDraft.sugar}
+                  onChange={(event) => updateModalDraft({ sugar: event.target.value })}
+                >
+                  {sugarLevels.map((entry) => (
+                    <option key={entry}>{entry}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="swing-field">
+                <span>Temperature</span>
+                <select
+                  value={modalDraft.temperature}
+                  onChange={(event) => updateModalDraft({ temperature: event.target.value })}
+                >
+                  {temperatureOptions.map((entry) => (
+                    <option key={entry}>{entry}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="swing-field">
+                <span>Ice</span>
+                <select
+                  value={modalDraft.ice}
+                  onChange={(event) => updateModalDraft({ ice: event.target.value })}
+                >
+                  {iceLevels.map((entry) => (
+                    <option key={entry}>{entry}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="swing-field">
+                <span>Quantity</span>
+                <input
+                  min="1"
+                  type="number"
+                  value={modalDraft.quantity}
+                  onChange={(event) => updateModalDraft({ quantity: event.target.value })}
+                />
+              </label>
+            </div>
+
+            <div className="cashier-modal-addons">
+              {addOnOptions.map((addon) => (
+                <label key={addon} className="addon-option">
+                  <input
+                    type="checkbox"
+                    checked={modalDraft.addons.includes(addon)}
+                    onChange={() => toggleModalAddon(addon)}
+                  />
+                  <span>{addon}</span>
+                </label>
+              ))}
+            </div>
+
+            <button type="button" className="swing-primary cashier-modal-submit" onClick={saveCustomization}>
+              {customizationModal.mode === 'edit' ? 'SAVE CHANGES' : 'ADD TO ORDER'} -{' '}
+              {formatCurrency(modalLineTotal)}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

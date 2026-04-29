@@ -115,8 +115,13 @@ function applyGoogleTranslate(language) {
     return false;
   }
 
+  const targetValue = options[targetIndex].value;
+  if (select.value === targetValue) {
+    return true;
+  }
+
   select.selectedIndex = targetIndex;
-  select.value = options[targetIndex].value;
+  select.value = targetValue;
   select.dispatchEvent(new Event('input', { bubbles: true }));
   select.dispatchEvent(new Event('change', { bubbles: true }));
   return true;
@@ -125,12 +130,19 @@ function applyGoogleTranslate(language) {
 // Google Translate's <select> sometimes mounts after we try to drive it, so we retry
 // on a backoff for a few seconds until it sticks. Returns a cleanup that cancels timers.
 function forceGoogleTranslate(language) {
-  // Apply immediately if ready, and keep retrying for a few seconds.
-  applyGoogleTranslate(language);
-  const delays = [60, 180, 400, 800, 1500, 2500, 4000];
+  // Try until the hidden Google select exists, then stop so it does not re-translate repeatedly.
+  let applied = false;
+  const delays = [0, 120, 360, 800, 1500, 2500];
   const timers = delays.map((ms) =>
-    window.setTimeout(() => applyGoogleTranslate(language), ms),
+    window.setTimeout(() => {
+      if (applied) {
+        return;
+      }
+
+      applied = applyGoogleTranslate(language);
+    }, ms),
   );
+
   return () => timers.forEach((id) => window.clearTimeout(id));
 }
 
@@ -166,14 +178,10 @@ export default function AccessibilityWidget() {
 
     if (nextLanguage === 'en') {
       clearGoogleTranslateCookie();
-      if (translateReady) {
-        forceGoogleTranslate(nextLanguage);
-      }
       return;
     }
 
     setGoogleTranslateCookie(nextLanguage);
-    forceGoogleTranslate(nextLanguage);
   };
 
   // Mirrors the contrast choice onto <body data-contrast="..."> so our CSS can react,
