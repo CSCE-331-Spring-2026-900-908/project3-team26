@@ -33,6 +33,190 @@ const NUM_ROWS = [
   ['!', '"', "'", '_', ':', ';', '?', ',', '.'],
 ];
 
+const DEFAULT_LABELS = {
+  close: 'Close Keyboard',
+  shift: 'Shift',
+  shiftActive: 'Shift active',
+  space: 'Space',
+  send: 'Send ↵',
+  numbers: '123',
+  letters: 'ABC',
+  backspace: 'Backspace',
+};
+
+const KEYBOARD_LAYOUTS = {
+  en: {
+    lang: 'en',
+    canShift: true,
+    alphaRows: ALPHA_ROWS,
+    labels: DEFAULT_LABELS,
+  },
+  es: {
+    lang: 'es',
+    canShift: true,
+    alphaRows: [
+      ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+      ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ñ'],
+      ['z', 'x', 'c', 'v', 'b', 'n', 'm'],
+    ],
+    labels: {
+      ...DEFAULT_LABELS,
+      close: 'Cerrar teclado',
+      shift: 'Mayús',
+      shiftActive: 'Mayús activa',
+      space: 'Espacio',
+      send: 'Enviar ↵',
+    },
+  },
+  fr: {
+    lang: 'fr',
+    canShift: true,
+    alphaRows: [
+      ['a', 'z', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+      ['q', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm'],
+      ['w', 'x', 'c', 'v', 'b', 'n', 'é', 'è', 'à'],
+    ],
+    labels: {
+      ...DEFAULT_LABELS,
+      close: 'Fermer le clavier',
+      shift: 'Maj',
+      shiftActive: 'Maj active',
+      space: 'Espace',
+      send: 'Envoyer ↵',
+    },
+  },
+  de: {
+    lang: 'de',
+    canShift: true,
+    alphaRows: [
+      ['q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p', 'ü'],
+      ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ö', 'ä'],
+      ['y', 'x', 'c', 'v', 'b', 'n', 'm', 'ß'],
+    ],
+    labels: {
+      ...DEFAULT_LABELS,
+      close: 'Tastatur schließen',
+      shift: 'Umschalt',
+      shiftActive: 'Umschalt aktiv',
+      space: 'Leerzeichen',
+      send: 'Senden ↵',
+    },
+  },
+  it: {
+    lang: 'it',
+    canShift: true,
+    alphaRows: [
+      ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+      ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ò'],
+      ['z', 'x', 'c', 'v', 'b', 'n', 'm', 'à', 'è', 'ù'],
+    ],
+    labels: {
+      ...DEFAULT_LABELS,
+      close: 'Chiudi tastiera',
+      shift: 'Maiusc',
+      shiftActive: 'Maiusc attivo',
+      space: 'Spazio',
+      send: 'Invia ↵',
+    },
+  },
+  pt: {
+    lang: 'pt',
+    canShift: true,
+    alphaRows: [
+      ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+      ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'ç'],
+      ['z', 'x', 'c', 'v', 'b', 'n', 'm', 'ã', 'õ'],
+    ],
+    labels: {
+      ...DEFAULT_LABELS,
+      close: 'Fechar teclado',
+      shift: 'Shift',
+      shiftActive: 'Shift ativo',
+      space: 'Espaço',
+      send: 'Enviar ↵',
+    },
+  },
+  'zh-cn': {
+    lang: 'zh-CN',
+    canShift: false,
+    alphaRows: [
+      ['你', '好', '我', '要', '喝', '奶', '茶', '珍', '珠', '糖'],
+      ['冰', '少', '多', '大', '中', '小', '杯', '芒', '果', '绿'],
+      ['请', '谢', '不', '有', '无', '热', '冷', '甜', '点'],
+    ],
+    labels: {
+      ...DEFAULT_LABELS,
+      close: '关闭键盘',
+      space: '空格',
+      send: '发送↵',
+      letters: '中文',
+      backspace: '退格',
+    },
+  },
+  ja: {
+    lang: 'ja',
+    canShift: false,
+    alphaRows: [
+      ['あ', 'い', 'う', 'え', 'お', 'か', 'き', 'く', 'け', 'こ'],
+      ['さ', 'し', 'す', 'せ', 'そ', 'た', 'ち', 'つ', 'て', 'と'],
+      ['な', 'に', 'ぬ', 'ね', 'の', 'ま', 'み', 'む', 'め', 'も'],
+    ],
+    labels: {
+      ...DEFAULT_LABELS,
+      close: 'キーボードを閉じる',
+      space: 'スペース',
+      send: '送信↵',
+      letters: 'かな',
+      backspace: '削除',
+    },
+  },
+  ko: {
+    lang: 'ko',
+    canShift: false,
+    alphaRows: [
+      ['ㅂ', 'ㅈ', 'ㄷ', 'ㄱ', 'ㅅ', 'ㅛ', 'ㅕ', 'ㅑ', 'ㅐ', 'ㅔ'],
+      ['ㅁ', 'ㄴ', 'ㅇ', 'ㄹ', 'ㅎ', 'ㅗ', 'ㅓ', 'ㅏ', 'ㅣ'],
+      ['ㅋ', 'ㅌ', 'ㅊ', 'ㅍ', 'ㅠ', 'ㅜ', 'ㅡ'],
+    ],
+    labels: {
+      ...DEFAULT_LABELS,
+      close: '키보드 닫기',
+      space: '스페이스',
+      send: '보내기↵',
+      letters: '한글',
+      backspace: '지우기',
+    },
+  },
+  ar: {
+    lang: 'ar',
+    direction: 'rtl',
+    canShift: false,
+    alphaRows: [
+      ['ض', 'ص', 'ث', 'ق', 'ف', 'غ', 'ع', 'ه', 'خ', 'ح'],
+      ['ش', 'س', 'ي', 'ب', 'ل', 'ا', 'ت', 'ن', 'م', 'ك'],
+      ['ئ', 'ء', 'ؤ', 'ر', 'ى', 'ة', 'و', 'ز', 'ظ'],
+    ],
+    labels: {
+      ...DEFAULT_LABELS,
+      close: 'إغلاق لوحة المفاتيح',
+      space: 'مسافة',
+      send: 'إرسال↵',
+      letters: 'حروف',
+      backspace: 'حذف',
+    },
+  },
+};
+
+function getKeyboardLayout(language = 'en') {
+  const normalized = language.toLowerCase();
+  if (normalized.startsWith('zh')) {
+    return KEYBOARD_LAYOUTS['zh-cn'];
+  }
+
+  const baseLanguage = normalized.split('-')[0];
+  return KEYBOARD_LAYOUTS[baseLanguage] || KEYBOARD_LAYOUTS.en;
+}
+
 // ── Inline styles (self-contained — no external CSS required) ─────────────────
 
 const S = {
@@ -124,11 +308,14 @@ const S = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, onClose }) {
+export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, onClose, language = 'en' }) {
   const [mode, setMode] = useState('alpha');
   const [shifted, setShifted] = useState(false);
+  const layout = getKeyboardLayout(language);
+  const labels = layout.labels;
+  const canShift = layout.canShift !== false;
 
-  const rows = mode === 'alpha' ? ALPHA_ROWS : NUM_ROWS;
+  const rows = mode === 'alpha' ? layout.alphaRows : NUM_ROWS;
 
   // onPointerDown + preventDefault: prevents the event from focusing/blurring the
   // textarea, which would re-trigger the native OS keyboard on touch devices.
@@ -139,7 +326,7 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
 
   // Applies shift casing and auto-releases Shift after one letter (one-shot shift).
   function pressAlpha(char) {
-    onKey(shifted ? char.toUpperCase() : char);
+    onKey(shifted && canShift ? char.toLocaleUpperCase(layout.lang) : char);
     if (shifted) setShifted(false);
   }
 
@@ -150,7 +337,13 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
   const pressKey = mode === 'alpha' ? pressAlpha : pressNum;
 
   return (
-    <div style={S.overlay} aria-label="On-screen keyboard">
+    <div
+      className="notranslate"
+      translate="no"
+      style={{ ...S.overlay, direction: layout.direction || 'ltr' }}
+      aria-label="On-screen keyboard"
+      lang={layout.lang}
+    >
 
       {/* ── NEW: Close bar — always visible at the top of the keyboard ── */}
       <div style={{
@@ -172,9 +365,9 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
             touchAction: 'manipulation',
           }}
           onPointerDown={(e) => { e.preventDefault(); onClose(); }}
-          aria-label="Close keyboard"
+          aria-label={labels.close}
         >
-          ✕ Close Keyboard
+          × {labels.close}
         </button>
       </div>
 
@@ -197,7 +390,7 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
               onPointerDown={(e) => tap(e, () => pressKey(char))}
               aria-label={char}
             >
-              {mode === 'alpha' && shifted ? char.toUpperCase() : char}
+              {mode === 'alpha' && shifted && canShift ? char.toLocaleUpperCase(layout.lang) : char}
             </button>
           ))}
 
@@ -206,7 +399,7 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
             <button
               style={{ ...S.key, ...S.backspace }}
               onPointerDown={(e) => tap(e, onBackspace)}
-              aria-label="Backspace"
+              aria-label={labels.backspace}
             >
               ⌫
             </button>
@@ -217,13 +410,13 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
       {/* ── Bottom action row ─────────────────────────────────────── */}
       <div style={S.row}>
 
-        {mode === 'alpha' && (
+        {mode === 'alpha' && canShift && (
           <button
             style={{ ...S.key, ...(shifted ? S.shiftActive : S.shift) }}
             onPointerDown={(e) => { e.preventDefault(); setShifted((s) => !s); }}
-            aria-label={shifted ? 'Shift active' : 'Shift'}
+            aria-label={shifted ? labels.shiftActive : labels.shift}
           >
-            ⇧ Shift
+            ⇧ {labels.shift}
           </button>
         )}
 
@@ -234,25 +427,25 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
             setMode((m) => (m === 'alpha' ? 'num' : 'alpha'));
             setShifted(false);
           }}
-          aria-label={mode === 'alpha' ? 'Switch to numbers' : 'Switch to letters'}
+          aria-label={mode === 'alpha' ? labels.numbers : labels.letters}
         >
-          {mode === 'alpha' ? '123' : 'ABC'}
+          {mode === 'alpha' ? labels.numbers : labels.letters}
         </button>
 
         <button
           style={{ ...S.key, ...S.space }}
           onPointerDown={(e) => tap(e, onSpace)}
-          aria-label="Space"
+          aria-label={labels.space}
         >
-          SPACE
+          {labels.space}
         </button>
 
         <button
           style={{ ...S.key, ...S.send }}
           onPointerDown={(e) => tap(e, onSend)}
-          aria-label="Send message"
+          aria-label={labels.send}
         >
-          Send ↵
+          {labels.send}
         </button>
 
       </div>

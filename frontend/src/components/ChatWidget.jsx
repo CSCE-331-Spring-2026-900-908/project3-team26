@@ -6,6 +6,35 @@ import OnScreenKeyboard from './OnScreenKeyboard.jsx';
 
 // System prompt that scopes the assistant to bubble-tea ordering questions only.
 const SYSTEM_PROMPT = `You are a friendly ordering assistant for a bubble tea shop. Help customers choose drinks, explain menu items, suggest customizations (milk tea, fruit tea, toppings, sweetness levels, ice levels), and guide them through placing their order. Keep responses concise and friendly. Only answer questions related to the menu and ordering process.`;
+const ACCESSIBILITY_STORAGE_KEY = 'bubble-tea-accessibility';
+const ACCESSIBILITY_CHANGE_EVENT = 'bubble-tea-accessibility-change';
+
+function getGoogleTranslateLanguage() {
+  const match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
+  if (!match) {
+    return null;
+  }
+
+  const value = decodeURIComponent(match[1]);
+  if (!value || value === '/auto/en') {
+    return 'en';
+  }
+
+  return value.split('/')[2] || null;
+}
+
+function getStoredKeyboardLanguage() {
+  const cookieLanguage = getGoogleTranslateLanguage();
+  if (cookieLanguage) {
+    return cookieLanguage;
+  }
+
+  try {
+    return JSON.parse(window.localStorage.getItem(ACCESSIBILITY_STORAGE_KEY) ?? '{}').language || 'en';
+  } catch {
+    return 'en';
+  }
+}
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +44,7 @@ export default function ChatWidget() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showKeyboard, setShowKeyboard] = useState(false); 
+  const [keyboardLanguage, setKeyboardLanguage] = useState(() => getStoredKeyboardLanguage());
   const bottomRef = useRef(null);
 
   // 2. closeChat — replaces calling setIsOpen(false) directly
@@ -40,6 +70,26 @@ export default function ChatWidget() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    const syncKeyboardLanguage = (event) => {
+      setKeyboardLanguage(event.detail?.language || getStoredKeyboardLanguage());
+    };
+
+    const syncFromStorage = () => {
+      setKeyboardLanguage(getStoredKeyboardLanguage());
+    };
+
+    window.addEventListener(ACCESSIBILITY_CHANGE_EVENT, syncKeyboardLanguage);
+    window.addEventListener('storage', syncFromStorage);
+    window.addEventListener('focus', syncFromStorage);
+
+    return () => {
+      window.removeEventListener(ACCESSIBILITY_CHANGE_EVENT, syncKeyboardLanguage);
+      window.removeEventListener('storage', syncFromStorage);
+      window.removeEventListener('focus', syncFromStorage);
+    };
+  }, []);
 
   // Sends the user's input plus the prior conversation to the backend /chat route,
   // then appends the assistant's reply (or an error message) to the messages array.
@@ -120,6 +170,8 @@ export default function ChatWidget() {
                 readOnly={showKeyboard}
                 placeholder="Ask about the menu…"
                 aria-label="Chat input"
+                lang={keyboardLanguage}
+                dir={keyboardLanguage === 'ar' ? 'rtl' : 'ltr'}
               />
               <button onClick={sendMessage} disabled={loading} className="primary">
                 Send
@@ -144,6 +196,7 @@ export default function ChatWidget() {
           onSpace={handleOskSpace}
           onSend={sendMessage}
           onClose={() => setShowKeyboard(false)}
+          language={keyboardLanguage}
         />
       )}
     </>

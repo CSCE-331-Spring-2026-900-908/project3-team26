@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'bubble-tea-accessibility';
+const ACCESSIBILITY_CHANGE_EVENT = 'bubble-tea-accessibility-change';
 const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
 const LENS_SIZE = 200;
@@ -255,6 +256,7 @@ export default function AccessibilityWidget() {
   // and persists all three preferences to localStorage on every change.
   useEffect(() => {
     document.body.dataset.contrast = contrast;
+    document.documentElement.lang = language;
 
     try {
       window.localStorage.setItem(
@@ -264,6 +266,12 @@ export default function AccessibilityWidget() {
     } catch {
       // Ignore storage failures so the panel still works in restricted browsers.
     }
+
+    window.dispatchEvent(
+      new CustomEvent(ACCESSIBILITY_CHANGE_EVENT, {
+        detail: { language, scale, contrast },
+      }),
+    );
   }, [contrast, language, scale]);
 
   // Magnifier setup: when scale > 1, clones the app DOM into a circular lens that

@@ -758,15 +758,13 @@ export default function KioskPage() {
               <strong>Boba</strong>
             </div>
             <h2>KIOSK - SELF ORDERING</h2>
-            <div className="kiosk-header-actions-stack">
-              <div className="kiosk-header-actions">
-                {renderThemeButton()}
-                <button onClick={resetKiosk}>RESET</button>
-                <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
-              </div>
+            <div className="kiosk-header-actions">
               <div className="kiosk-header-weather">
                 <WeatherWidget />
               </div>
+              {renderThemeButton()}
+              <button onClick={resetKiosk}>RESET</button>
+              <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
             </div>
           </div>
           <div className="kiosk-banner-row kiosk-banner-row-filter">
