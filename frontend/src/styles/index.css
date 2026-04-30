@@ -2204,6 +2204,9 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-page.kiosk-theme-hue .kiosk-panel-section {
   border-color: rgba(240, 82, 117, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 244, 230, 0.84)),
+    var(--panel-bg);
 }
 
 .kiosk-page.kiosk-theme-hue .kiosk-panel-label {
@@ -2215,12 +2218,6 @@ body[data-contrast='soft'] .helper-text {
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.8px;
-}
-
-.kiosk-page.kiosk-theme-hue .kiosk-categories-panel {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 244, 230, 0.84)),
-    var(--panel-bg);
 }
 
 .kiosk-page.kiosk-theme-hue .kiosk-cat-row {
@@ -2273,6 +2270,7 @@ body[data-contrast='soft'] .helper-text {
   box-shadow: 0 0 0 4px rgba(240, 82, 117, 0.16), 0 10px 22px rgba(92, 46, 25, 0.14);
 }
 
+.kiosk-page.kiosk-theme-hue .kiosk-filter-option.hovered,
 .kiosk-page.kiosk-theme-hue .kiosk-filter-option:hover,
 .kiosk-page.kiosk-theme-hue .kiosk-filter-option.active {
   color: #ffffff;
@@ -2358,6 +2356,7 @@ body[data-contrast='soft'] .helper-text {
   white-space: normal;
 }
 
+.kiosk-filter-option.hovered,
 .kiosk-filter-option:hover,
 .kiosk-filter-option.active {
   color: var(--primary-fg);
@@ -2566,7 +2565,7 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-order-panel {
   position: fixed;
-  top: var(--kiosk-header-height, 0px);
+  top: calc(var(--kiosk-header-height, 0px) + 8px);
   right: 10px;
   bottom: 104px;
   width: 340px;
@@ -2813,8 +2812,10 @@ body[data-contrast='high'] .kiosk-filter-option {
 }
 
 body[data-contrast='high'] .kiosk-filter-option:hover,
+body[data-contrast='high'] .kiosk-filter-option.hovered,
 body[data-contrast='high'] .kiosk-filter-option.active,
 body[data-contrast='high'] .kiosk-page.kiosk-theme-hue .kiosk-filter-option:hover,
+body[data-contrast='high'] .kiosk-page.kiosk-theme-hue .kiosk-filter-option.hovered,
 body[data-contrast='high'] .kiosk-page.kiosk-theme-hue .kiosk-filter-option.active {
   color: #111111;
   background: #ffd84d;

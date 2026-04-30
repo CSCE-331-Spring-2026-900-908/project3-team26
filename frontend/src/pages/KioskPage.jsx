@@ -207,6 +207,7 @@ export default function KioskPage() {
   const [editingLine, setEditingLine] = useState(null);
   const [draftCustomization, setDraftCustomization] = useState(DEFAULT_CUSTOMIZATION);
   const [ingredientFilterOpen, setIngredientFilterOpen] = useState(false);
+  const [hoveredFilterValue, setHoveredFilterValue] = useState('');
   // Drives the checkout flow: null = normal cart view, 'confirm' = "Continue?" popup,
   // 'payment' = full-screen Cash/Card picker. After a successful submit, `confirmation`
   // takes over and shows the receipt with the tax breakdown.
@@ -306,12 +307,14 @@ export default function KioskPage() {
     const closeOnOutsideClick = (event) => {
       if (!ingredientFilterRef.current?.contains(event.target)) {
         setIngredientFilterOpen(false);
+        setHoveredFilterValue('');
       }
     };
 
     const closeOnEscape = (event) => {
       if (event.key === 'Escape') {
         setIngredientFilterOpen(false);
+        setHoveredFilterValue('');
       }
     };
 
@@ -604,6 +607,7 @@ export default function KioskPage() {
   function chooseIngredientFilter(value) {
     setActiveFilterValue(value);
     setIngredientFilterOpen(false);
+    setHoveredFilterValue('');
   }
 
   function renderThemeButton() {
@@ -786,6 +790,7 @@ export default function KioskPage() {
                 onBlur={(event) => {
                   if (!event.currentTarget.contains(event.relatedTarget)) {
                     setIngredientFilterOpen(false);
+                    setHoveredFilterValue('');
                   }
                 }}
               >
@@ -807,23 +812,32 @@ export default function KioskPage() {
                     id="ingredient-filter-options"
                     role="listbox"
                     aria-label="Ingredient filter options"
+                    onPointerLeave={() => setHoveredFilterValue('')}
                   >
-                    {filterOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="option"
-                        aria-selected={option.value === activeFilterValue}
-                        className={
-                          option.value === activeFilterValue
-                            ? 'kiosk-filter-option active'
-                            : 'kiosk-filter-option'
-                        }
-                        onClick={() => chooseIngredientFilter(option.value)}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
+                    {filterOptions.map((option) => {
+                      const isActive = option.value === activeFilterValue;
+                      const isHovered = option.value === hoveredFilterValue;
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          role="option"
+                          aria-selected={isActive}
+                          className={[
+                            'kiosk-filter-option',
+                            isActive ? 'active' : '',
+                            isHovered ? 'hovered' : '',
+                          ]
+                            .filter(Boolean)
+                            .join(' ')}
+                          onPointerEnter={() => setHoveredFilterValue(option.value)}
+                          onFocus={() => setHoveredFilterValue(option.value)}
+                          onClick={() => chooseIngredientFilter(option.value)}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : null}
               </div>
