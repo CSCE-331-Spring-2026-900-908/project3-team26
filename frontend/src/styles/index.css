@@ -3331,6 +3331,19 @@ body[data-contrast='high'] .kiosk-brand-wordmark strong {
   flex: 1;
 }
 
+/* Stacks the kiosk header buttons above the weather widget so the widget
+   sits below the theme/reset/logout row instead of beside it. */
+.kiosk-header-actions-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.kiosk-header-weather .weather-widget {
+  margin: 0;
+}
+
 /* Kiosk checkout: confirm popup, payment screen, and receipt totals */
 .kiosk-checkout-confirm {
   max-width: 480px;
