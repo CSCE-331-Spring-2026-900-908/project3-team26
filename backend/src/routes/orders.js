@@ -1,3 +1,5 @@
+// Orders route: creates completed orders, records line items, and returns order receipts.
+// Uses schema feature detection so it can run against both the base and migrated databases.
 import { Router } from 'express';
 import { withClient } from '../db/pool.js';
 import { getSchemaSupport } from '../db/compat.js';
@@ -13,6 +15,7 @@ function roundCurrency(value) {
 }
 
 async function nextId(client, table) {
+  // The class database uses integer IDs without sequences, so routes allocate the next ID manually.
   const result = await client.query(`SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM ${table}`);
   return Number(result.rows[0].next_id);
 }

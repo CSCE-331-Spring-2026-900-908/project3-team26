@@ -1,3 +1,4 @@
+-- seed.sql: imports the CSV seed data into the base Bubble Tea POS tables.
 \set ON_ERROR_STOP on
 
 \copy employees(id, permission, actions, changes) FROM 'database/csv/employees.csv' WITH (FORMAT csv, HEADER true);

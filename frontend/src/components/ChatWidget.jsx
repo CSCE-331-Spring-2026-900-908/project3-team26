@@ -150,7 +150,7 @@ export default function ChatWidget() {
 
   return (
     <>
-      <div className="chat-widget" style={showKeyboard ? { bottom: '265px' } : undefined}>
+      <div className={showKeyboard ? 'chat-widget chat-widget--keyboard-open' : 'chat-widget'}>
         {isOpen && (
           <div className="chat-panel panel">
             <div className="chat-panel-header">

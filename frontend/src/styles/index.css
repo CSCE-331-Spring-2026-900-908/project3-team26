@@ -1,3 +1,4 @@
+/* Global design tokens and shared styles for the Bubble Tea POS frontend. */
 :root {
   --page-bg: #f4f6fb;
   --panel-bg: #ffffff;
@@ -302,7 +303,7 @@ fieldset.panel legend {
   position: fixed;
   right: 18px;
   bottom: 18px;
-  z-index: 120;
+  z-index: 100020;
   display: flex;
   flex-direction: column-reverse;
   align-items: flex-end;
@@ -412,18 +413,13 @@ body[data-page='cashier'] .page-shell {
   text-align: left;
 }
 
-.accessibility-select-chevron {
-  flex: 0 0 auto;
+.accessibility-select-arrow {
   width: 10px;
   height: 10px;
-  margin-right: 2px;
+  flex: 0 0 auto;
   border-right: 2px solid currentColor;
   border-bottom: 2px solid currentColor;
   transform: rotate(45deg) translateY(-2px);
-}
-
-.accessibility-select-trigger[aria-expanded='true'] .accessibility-select-chevron {
-  transform: rotate(-135deg) translateY(-1px);
 }
 
 .accessibility-select-options {
@@ -474,6 +470,184 @@ body {
 body > .skiptranslate,
 iframe.goog-te-banner-frame.skiptranslate {
   display: none !important;
+}
+
+.magnifier-lens {
+  position: fixed;
+  width: 200px;
+  height: 200px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 100030;
+  transition: opacity 120ms ease-out;
+}
+
+.magnifier-lens.active {
+  opacity: 1;
+}
+
+.magnifier-lens-frame {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border: 6px solid var(--primary-alt);
+  border-radius: 50%;
+  background: var(--page-bg);
+  box-shadow: 0 16px 42px rgba(20, 30, 50, 0.3), inset 0 0 0 2px rgba(255, 255, 255, 0.6);
+}
+
+.magnifier-lens-content {
+  width: max-content;
+  transform-origin: top left;
+}
+
+.magnifier-pointer {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: rgba(26, 31, 43, 0.88);
+  box-shadow: 0 0 0 2px var(--primary-alt), 0 4px 12px rgba(20, 30, 50, 0.32);
+  transform: translate(-50%, -50%);
+}
+
+.magnifier-pointer::before,
+.magnifier-pointer::after {
+  content: '';
+  position: absolute;
+  background: #ffffff;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.magnifier-pointer::before {
+  width: 2px;
+  height: 24px;
+}
+
+.magnifier-pointer::after {
+  width: 24px;
+  height: 2px;
+}
+
+.magnifier-clone {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  background: var(--page-bg);
+}
+
+.magnifier-clone .magnifier-accessibility-clone,
+.magnifier-clone .magnifier-chat-clone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 220;
+  overflow: visible;
+}
+
+.magnifier-clone .magnifier-accessibility-clone {
+  flex-direction: column-reverse;
+  z-index: 230;
+}
+
+.magnifier-clone .magnifier-accessibility-clone .accessibility-panel {
+  background: var(--panel-bg);
+}
+
+.magnifier-clone .magnifier-chat-clone .chat-panel {
+  background: var(--panel-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.magnifier-clone .magnifier-keyboard-clone {
+  z-index: 135;
+}
+
+.magnifier-clone .kiosk-modal-backdrop,
+.magnifier-clone .cashier-modal-backdrop {
+  position: absolute;
+  width: 100vw;
+  min-height: 100vh;
+}
+
+.magnifier-clone .kiosk-header,
+.magnifier-clone .kiosk-categories-panel,
+.magnifier-clone .kiosk-order-panel {
+  position: absolute;
+  background: var(--panel-bg);
+  z-index: 90;
+}
+
+.magnifier-clone .kiosk-header {
+  overflow: visible;
+  z-index: 110;
+}
+
+.magnifier-clone .kiosk-banner,
+.magnifier-clone .kiosk-filter-select {
+  position: relative;
+  z-index: 2;
+}
+
+.magnifier-clone .kiosk-filter-select-options {
+  z-index: 130;
+}
+
+.magnifier-clone .kiosk-header::after {
+  display: none;
+}
+
+.magnifier-clone #page-kiosk.kiosk-active::before {
+  position: absolute;
+  background: var(--panel-bg);
+  z-index: 80;
+}
+
+.magnifier-clone .kiosk-categories-panel .kiosk-cat-row {
+  background: var(--panel-bg);
+}
+
+.magnifier-clone .kiosk-categories-panel button {
+  background: var(--btn-bg);
+}
+
+.magnifier-clone .kiosk-categories-panel button.active {
+  background: var(--active-btn);
+}
+
+.magnifier-clone:has(.kiosk-modal-backdrop) .kiosk-header,
+.magnifier-clone:has(.kiosk-modal-backdrop) .kiosk-categories-panel,
+.magnifier-clone:has(.kiosk-modal-backdrop) .kiosk-order-panel {
+  display: none;
+}
+
+.magnifier-clone:has(.kiosk-modal-backdrop) #page-kiosk.kiosk-active::before {
+  display: none;
+}
+
+.magnifier-clone:has(.cashier-modal-backdrop) .swing-header,
+.magnifier-clone:has(.cashier-modal-backdrop) .cashier-confirmation,
+.magnifier-clone:has(.cashier-modal-backdrop) .cashier-layout,
+.magnifier-clone:has(.cashier-modal-backdrop) .cashier-bottom-bar {
+  display: none;
+}
+
+.magnifier-clone .cashier-modal-backdrop {
+  z-index: 90;
+}
+
+.magnifier-clone .cashier-page .swing-panel,
+.magnifier-clone .cashier-page .order-panel,
+.magnifier-clone .manager-page .swing-panel,
+.magnifier-clone .manager-page .manager-nav,
+.magnifier-clone .manager-page .manager-action-row,
+.magnifier-clone .manager-page .metric-box {
+  background: var(--panel-bg);
 }
 
 body[data-contrast='high'] .accessibility-panel-header p,
@@ -1569,7 +1743,12 @@ body[data-contrast='soft'] .helper-text {
 
 .cashier-modal-ice-options {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.cashier-modal-ice-options button {
+  min-width: 0;
+  padding-inline: 6px;
 }
 
 .cashier-modal-quantity input {
@@ -2085,20 +2264,15 @@ body[data-contrast='soft'] .helper-text {
   --primary-alt: #fa8b42;
   --primary-fg: #ffffff;
   --accent: #6c5ce7;
+  /* Warm tan-blush wash keeps the fixed kiosk category area unified without the old green cast. */
   --kiosk-sticky-bg:
-    linear-gradient(
-      90deg,
-      rgba(5, 116, 111, 0.16),
-      transparent 24%,
-      transparent 76%,
-      rgba(119, 73, 173, 0.14)
-    ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 244, 230, 0.92)),
-    #fff4e6;
+    linear-gradient(90deg, rgba(232, 167, 127, 0.18), rgba(240, 82, 117, 0.08)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.91), rgba(255, 245, 236, 0.92)),
+    #fff5ec;
   background:
-    linear-gradient(135deg, rgba(255, 89, 125, 0.26), transparent 32%),
-    linear-gradient(225deg, rgba(255, 177, 61, 0.28), transparent 34%),
-    linear-gradient(0deg, rgba(123, 201, 88, 0.18), transparent 36%),
+    linear-gradient(135deg, rgba(255, 112, 139, 0.18), transparent 32%),
+    linear-gradient(225deg, rgba(233, 177, 120, 0.24), transparent 34%),
+    linear-gradient(0deg, rgba(228, 186, 145, 0.2), transparent 36%),
     #fff4e6;
   color: var(--text);
 }
@@ -2285,6 +2459,13 @@ body[data-contrast='soft'] .helper-text {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 244, 230, 0.84)),
     var(--panel-bg);
+}
+
+.kiosk-page.kiosk-theme-hue .kiosk-categories-panel {
+  background:
+    linear-gradient(90deg, rgba(232, 167, 127, 0.18), rgba(240, 82, 117, 0.08)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 245, 236, 0.9)),
+    #fff5ec;
 }
 
 .kiosk-page.kiosk-theme-hue .kiosk-panel-label {
@@ -3289,6 +3470,14 @@ body[data-contrast='high'] .kiosk-brand-wordmark strong {
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
+}
+
+.chat-widget--keyboard-open {
+  bottom: 282px;
+}
+
+.chat-widget--keyboard-open .chat-trigger {
+  display: none;
 }
 
 .on-screen-keyboard {

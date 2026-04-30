@@ -1,3 +1,4 @@
+// Customization options and add-on prices shared by cashier and kiosk ordering flows.
 export const toppingOptions = [
   'Boba',
   'Jelly',

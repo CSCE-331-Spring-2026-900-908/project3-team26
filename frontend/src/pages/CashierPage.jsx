@@ -14,12 +14,12 @@ import { toppingOptions } from '../utils/toppings.js';
 const sizes = ['Small', 'Medium', 'Large'];
 const temperatureOptions = ['Cold', 'Hot'];
 const sugarLevels = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
-const iceLevels = ['No Ice', 'Less Ice', 'Regular'];
+const iceLevels = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
 const defaultCustomization = {
   size: 'Medium',
   temperature: 'Cold',
   sugar: '75%',
-  ice: 'Regular',
+  ice: '100%',
   addons: [],
   quantity: 1,
 };
