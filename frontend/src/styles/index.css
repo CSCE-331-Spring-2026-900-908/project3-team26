@@ -528,6 +528,7 @@ body[data-contrast='high'] .page-copy,
 body[data-contrast='high'] .helper-text,
 body[data-contrast='high'] .metric-unit,
 body[data-contrast='high'] .manager-chart-unit,
+body[data-contrast='high'] .manager-chart-note,
 body[data-contrast='high'] .manager-top-row strong small,
 body[data-contrast='high'] .list-row strong small,
 body[data-contrast='high'] .manager-legend-row small {
@@ -1660,6 +1661,13 @@ body[data-contrast='soft'] .helper-text {
   text-transform: uppercase;
 }
 
+.manager-chart-note {
+  margin: 0 0 8px;
+  color: #596579;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .manager-line-chart svg {
   display: block;
   width: 100%;
@@ -2162,7 +2170,9 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-page.kiosk-theme-hue fieldset.panel legend {
   position: relative;
+  left: 50%;
   top: 7px;
+  width: max-content;
   padding: 5px 12px;
   color: #ffffff;
   background: linear-gradient(135deg, #f05275, #fa8b42);
@@ -2174,6 +2184,7 @@ body[data-contrast='soft'] .helper-text {
   letter-spacing: 0.8px;
   line-height: 1;
   margin-bottom: 12px;
+  transform: translateX(-50%);
 }
 
 .kiosk-page.kiosk-theme-hue .kiosk-categories-panel {

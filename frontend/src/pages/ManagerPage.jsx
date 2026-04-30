@@ -91,7 +91,6 @@ function SalesTrendChart({ data = [] }) {
 
   return (
     <div className="manager-chart-body manager-line-chart">
-      <div className="manager-chart-unit">Daily sales in USD</div>
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Daily sales trend in US dollars">
         <line x1={padding} y1={padding} x2={padding} y2={height - padding} className="chart-axis" />
         <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} className="chart-axis" />
@@ -118,7 +117,7 @@ function PeakHoursChart({ data = [] }) {
 
   return (
     <div className="manager-chart-body manager-bar-chart-wrap">
-      <div className="manager-chart-unit">Orders per hour</div>
+      <div className="manager-chart-note">Sorted greatest to least by order count</div>
       <div className="manager-bar-chart" role="img" aria-label="Peak hours by order count">
         {rows.map((row) => (
           <div className="manager-bar-column" key={row.hour}>
