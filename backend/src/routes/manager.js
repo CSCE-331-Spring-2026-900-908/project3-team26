@@ -1,3 +1,7 @@
+// Manager route: /api/manager/*
+// Covers all manager-only CRUD operations: dashboard stats, order viewing/voiding,
+// inventory management, menu management, employee management, and X/Z reports.
+// All mutations use withClient + BEGIN/COMMIT so failures roll back cleanly.
 import { Router } from 'express';
 import { query, withClient } from '../db/pool.js';
 import { getSchemaSupport } from '../db/compat.js';
@@ -6,15 +10,22 @@ import { getCategoryForName } from '../utils/menu.js';
 
 const router = Router();
 
+// Returns the next available integer ID for a table that uses manual (non-SERIAL) primary keys.
 async function nextId(client, table) {
   const result = await client.query(`SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM ${table}`);
   return Number(result.rows[0].next_id);
 }
 
+// GET /api/manager/dashboard — runs eight queries in parallel to populate all manager
+// dashboard widgets: totals, low stock, recent orders, ingredient usage, sales trend,
+// top items, peak hours, and category revenue.
 router.get('/dashboard', async (_req, res, next) => {
   try {
     const support = await getSchemaSupport();
-    const [totals, lowStock, recentOrders, productUsage] = await Promise.all([
+    const voidJoin = support.hasOrderVoids ? 'LEFT JOIN order_voids ov ON ov.order_id = o.id' : '';
+    const activeOrderWhere = support.hasOrderVoids ? 'WHERE ov.order_id IS NULL' : '';
+    const activeOrderAnd = support.hasOrderVoids ? 'AND ov.order_id IS NULL' : '';
+    const [totals, lowStock, recentOrders, productUsage, salesTrend, topItems, peakHours, categoryRows] = await Promise.all([
       query(
         `SELECT
            COUNT(*)::int AS orders,
@@ -24,7 +35,7 @@ router.get('/dashboard', async (_req, res, next) => {
          FROM orders`
       ),
       query(
-        `SELECT i.id AS ingredient_id, i.name, inv.quantity, inv.threshold
+        `SELECT i.id AS ingredient_id, i.name, i.unit, inv.quantity, inv.threshold
          FROM inventory inv
          JOIN ingredients i ON i.id = inv.ingredient_id
          WHERE inv.quantity <= inv.threshold
@@ -50,7 +61,58 @@ router.get('/dashboard', async (_req, res, next) => {
          ORDER BY units_used DESC, i.name
          LIMIT 10`
       ),
+      query(
+        `SELECT sales_date, daily_sales
+         FROM (
+           SELECT DATE(o.order_time) AS sales_date,
+                  COALESCE(SUM(o.total_amount), 0) AS daily_sales
+           FROM orders o
+           ${voidJoin}
+           ${activeOrderWhere}
+           GROUP BY DATE(o.order_time)
+           ORDER BY sales_date DESC
+           LIMIT 10
+         ) recent_sales
+         ORDER BY sales_date ASC`
+      ),
+      query(
+        `SELECT m.name, SUM(oi.quantity)::int AS total_units_sold
+         FROM order_items oi
+         JOIN orders o ON o.id = oi.order_id
+         ${voidJoin}
+         JOIN menu_items m ON m.id = oi.menu_item_id
+         WHERE 1 = 1 ${activeOrderAnd}
+         GROUP BY m.id, m.name
+         ORDER BY total_units_sold DESC, m.name ASC
+         LIMIT 10`
+      ),
+      query(
+        `SELECT EXTRACT(HOUR FROM o.order_time)::int AS hour_of_day,
+                COUNT(*)::int AS order_count
+         FROM orders o
+         ${voidJoin}
+         ${activeOrderWhere}
+         GROUP BY hour_of_day
+         ORDER BY order_count DESC, hour_of_day ASC
+         LIMIT 10`
+      ),
+      query(
+        `SELECT m.name,
+                COALESCE(SUM(oi.quantity * oi.price_charged), 0) AS revenue
+         FROM order_items oi
+         JOIN orders o ON o.id = oi.order_id
+         ${voidJoin}
+         JOIN menu_items m ON m.id = oi.menu_item_id
+         WHERE 1 = 1 ${activeOrderAnd}
+         GROUP BY m.id, m.name`
+      ),
     ]);
+
+    const categoryRevenueMap = categoryRows.rows.reduce((totalsByCategory, row) => {
+      const category = getCategoryForName(row.name);
+      totalsByCategory[category] = (totalsByCategory[category] || 0) + Number(row.revenue || 0);
+      return totalsByCategory;
+    }, {});
 
     res.json({
       totals: {
@@ -67,12 +129,28 @@ router.get('/dashboard', async (_req, res, next) => {
         unit: row.unit,
         unitsUsed: Number(row.units_used),
       })),
+      salesTrend: salesTrend.rows.map((row) => ({
+        date: row.sales_date,
+        sales: Number(row.daily_sales),
+      })),
+      topItems: topItems.rows.map((row) => ({
+        name: row.name,
+        totalUnitsSold: Number(row.total_units_sold),
+      })),
+      peakHours: peakHours.rows.map((row) => ({
+        hour: Number(row.hour_of_day),
+        orderCount: Number(row.order_count),
+      })),
+      categoryRevenue: Object.entries(categoryRevenueMap)
+        .map(([category, revenue]) => ({ category, revenue }))
+        .sort((a, b) => b.revenue - a.revenue),
     });
   } catch (error) {
     next(error);
   }
 });
 
+// GET /api/manager/orders — returns the 250 most recent orders with void status.
 router.get('/orders', async (_req, res, next) => {
   try {
     const support = await getSchemaSupport();
@@ -91,6 +169,8 @@ router.get('/orders', async (_req, res, next) => {
   }
 });
 
+// POST /api/manager/orders/:id/void — records an order void in the order_voids table.
+// Checks that the order exists and hasn't already been voided, both inside a transaction.
 router.post('/orders/:id/void', async (req, res, next) => {
   const orderId = Number(req.params.id);
   const managerId = req.body?.managerId || null;
@@ -137,6 +217,7 @@ router.post('/orders/:id/void', async (req, res, next) => {
   }
 });
 
+// GET /api/manager/inventory — returns all ingredients joined with inventory quantities.
 router.get('/inventory', async (_req, res, next) => {
   try {
     const result = await query(
@@ -151,6 +232,8 @@ router.get('/inventory', async (_req, res, next) => {
   }
 });
 
+// POST /api/manager/inventory — creates a new ingredient row and a matching inventory row
+// in a single transaction so the two tables never get out of sync.
 router.post('/inventory', async (req, res, next) => {
   const { name, unit, quantity, threshold, availability } = req.body || {};
   try {
@@ -181,26 +264,50 @@ router.post('/inventory', async (req, res, next) => {
   }
 });
 
+// PATCH /api/manager/inventory/:ingredientId — updates name/unit/availability on the
+// ingredient row and/or quantity/threshold on the inventory row. Supports an additive
+// `delta` field (e.g. delta: 10 adds 10 units) alongside an absolute `quantity` field.
 router.patch('/inventory/:ingredientId', async (req, res, next) => {
   const ingredientId = Number(req.params.ingredientId);
-  const { delta, threshold, availability } = req.body || {};
+  const { name, unit, quantity, delta, threshold, availability } = req.body || {};
 
   try {
-    if (delta !== undefined) {
-      await query('UPDATE inventory SET quantity = quantity + $1 WHERE ingredient_id = $2', [delta, ingredientId]);
-    }
-    if (threshold !== undefined) {
-      await query('UPDATE inventory SET threshold = $1 WHERE ingredient_id = $2', [threshold, ingredientId]);
-    }
-    if (availability !== undefined) {
-      await query('UPDATE ingredients SET availability = $1 WHERE id = $2', [availability, ingredientId]);
-    }
+    await withClient(async (client) => {
+      await client.query('BEGIN');
+      try {
+        if (name !== undefined || unit !== undefined || availability !== undefined) {
+          await client.query(
+            `UPDATE ingredients
+             SET name = COALESCE($1, name),
+                 unit = COALESCE($2, unit),
+                 availability = COALESCE($3, availability)
+             WHERE id = $4`,
+            [name, unit, availability, ingredientId]
+          );
+        }
+        if (quantity !== undefined) {
+          await client.query('UPDATE inventory SET quantity = $1 WHERE ingredient_id = $2', [quantity, ingredientId]);
+        }
+        if (delta !== undefined) {
+          await client.query('UPDATE inventory SET quantity = quantity + $1 WHERE ingredient_id = $2', [delta, ingredientId]);
+        }
+        if (threshold !== undefined) {
+          await client.query('UPDATE inventory SET threshold = $1 WHERE ingredient_id = $2', [threshold, ingredientId]);
+        }
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+    });
     res.json({ success: true });
   } catch (error) {
     next(error);
   }
 });
 
+// DELETE /api/manager/inventory/:ingredientId — removes the ingredient and its
+// menu_item_ingredients links before deleting the ingredient itself (FK constraint order).
 router.delete('/inventory/:ingredientId', async (req, res, next) => {
   const ingredientId = Number(req.params.ingredientId);
   try {
@@ -221,6 +328,8 @@ router.delete('/inventory/:ingredientId', async (req, res, next) => {
   }
 });
 
+// GET /api/manager/menu — returns all menu items with their ingredient ID list (not names).
+// Used by the manager menu table, which needs IDs for the edit form.
 router.get('/menu', async (_req, res, next) => {
   try {
     const result = await query(
@@ -244,6 +353,7 @@ router.get('/menu', async (_req, res, next) => {
   }
 });
 
+// POST /api/manager/menu — inserts a new menu item and its ingredient links in a transaction.
 router.post('/menu', async (req, res, next) => {
   const { id, name, price, availability, ingredientIds = [] } = req.body || {};
   try {
@@ -276,6 +386,8 @@ router.post('/menu', async (req, res, next) => {
   }
 });
 
+// PATCH /api/manager/menu/:id — updates name/price/availability and optionally replaces
+// the full ingredient link list (delete-all + re-insert) inside a transaction.
 router.patch('/menu/:id', async (req, res, next) => {
   const id = Number(req.params.id);
   const { name, price, availability, ingredientIds } = req.body || {};
@@ -314,6 +426,8 @@ router.patch('/menu/:id', async (req, res, next) => {
   }
 });
 
+// DELETE /api/manager/menu/:id — soft-deletes (sets availability=false) if the item has
+// existing order history; hard-deletes only if it has never been ordered.
 router.delete('/menu/:id', async (req, res, next) => {
   const id = Number(req.params.id);
   try {
@@ -329,6 +443,7 @@ router.delete('/menu/:id', async (req, res, next) => {
   }
 });
 
+// GET /api/manager/employees — returns all employee rows ordered by ID.
 router.get('/employees', async (_req, res, next) => {
   try {
     const result = await query('SELECT id, permission, actions, changes FROM employees ORDER BY id');
@@ -338,6 +453,7 @@ router.get('/employees', async (_req, res, next) => {
   }
 });
 
+// POST /api/manager/employees — creates a new employee with an explicit ID.
 router.post('/employees', async (req, res, next) => {
   const { id, permission, actions, changes } = req.body || {};
   try {
@@ -351,6 +467,7 @@ router.post('/employees', async (req, res, next) => {
   }
 });
 
+// PATCH /api/manager/employees/:id — updates permission, actions, or changes fields.
 router.patch('/employees/:id', async (req, res, next) => {
   const id = Number(req.params.id);
   const { permission, actions, changes } = req.body || {};
@@ -369,6 +486,7 @@ router.patch('/employees/:id', async (req, res, next) => {
   }
 });
 
+// DELETE /api/manager/employees/:id — permanently removes the employee record.
 router.delete('/employees/:id', async (req, res, next) => {
   const id = Number(req.params.id);
   try {
@@ -379,6 +497,8 @@ router.delete('/employees/:id', async (req, res, next) => {
   }
 });
 
+// GET /api/manager/reports/x — returns today's live X-report (running daily totals).
+// Returns an empty report if the Z has already been closed for today.
 router.get('/reports/x', async (_req, res, next) => {
   try {
     const businessDate = new Date().toISOString().slice(0, 10);
@@ -389,6 +509,8 @@ router.get('/reports/x', async (_req, res, next) => {
   }
 });
 
+// GET /api/manager/reports/z-preview — returns today's Z-report preview with status
+// ('ready-to-close' or 'closed') so the manager UI can show or hide the reset button.
 router.get('/reports/z-preview', async (_req, res, next) => {
   try {
     const businessDate = new Date().toISOString().slice(0, 10);
@@ -399,6 +521,8 @@ router.get('/reports/z-preview', async (_req, res, next) => {
   }
 });
 
+// POST /api/manager/reports/z-reset — closes today's Z-report, archives the totals,
+// and marks the day as done so the X-report stops accumulating for today.
 router.post('/reports/z-reset', async (req, res, next) => {
   try {
     const businessDate = new Date().toISOString().slice(0, 10);
@@ -410,6 +534,8 @@ router.post('/reports/z-reset', async (req, res, next) => {
   }
 });
 
+// POST /api/manager/reports/z-reset/undo — reverses the Z-report close for today.
+// Clears the flag and removes the archive row so the live X-report resumes.
 router.post('/reports/z-reset/undo', async (_req, res, next) => {
   try {
     const businessDate = new Date().toISOString().slice(0, 10);

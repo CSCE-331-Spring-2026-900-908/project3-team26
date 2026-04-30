@@ -1,6 +1,12 @@
+// Chat proxy route: /api/chat
+// Forwards the conversation history from the kiosk's Order Help widget to the
+// Groq API (OpenAI-compatible) and streams the reply back to the frontend.
+// Requires GROQ_API_KEY in the environment.
 import express from 'express';
 const router = express.Router();
 
+// POST /api/chat — expects { messages: [{role, content}, ...] } in the request body.
+// Passes the full conversation to Groq so the assistant maintains context across turns.
 router.post('/chat', async (req, res) => {
   const { messages } = req.body;
   try {

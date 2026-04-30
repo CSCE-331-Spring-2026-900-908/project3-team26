@@ -416,87 +416,108 @@ export default function CashierPage() {
 
       {customizationModal ? (
         <div className="cashier-modal-backdrop" onClick={() => setCustomizationModal(null)}>
-          <div className="cashier-modal swing-panel" onClick={(event) => event.stopPropagation()}>
-            <div className="cashier-modal-header">
+          <div className="kiosk-modal cashier-kiosk-modal panel" onClick={(event) => event.stopPropagation()}>
+            <div className="kiosk-modal-header">
               <div>
                 <strong>{modalItem.name}</strong>
                 <p>{formatCurrency(modalItem.price)}</p>
               </div>
               <button type="button" onClick={() => setCustomizationModal(null)}>
-                CLOSE
+                Close
               </button>
             </div>
 
-            <div className="cashier-modal-grid">
-              <label className="swing-field">
-                <span>Size</span>
-                <select
-                  value={modalDraft.size}
-                  onChange={(event) => updateModalDraft({ size: event.target.value })}
-                >
-                  {sizes.map((entry) => (
-                    <option key={entry}>{entry}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="swing-field">
-                <span>Sugar</span>
-                <select
-                  value={modalDraft.sugar}
-                  onChange={(event) => updateModalDraft({ sugar: event.target.value })}
-                >
-                  {sugarLevels.map((entry) => (
-                    <option key={entry}>{entry}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="swing-field">
-                <span>Temperature</span>
-                <select
-                  value={modalDraft.temperature}
-                  onChange={(event) => updateModalDraft({ temperature: event.target.value })}
-                >
-                  {temperatureOptions.map((entry) => (
-                    <option key={entry}>{entry}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="swing-field">
-                <span>Ice</span>
-                <select
-                  value={modalDraft.ice}
-                  onChange={(event) => updateModalDraft({ ice: event.target.value })}
-                >
-                  {iceLevels.map((entry) => (
-                    <option key={entry}>{entry}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="swing-field">
-                <span>Quantity</span>
-                <input
-                  min="1"
-                  type="number"
-                  value={modalDraft.quantity}
-                  onChange={(event) => updateModalDraft({ quantity: event.target.value })}
-                />
-              </label>
+            <div className="kiosk-modal-field">
+              <span>Size</span>
+              <div className="kiosk-modal-options">
+                {sizes.map((entry) => (
+                  <button
+                    key={entry}
+                    type="button"
+                    className={modalDraft.size === entry ? 'active bold' : 'bold'}
+                    onClick={() => updateModalDraft({ size: entry })}
+                  >
+                    {entry}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="cashier-modal-addons">
-              {toppingOptions.map((addon) => (
-                <label key={addon} className="addon-option">
-                  <input
-                    type="checkbox"
-                    checked={modalDraft.addons.includes(addon)}
-                    onChange={() => toggleModalAddon(addon)}
-                  />
-                  <span>{addon}</span>
-                </label>
-              ))}
+            <div className="kiosk-modal-field">
+              <span>Temperature</span>
+              <div className="kiosk-modal-options">
+                {temperatureOptions.map((entry) => (
+                  <button
+                    key={entry}
+                    type="button"
+                    className={modalDraft.temperature === entry ? 'active bold' : 'bold'}
+                    onClick={() => updateModalDraft({ temperature: entry })}
+                  >
+                    {entry}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <button type="button" className="swing-primary cashier-modal-submit" onClick={saveCustomization}>
+            <div className="kiosk-modal-field">
+              <span>Sugar</span>
+              <div className="kiosk-modal-options kiosk-modal-options-sweetness">
+                {sugarLevels.map((entry) => (
+                  <button
+                    key={entry}
+                    type="button"
+                    className={modalDraft.sugar === entry ? 'active bold' : 'bold'}
+                    onClick={() => updateModalDraft({ sugar: entry })}
+                  >
+                    {entry}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="kiosk-modal-field">
+              <span>Ice</span>
+              <div className="kiosk-modal-options cashier-modal-ice-options">
+                {iceLevels.map((entry) => (
+                  <button
+                    key={entry}
+                    type="button"
+                    className={modalDraft.ice === entry ? 'active bold' : 'bold'}
+                    onClick={() => updateModalDraft({ ice: entry })}
+                  >
+                    {entry}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="kiosk-modal-field">
+              <span>Toppings</span>
+              <div className="kiosk-modal-options">
+                {toppingOptions.map((addon) => (
+                  <button
+                    key={addon}
+                    type="button"
+                    className={modalDraft.addons.includes(addon) ? 'active bold' : 'bold'}
+                    onClick={() => toggleModalAddon(addon)}
+                  >
+                    {addon}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <label className="kiosk-modal-field cashier-modal-quantity">
+              <span>Quantity</span>
+              <input
+                min="1"
+                type="number"
+                value={modalDraft.quantity}
+                onChange={(event) => updateModalDraft({ quantity: event.target.value })}
+              />
+            </label>
+
+            <button type="button" className="primary bold kiosk-modal-confirm" onClick={saveCustomization}>
               {customizationModal.mode === 'edit' ? 'SAVE CHANGES' : 'ADD TO ORDER'} -{' '}
               {formatCurrency(modalLineTotal)}
             </button>

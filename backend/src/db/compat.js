@@ -1,7 +1,12 @@
+// compat.js: detects which optional tables and columns exist in the live database
+// so routes can degrade gracefully on older schemas (e.g. the original Project 2 DB).
+// Results are cached after the first call so we only hit information_schema once.
 import { query, withClient } from './pool.js';
 
 let cachedSupport;
 
+// Queries information_schema to see which Project 3 columns/tables are present.
+// Returns a support object that routes check before writing optional fields.
 async function inspectSupport(client) {
   const orderSourceColumn = await client.query(
     `SELECT COUNT(*)::int AS count
@@ -24,6 +29,8 @@ async function inspectSupport(client) {
   };
 }
 
+// Returns the cached support object, running inspectSupport once on first call.
+// Clears the cache on failure so the next request retries rather than serving stale results.
 export async function getSchemaSupport() {
   if (!cachedSupport) {
     cachedSupport = withClient(async (client) => inspectSupport(client)).catch((error) => {
@@ -35,6 +42,8 @@ export async function getSchemaSupport() {
   return cachedSupport;
 }
 
+// Confirms the database is reachable and returns the schema support object.
+// Called by the /api/health endpoint and by hosting platforms during startup checks.
 export async function databaseHealthcheck() {
   await query('SELECT 1');
   return getSchemaSupport();

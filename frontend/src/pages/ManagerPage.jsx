@@ -12,11 +12,175 @@ const sections = ['DASHBOARD', 'ORDERS', 'INVENTORY', 'MENU', 'EMPLOYEES', 'REPO
 
 const initialInventoryForm = { name: '', unit: 'oz', quantity: '0', threshold: '0' };
 const initialInventoryUpdate = { ingredientId: '', delta: '', threshold: '' };
+const initialInventoryEdit = { name: '', unit: '', quantity: '', threshold: '', availability: true };
 const initialMenuForm = { id: '', name: '', price: '', ingredientIds: '', availability: true };
+const initialMenuEdit = { name: '', price: '', ingredientIds: '', availability: true };
 const initialEmployeeForm = { id: '', permission: 'Cashier', actions: '', changes: '' };
 
 function formatCurrency(value) {
-  return `$${Number(value || 0).toFixed(2)}`;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value || 0));
+}
+
+function formatChartCurrency(value) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    notation: Math.abs(Number(value || 0)) >= 10000 ? 'compact' : 'standard',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(Number(value || 0));
+}
+
+function formatNumber(value, options = {}) {
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 0,
+    ...options,
+  }).format(Number(value || 0));
+}
+
+function formatHourLabel(value) {
+  const hour = Number(value);
+  if (!Number.isFinite(hour)) {
+    return String(value || '-');
+  }
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12} ${suffix}`;
+}
+
+function parseIdList(value) {
+  return String(value || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map(Number)
+    .filter(Number.isFinite);
+}
+
+function formatShortDate(value) {
+  if (!value) {
+    return '-';
+  }
+  if (typeof value === 'string') {
+    const match = value.match(/\d{4}-(\d{2})-(\d{2})/);
+    if (match) {
+      return `${match[1]}/${match[2]}`;
+    }
+  }
+  return new Date(value).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' });
+}
+
+function SalesTrendChart({ data = [] }) {
+  const points = data.slice(-10);
+  const width = 520;
+  const height = 230;
+  const padding = 34;
+  const maxSales = Math.max(...points.map((row) => Number(row.sales || 0)), 1);
+  const step = points.length > 1 ? (width - padding * 2) / (points.length - 1) : 0;
+  const plotted = points.map((row, index) => {
+    const x = padding + step * index;
+    const y = height - padding - (Number(row.sales || 0) / maxSales) * (height - padding * 2);
+    return { ...row, x, y };
+  });
+  const path = plotted.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+
+  return (
+    <div className="manager-chart-body manager-line-chart">
+      <div className="manager-chart-unit">Daily sales in USD</div>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Daily sales trend in US dollars">
+        <line x1={padding} y1={padding} x2={padding} y2={height - padding} className="chart-axis" />
+        <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} className="chart-axis" />
+        {path ? <path d={path} className="chart-line" /> : null}
+        {plotted.map((point) => (
+          <g key={`${point.date}-${point.x}`}>
+            <circle cx={point.x} cy={point.y} r="5" className="chart-dot" />
+            <text x={point.x} y={point.y - 12} className="chart-value" textAnchor="middle">
+              {formatChartCurrency(point.sales)}
+            </text>
+            <text x={point.x} y={height - 10} className="chart-label" textAnchor="middle">
+              {formatShortDate(point.date)}
+            </text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+function PeakHoursChart({ data = [] }) {
+  const rows = data.slice(0, 10);
+  const maxOrders = Math.max(...rows.map((row) => Number(row.orderCount || 0)), 1);
+
+  return (
+    <div className="manager-chart-body manager-bar-chart-wrap">
+      <div className="manager-chart-unit">Orders per hour</div>
+      <div className="manager-bar-chart" role="img" aria-label="Peak hours by order count">
+        {rows.map((row) => (
+          <div className="manager-bar-column" key={row.hour}>
+            <div className="manager-bar-stack">
+              <span className="manager-bar-value">
+                {formatNumber(row.orderCount)}
+                <small>orders</small>
+              </span>
+              <span className="manager-bar-fill" style={{ height: `${Math.max((row.orderCount / maxOrders) * 100, 3)}%` }} />
+            </div>
+            <span className="manager-bar-label">{formatHourLabel(row.hour)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TopItemsList({ data = [] }) {
+  return (
+    <div className="manager-chart-body manager-top-list">
+      {data.slice(0, 10).map((item) => (
+        <div className="manager-top-row" key={item.name}>
+          <span>{item.name}</span>
+          <strong>
+            {formatNumber(item.totalUnitsSold)}
+            <small> sold</small>
+          </strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RevenueCategoryChart({ data = [] }) {
+  const palette = ['#557fb0', '#d48645', '#6eaa79', '#bd5c60'];
+  const total = data.reduce((sum, row) => sum + Number(row.revenue || 0), 0);
+  let cursor = 0;
+  const stops = data.map((row, index) => {
+    const start = cursor;
+    const value = total > 0 ? (Number(row.revenue || 0) / total) * 100 : 0;
+    cursor += value;
+    return `${palette[index % palette.length]} ${start}% ${cursor}%`;
+  });
+
+  return (
+    <div className="manager-chart-body manager-pie-layout">
+      <div className="manager-pie-legend">
+        {data.map((row, index) => {
+          const percent = total > 0 ? (Number(row.revenue || 0) / total) * 100 : 0;
+          return (
+            <div className="manager-legend-row" key={row.category}>
+              <span style={{ background: palette[index % palette.length] }} />
+              <strong>{row.category}</strong>
+              <small>{percent.toFixed(1)}% revenue</small>
+            </div>
+          );
+        })}
+      </div>
+      <div className="manager-pie" style={{ background: stops.length ? `conic-gradient(${stops.join(', ')})` : '#d8dce4' }} />
+    </div>
+  );
 }
 
 export default function ManagerPage() {
@@ -31,7 +195,11 @@ export default function ManagerPage() {
   const [zPreview, setZPreview] = useState(null);
   const [inventoryForm, setInventoryForm] = useState(initialInventoryForm);
   const [inventoryUpdate, setInventoryUpdate] = useState(initialInventoryUpdate);
+  const [editingInventoryId, setEditingInventoryId] = useState(null);
+  const [inventoryEdit, setInventoryEdit] = useState(initialInventoryEdit);
   const [menuForm, setMenuForm] = useState(initialMenuForm);
+  const [editingMenuId, setEditingMenuId] = useState(null);
+  const [menuEdit, setMenuEdit] = useState(initialMenuEdit);
   const [employeeForm, setEmployeeForm] = useState(initialEmployeeForm);
   const [voidOrderId, setVoidOrderId] = useState('');
   const [zClosing, setZClosing] = useState(false);
@@ -107,6 +275,72 @@ export default function ManagerPage() {
     }
   }
 
+  function startInventoryEdit(item) {
+    const ingredientId = item.ingredientId || item.ingredient_id;
+    setEditingInventoryId(ingredientId);
+    setInventoryEdit({
+      name: item.name || '',
+      unit: item.unit || '',
+      quantity: String(item.quantity ?? ''),
+      threshold: String(item.threshold ?? ''),
+      availability: item.availability ?? true,
+    });
+  }
+
+  function updateInventoryEdit(partial) {
+    setInventoryEdit((current) => ({ ...current, ...partial }));
+  }
+
+  function cancelInventoryEdit() {
+    setEditingInventoryId(null);
+    setInventoryEdit(initialInventoryEdit);
+  }
+
+  async function saveInventoryEdit(ingredientId) {
+    setFeedback('');
+    setError('');
+    const quantity = Number(inventoryEdit.quantity);
+    const threshold = Number(inventoryEdit.threshold);
+    if (!inventoryEdit.name.trim() || !Number.isFinite(quantity) || !Number.isFinite(threshold)) {
+      setError('Name, quantity, and threshold are required for inventory edits.');
+      return;
+    }
+    try {
+      await api.patch(`/manager/inventory/${ingredientId}`, {
+        name: inventoryEdit.name.trim(),
+        unit: inventoryEdit.unit.trim() || null,
+        quantity,
+        threshold,
+        availability: inventoryEdit.availability,
+      });
+      cancelInventoryEdit();
+      setFeedback('Inventory item updated.');
+      await loadPage();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function deleteInventoryItem(item) {
+    const ingredientId = item.ingredientId || item.ingredient_id;
+    if (!window.confirm(`Delete ${item.name} from inventory? This also removes its menu ingredient links.`)) {
+      return;
+    }
+
+    setFeedback('');
+    setError('');
+    try {
+      await api.delete(`/manager/inventory/${ingredientId}`);
+      if (Number(editingInventoryId) === Number(ingredientId)) {
+        cancelInventoryEdit();
+      }
+      setFeedback('Inventory item deleted.');
+      await loadPage();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   // Creates or updates a menu item depending on whether menuForm.id was filled in.
   // POST /manager/menu for a new item, PATCH /manager/menu/:id for an edit.
   async function handleMenuSubmit(event) {
@@ -115,12 +349,7 @@ export default function ManagerPage() {
     setError('');
     try {
       const hasIngredientIds = menuForm.ingredientIds.trim() !== '';
-      const ingredientIds = menuForm.ingredientIds
-        .split(',')
-        .map((part) => part.trim())
-        .filter(Boolean)
-        .map(Number)
-        .filter(Number.isFinite);
+      const ingredientIds = parseIdList(menuForm.ingredientIds);
 
       if (menuForm.id) {
         const body = {
@@ -142,6 +371,49 @@ export default function ManagerPage() {
       }
       setMenuForm(initialMenuForm);
       setFeedback('Menu saved.');
+      await loadPage();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  function startMenuEdit(item) {
+    setEditingMenuId(item.id);
+    setMenuEdit({
+      name: item.name || '',
+      price: String(item.price ?? ''),
+      ingredientIds: item.ingredient_ids || '',
+      availability: item.availability ?? true,
+    });
+  }
+
+  function updateMenuEdit(partial) {
+    setMenuEdit((current) => ({ ...current, ...partial }));
+  }
+
+  function cancelMenuEdit() {
+    setEditingMenuId(null);
+    setMenuEdit(initialMenuEdit);
+  }
+
+  async function saveMenuEdit(menuId) {
+    setFeedback('');
+    setError('');
+    const price = Number(menuEdit.price);
+    if (!menuEdit.name.trim() || !Number.isFinite(price)) {
+      setError('Name and price are required for menu edits.');
+      return;
+    }
+
+    try {
+      await api.patch(`/manager/menu/${menuId}`, {
+        name: menuEdit.name.trim(),
+        price,
+        availability: menuEdit.availability,
+        ingredientIds: parseIdList(menuEdit.ingredientIds),
+      });
+      cancelMenuEdit();
+      setFeedback('Menu item updated.');
       await loadPage();
     } catch (err) {
       setError(err.message);
@@ -262,19 +534,47 @@ export default function ManagerPage() {
             <div className="metric-box">
               <span>TOTAL SALES</span>
               <strong>{formatCurrency(dashboard?.totals?.sales)}</strong>
+              <small className="metric-unit">USD total revenue</small>
             </div>
             <div className="metric-box">
               <span>ORDERS</span>
-              <strong>{dashboard?.totals?.orders ?? 0}</strong>
+              <strong>{formatNumber(dashboard?.totals?.orders)}</strong>
+              <small className="metric-unit">orders placed</small>
             </div>
             <div className="metric-box">
               <span>AVG ORDER</span>
               <strong>{formatCurrency(dashboard?.totals?.averageOrder)}</strong>
+              <small className="metric-unit">USD per order</small>
             </div>
             <div className="metric-box">
               <span>CASHIERS</span>
-              <strong>{dashboard?.totals?.activeCashiers ?? 0}</strong>
+              <strong>{formatNumber(dashboard?.totals?.activeCashiers)}</strong>
+              <small className="metric-unit">active cashiers</small>
             </div>
+          </div>
+
+          <div className="manager-analytics-grid">
+            <article className="swing-panel manager-chart-panel">
+              <div className="panel-title">SALES TREND</div>
+              <h3>Sales (USD)</h3>
+              <SalesTrendChart data={dashboard?.salesTrend || []} />
+            </article>
+
+            <article className="swing-panel manager-chart-panel">
+              <div className="panel-title">TOP ITEMS</div>
+              <TopItemsList data={dashboard?.topItems || []} />
+            </article>
+
+            <article className="swing-panel manager-chart-panel">
+              <div className="panel-title">PEAK HOURS</div>
+              <h3>Orders by Hour</h3>
+              <PeakHoursChart data={dashboard?.peakHours || []} />
+            </article>
+
+            <article className="swing-panel manager-chart-panel">
+              <div className="panel-title">REVENUE BY CATEGORY</div>
+              <RevenueCategoryChart data={dashboard?.categoryRevenue || []} />
+            </article>
           </div>
 
           <div className="manager-grid-2">
@@ -285,7 +585,8 @@ export default function ManagerPage() {
                   <div className="list-row" key={item.ingredient_id}>
                     <span>{item.name}</span>
                     <strong>
-                      {Number(item.quantity).toFixed(0)} / {Number(item.threshold).toFixed(0)}
+                      {formatNumber(item.quantity)} / {formatNumber(item.threshold)}
+                      <small> {item.unit || 'units'}</small>
                     </strong>
                   </div>
                 ))}
@@ -298,7 +599,10 @@ export default function ManagerPage() {
                 {dashboard?.productUsage?.map((item) => (
                   <div className="list-row" key={item.ingredientId}>
                     <span>{item.name}</span>
-                    <strong>{item.unitsUsed}</strong>
+                    <strong>
+                      {formatNumber(item.unitsUsed)}
+                      <small> {item.unit || 'units'} used</small>
+                    </strong>
                   </div>
                 ))}
               </div>
@@ -362,7 +666,7 @@ export default function ManagerPage() {
             </form>
 
             <form className="swing-panel" onSubmit={handleInventoryUpdate}>
-              <div className="panel-title">UPDATE INVENTORY</div>
+              <div className="panel-title">QUICK STOCK ADJUSTMENT</div>
               <label className="compact-field"><span>Ingredient ID</span><input value={inventoryUpdate.ingredientId} onChange={(event) => setInventoryUpdate({ ...inventoryUpdate, ingredientId: event.target.value })} /></label>
               <label className="compact-field"><span>Delta</span><input value={inventoryUpdate.delta} onChange={(event) => setInventoryUpdate({ ...inventoryUpdate, delta: event.target.value })} /></label>
               <label className="compact-field"><span>Threshold</span><input value={inventoryUpdate.threshold} onChange={(event) => setInventoryUpdate({ ...inventoryUpdate, threshold: event.target.value })} /></label>
@@ -371,8 +675,17 @@ export default function ManagerPage() {
           </div>
 
           <article className="swing-panel">
-            <div className="panel-title">INVENTORY</div>
-            <InventoryTable items={inventory.map((item) => ({ ...item, lowStock: Number(item.quantity) <= Number(item.threshold) }))} />
+            <div className="panel-title">EDIT EXISTING INVENTORY</div>
+            <InventoryTable
+              items={inventory.map((item) => ({ ...item, lowStock: Number(item.quantity) <= Number(item.threshold) }))}
+              editingId={editingInventoryId}
+              editDraft={inventoryEdit}
+              onStartEdit={startInventoryEdit}
+              onDraftChange={updateInventoryEdit}
+              onSaveEdit={saveInventoryEdit}
+              onCancelEdit={cancelInventoryEdit}
+              onDelete={deleteInventoryItem}
+            />
           </article>
         </div>
       ) : null}
@@ -380,7 +693,7 @@ export default function ManagerPage() {
       {activeSection === 'MENU' ? (
         <div className="manager-section">
           <form className="swing-panel" onSubmit={handleMenuSubmit}>
-            <div className="panel-title">MENU ITEMS</div>
+            <div className="panel-title">ADD MENU ITEM</div>
             <div className="manager-form-grid">
               <label className="compact-field"><span>ID</span><input value={menuForm.id} onChange={(event) => setMenuForm({ ...menuForm, id: event.target.value })} /></label>
               <label className="compact-field"><span>Name</span><input value={menuForm.name} onChange={(event) => setMenuForm({ ...menuForm, name: event.target.value })} /></label>
@@ -389,9 +702,12 @@ export default function ManagerPage() {
               <label className="compact-field compact-checkbox"><span>Available</span><input type="checkbox" checked={menuForm.availability} onChange={(event) => setMenuForm({ ...menuForm, availability: event.target.checked })} /></label>
             </div>
             <button className="swing-primary">{menuForm.id ? 'UPDATE' : 'ADD'}</button>
+          </form>
 
+          <article className="swing-panel">
+            <div className="panel-title">EDIT EXISTING MENU ITEMS</div>
             <div className="table-wrap">
-              <table>
+              <table className="menu-edit-table">
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -400,23 +716,81 @@ export default function ManagerPage() {
                     <th>Price</th>
                     <th>Available</th>
                     <th>Ingredients</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {menuItems.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.id}</td>
-                      <td>{item.name}</td>
-                      <td>{item.category || '-'}</td>
-                      <td>{formatCurrency(item.price)}</td>
-                      <td>{String(item.availability)}</td>
-                      <td>{item.ingredient_ids || '-'}</td>
-                    </tr>
-                  ))}
+                  {menuItems.map((item) => {
+                    const isEditing = Number(editingMenuId) === Number(item.id);
+                    return (
+                      <tr key={item.id}>
+                        <td>{item.id}</td>
+                        <td>
+                          {isEditing ? (
+                            <input value={menuEdit.name} onChange={(event) => updateMenuEdit({ name: event.target.value })} />
+                          ) : (
+                            item.name
+                          )}
+                        </td>
+                        <td>{item.category || '-'}</td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={menuEdit.price}
+                              onChange={(event) => updateMenuEdit({ price: event.target.value })}
+                            />
+                          ) : (
+                            formatCurrency(item.price)
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              type="checkbox"
+                              checked={menuEdit.availability}
+                              onChange={(event) => updateMenuEdit({ availability: event.target.checked })}
+                            />
+                          ) : (
+                            String(item.availability)
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              value={menuEdit.ingredientIds}
+                              onChange={(event) => updateMenuEdit({ ingredientIds: event.target.value })}
+                              placeholder="1, 4, 6"
+                            />
+                          ) : (
+                            item.ingredient_ids || '-'
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <div className="inventory-row-actions">
+                              <button type="button" className="swing-primary" onClick={() => saveMenuEdit(item.id)}>
+                                SAVE
+                              </button>
+                              <button type="button" className="swing-secondary" onClick={cancelMenuEdit}>
+                                CANCEL
+                              </button>
+                            </div>
+                          ) : (
+                            <button type="button" className="swing-secondary" onClick={() => startMenuEdit(item)}>
+                              EDIT
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-          </form>
+          </article>
         </div>
       ) : null}
 
@@ -471,11 +845,11 @@ export default function ManagerPage() {
               <div className="panel-title">X-REPORT</div>
               <div className="report-lines">
                 <p>Date: {xReport?.businessDate || '-'}</p>
-                <p>Sales: {xReport ? `$${xReport.sales}` : '-'}</p>
-                <p>Cash: {xReport ? `$${xReport.cashPayments}` : '-'}</p>
-                <p>Card: {xReport ? `$${xReport.cardPayments}` : '-'}</p>
-                <p>Other: {xReport ? `$${xReport.otherPayments}` : '-'}</p>
-                <p>Voids: {xReport?.voids ?? 0}</p>
+                <p>Sales: {xReport ? formatCurrency(xReport.sales) : '-'}</p>
+                <p>Cash: {xReport ? formatCurrency(xReport.cashPayments) : '-'}</p>
+                <p>Card: {xReport ? formatCurrency(xReport.cardPayments) : '-'}</p>
+                <p>Other: {xReport ? formatCurrency(xReport.otherPayments) : '-'}</p>
+                <p>Voids: {formatNumber(xReport?.voids)}</p>
               </div>
             </article>
 
@@ -483,9 +857,9 @@ export default function ManagerPage() {
               <div className="panel-title">Z-REPORT PREVIEW</div>
               <div className="report-lines">
                 <p>Date: {zPreview?.businessDate || '-'}</p>
-                <p>Sales: {zPreview ? `$${zPreview.sales}` : '-'}</p>
-                <p>Tax: {zPreview ? `$${zPreview.tax}` : '-'}</p>
-                <p>Total Cash: {zPreview ? `$${zPreview.cashPayments}` : '-'}</p>
+                <p>Sales: {zPreview ? formatCurrency(zPreview.sales) : '-'}</p>
+                <p>Tax: {zPreview ? formatCurrency(zPreview.tax) : '-'}</p>
+                <p>Total Cash: {zPreview ? formatCurrency(zPreview.cashPayments) : '-'}</p>
                 <p>Status: {zPreview?.status || '-'}</p>
                 {zPreview?.closedAt ? (
                   <p>Closed: {new Date(zPreview.closedAt).toLocaleString()}</p>
@@ -527,7 +901,7 @@ export default function ManagerPage() {
                   {xReport?.hourly?.map((row) => (
                     <tr key={row.hour}>
                       <td>{String(row.hour).padStart(2, '0')}:00</td>
-                      <td>{row.orderCount}</td>
+                      <td>{formatNumber(row.orderCount)}</td>
                       <td>{formatCurrency(row.sales)}</td>
                     </tr>
                   ))}
