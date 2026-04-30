@@ -98,7 +98,7 @@ export default function ChatWidget() {
                 title={showKeyboard ? 'Hide keyboard' : 'Show on-screen keyboard'}
                 aria-label="Toggle on-screen keyboard"
               >
-                ⌨️
+                Keyboard ⌨️
               </button>
               <button onClick={closeChat} aria-label="Close chat">✕</button>
             </div>
