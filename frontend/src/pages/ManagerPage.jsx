@@ -695,19 +695,13 @@ export default function ManagerPage() {
           <div className="manager-grid-2">
             <form className="swing-panel" onSubmit={handleInventoryCreate}>
               <div className="panel-title">ADD INVENTORY ITEM</div>
-              <label className="compact-field"><span>Name</span><input value={inventoryForm.name} onChange={(event) => setInventoryForm({ ...inventoryForm, name: event.target.value })} /></label>
-              <label className="compact-field"><span>Unit</span><input value={inventoryForm.unit} onChange={(event) => setInventoryForm({ ...inventoryForm, unit: event.target.value })} /></label>
-              <label className="compact-field"><span>Qty</span><input value={inventoryForm.quantity} onChange={(event) => setInventoryForm({ ...inventoryForm, quantity: event.target.value })} /></label>
-              <label className="compact-field"><span>Threshold</span><input value={inventoryForm.threshold} onChange={(event) => setInventoryForm({ ...inventoryForm, threshold: event.target.value })} /></label>
+              <div className="manager-form-grid">
+                <label className="compact-field"><span>Name</span><input value={inventoryForm.name} onChange={(event) => setInventoryForm({ ...inventoryForm, name: event.target.value })} /></label>
+                <label className="compact-field"><span>Unit</span><input value={inventoryForm.unit} onChange={(event) => setInventoryForm({ ...inventoryForm, unit: event.target.value })} /></label>
+                <label className="compact-field"><span>Qty</span><input value={inventoryForm.quantity} onChange={(event) => setInventoryForm({ ...inventoryForm, quantity: event.target.value })} /></label>
+                <label className="compact-field"><span>Threshold</span><input value={inventoryForm.threshold} onChange={(event) => setInventoryForm({ ...inventoryForm, threshold: event.target.value })} /></label>
+              </div>
               <button className="swing-primary">ADD NEW ITEM</button>
-            </form>
-
-            <form className="swing-panel" onSubmit={handleInventoryUpdate}>
-              <div className="panel-title">QUICK STOCK ADJUSTMENT</div>
-              <label className="compact-field"><span>Ingredient ID</span><input value={inventoryUpdate.ingredientId} onChange={(event) => setInventoryUpdate({ ...inventoryUpdate, ingredientId: event.target.value })} /></label>
-              <label className="compact-field"><span>Delta</span><input value={inventoryUpdate.delta} onChange={(event) => setInventoryUpdate({ ...inventoryUpdate, delta: event.target.value })} /></label>
-              <label className="compact-field"><span>Threshold</span><input value={inventoryUpdate.threshold} onChange={(event) => setInventoryUpdate({ ...inventoryUpdate, threshold: event.target.value })} /></label>
-              <button className="swing-primary">APPLY DELTA</button>
             </form>
           </div>
 
