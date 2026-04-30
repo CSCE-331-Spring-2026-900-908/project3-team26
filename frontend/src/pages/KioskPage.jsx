@@ -53,6 +53,18 @@ const sizeOptions = ['Small', 'Medium', 'Large'];
 const temperatureOptions = ['Cold', 'Hot'];
 const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
 const iceOptions = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
+const KIOSK_THEMES = {
+  hue: {
+    className: 'kiosk-theme-hue',
+    label: 'HUE',
+    nextLabel: 'CLASSIC',
+  },
+  classic: {
+    className: 'kiosk-theme-classic',
+    label: 'CLASSIC',
+    nextLabel: 'HUE',
+  },
+};
 
 const DEFAULT_CUSTOMIZATION = {
   size: 'Medium',
@@ -189,6 +201,7 @@ export default function KioskPage() {
   const [cart, setCart] = useState([]);
   const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState('');
+  const [kioskTheme, setKioskTheme] = useState('hue');
   const [submitting, setSubmitting] = useState(false);
   const [customizingItem, setCustomizingItem] = useState(null);
   const [editingLine, setEditingLine] = useState(null);
@@ -206,6 +219,8 @@ export default function KioskPage() {
 
   // True only once real items (with real prices) have replaced the seed.
   const menuLoaded = menuItems.length > 0 && !menuItems[0]?._isPlaceholder;
+  const activeTheme = KIOSK_THEMES[kioskTheme] || KIOSK_THEMES.hue;
+  const kioskPageClassName = `page active kiosk-page ${activeTheme.className}`;
 
   useKioskBodyFlag(started, Boolean(confirmation));
 
@@ -561,15 +576,33 @@ export default function KioskPage() {
     setCheckoutStep(null);
     setActiveCategory('Milk Tea');
     setActiveFilterValue(allIngredientsValue);
-    setActiveMaxPrice(0);
+    setActiveMaxPrice(maxPriceLimit);
     closeCustomization();
+  }
+
+  function toggleKioskTheme() {
+    setKioskTheme((current) => (current === 'hue' ? 'classic' : 'hue'));
+  }
+
+  function renderThemeButton() {
+    return (
+      <button
+        type="button"
+        className="kiosk-theme-button"
+        onClick={toggleKioskTheme}
+        aria-label={`Switch kiosk theme to ${activeTheme.nextLabel.toLowerCase()}`}
+      >
+        THEME: {activeTheme.label}
+      </button>
+    );
   }
 
   if (!started) {
     return (
-      <section id="page-kiosk" className="page active kiosk-page">
+      <section id="page-kiosk" className={kioskPageClassName}>
         <div className="kiosk-start panel">
           <div className="page-action-row page-action-row-right">
+            {renderThemeButton()}
             <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
           </div>
           <h1>BUBBLE TEA SELF ORDER</h1>
@@ -589,9 +622,10 @@ export default function KioskPage() {
     const receiptTax = confirmation.tax != null ? Number(confirmation.tax) : cartTax;
     const receiptTotal = Number(confirmation.totalAmount);
     return (
-      <section id="page-kiosk" className="page active kiosk-page">
+      <section id="page-kiosk" className={kioskPageClassName}>
         <div className="kiosk-confirm panel">
           <div className="page-action-row page-action-row-right">
+            {renderThemeButton()}
             <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
           </div>
           <div className="confirm-check">&#10003;</div>
@@ -623,9 +657,10 @@ export default function KioskPage() {
   // Full-screen payment view: customer reviews the cart and chooses Cash or Card.
   if (checkoutStep === 'payment') {
     return (
-      <section id="page-kiosk" className="page active kiosk-page">
+      <section id="page-kiosk" className={kioskPageClassName}>
         <div className="kiosk-confirm panel kiosk-payment-panel">
           <div className="page-action-row page-action-row-right">
+            {renderThemeButton()}
             <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
           </div>
           <h1>CHECKOUT</h1>
@@ -698,7 +733,7 @@ export default function KioskPage() {
   return (
     <section
       id="page-kiosk"
-      className="page active kiosk-page kiosk-active"
+      className={`${kioskPageClassName} kiosk-active`}
       style={{
         '--kiosk-header-height': `${kioskFixedHeights.header}px`,
         '--kiosk-categories-height': `${kioskFixedHeights.categories}px`,
@@ -713,6 +748,7 @@ export default function KioskPage() {
             </div>
             <h2>KIOSK - SELF ORDERING</h2>
             <div className="kiosk-header-actions">
+              {renderThemeButton()}
               <button onClick={resetKiosk}>RESET</button>
               <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
             </div>
@@ -753,11 +789,15 @@ export default function KioskPage() {
               <span className="kiosk-price-value">{formatCurrency(sliderValue)}</span>
             </div>
             <span className="helper-text kiosk-filter-summary">
-              menuLoaded && (
-              Showing {visibleItems.length} item{visibleItems.length === 1 ? '' : 's'} in{' '}
-              {activeCategory} for {activeFilterLabel} from {formatCurrency(minPriceLimit)} to{' '}
-              {formatCurrency(sliderValue)}
-              )
+              {menuLoaded ? (
+                <>
+                  Showing {visibleItems.length} item{visibleItems.length === 1 ? '' : 's'} in{' '}
+                  {activeCategory} for {activeFilterLabel} from {formatCurrency(minPriceLimit)} to{' '}
+                  {formatCurrency(sliderValue)}
+                </>
+              ) : (
+                'Menu loading...'
+              )}
             </span>
           </div>
         </div>
