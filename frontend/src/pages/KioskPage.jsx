@@ -206,12 +206,14 @@ export default function KioskPage() {
   const [customizingItem, setCustomizingItem] = useState(null);
   const [editingLine, setEditingLine] = useState(null);
   const [draftCustomization, setDraftCustomization] = useState(DEFAULT_CUSTOMIZATION);
+  const [ingredientFilterOpen, setIngredientFilterOpen] = useState(false);
   // Drives the checkout flow: null = normal cart view, 'confirm' = "Continue?" popup,
   // 'payment' = full-screen Cash/Card picker. After a successful submit, `confirmation`
   // takes over and shows the receipt with the tax breakdown.
   const [checkoutStep, setCheckoutStep] = useState(null);
   const kioskHeaderRef = useRef(null);
   const kioskCategoriesRef = useRef(null);
+  const ingredientFilterRef = useRef(null);
   const [kioskFixedHeights, setKioskFixedHeights] = useState({
     header: 0,
     categories: 0,
@@ -295,6 +297,32 @@ export default function KioskPage() {
     () => [{ value: allIngredientsValue, label: allIngredientsLabel }, ...specialFilterOptions],
     []
   );
+
+  useEffect(() => {
+    if (!ingredientFilterOpen) {
+      return undefined;
+    }
+
+    const closeOnOutsideClick = (event) => {
+      if (!ingredientFilterRef.current?.contains(event.target)) {
+        setIngredientFilterOpen(false);
+      }
+    };
+
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIngredientFilterOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [ingredientFilterOpen]);
 
   // Items that match the active category and ingredient filter. The price slider
   // narrows this further into `visibleItems` below.
@@ -573,6 +601,11 @@ export default function KioskPage() {
     setKioskTheme((current) => (current === 'hue' ? 'classic' : 'hue'));
   }
 
+  function chooseIngredientFilter(value) {
+    setActiveFilterValue(value);
+    setIngredientFilterOpen(false);
+  }
+
   function renderThemeButton() {
     return (
       <button
@@ -747,17 +780,53 @@ export default function KioskPage() {
               <label className="kiosk-filter-label" htmlFor="ingredient-filter">
                 Ingredient Filter
               </label>
-              <select
-                id="ingredient-filter"
-                value={activeFilterValue}
-                onChange={(event) => setActiveFilterValue(event.target.value)}
+              <div
+                className="kiosk-filter-select"
+                ref={ingredientFilterRef}
+                onBlur={(event) => {
+                  if (!event.currentTarget.contains(event.relatedTarget)) {
+                    setIngredientFilterOpen(false);
+                  }
+                }}
               >
-                {filterOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                <button
+                  type="button"
+                  id="ingredient-filter"
+                  className="kiosk-filter-select-button"
+                  aria-haspopup="listbox"
+                  aria-expanded={ingredientFilterOpen}
+                  aria-controls="ingredient-filter-options"
+                  onClick={() => setIngredientFilterOpen((open) => !open)}
+                >
+                  <span>{activeFilterLabel}</span>
+                  <span className="kiosk-filter-select-arrow" aria-hidden="true" />
+                </button>
+                {ingredientFilterOpen ? (
+                  <div
+                    className="kiosk-filter-select-options"
+                    id="ingredient-filter-options"
+                    role="listbox"
+                    aria-label="Ingredient filter options"
+                  >
+                    {filterOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="option"
+                        aria-selected={option.value === activeFilterValue}
+                        className={
+                          option.value === activeFilterValue
+                            ? 'kiosk-filter-option active'
+                            : 'kiosk-filter-option'
+                        }
+                        onClick={() => chooseIngredientFilter(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
             <div className="kiosk-filter-group kiosk-filter-group-slider">
               <label className="kiosk-filter-label" htmlFor="price-filter">
