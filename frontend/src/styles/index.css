@@ -2163,7 +2163,9 @@ body[data-contrast='soft'] .helper-text {
 }
 
 .kiosk-page.kiosk-theme-hue fieldset.panel {
-  border-color: rgba(240, 82, 117, 0.34);
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1px rgba(240, 82, 117, 0.34),
+    0 18px 44px rgba(64, 35, 23, 0.16);
   padding-top: 18px;
   overflow: visible;
 }
@@ -2741,6 +2743,11 @@ body[data-contrast='high'] .kiosk-page.kiosk-theme-hue button.primary {
   background: #ffd84d;
   border-color: #ffd84d;
   box-shadow: none;
+}
+
+body[data-contrast='high'] .kiosk-page.kiosk-theme-hue fieldset.panel {
+  border-color: transparent;
+  box-shadow: inset 0 0 0 1px #f7f7f7;
 }
 
 body[data-contrast='high'] .kiosk-page.kiosk-theme-hue fieldset.panel legend {
