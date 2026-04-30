@@ -293,22 +293,22 @@ fieldset.panel legend {
 
 .accessibility-widget {
   position: fixed;
-  left: 18px;
+  right: 18px;
   bottom: 18px;
   z-index: 120;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 8px;
 }
 
 body[data-chat-page='true'] .accessibility-widget {
-  left: 278px;
+  right: 190px;
 }
 
 body[data-page='kiosk'] .accessibility-widget {
   bottom: 18px;
-  left: 210px;
+  right: 190px;
 }
 
 .language-select {
@@ -411,6 +411,37 @@ iframe.goog-te-banner-frame.skiptranslate {
   transform-origin: top left;
 }
 
+.magnifier-pointer {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: rgba(26, 31, 43, 0.88);
+  box-shadow: 0 0 0 2px var(--primary-alt), 0 4px 12px rgba(20, 30, 50, 0.32);
+  transform: translate(-50%, -50%);
+}
+
+.magnifier-pointer::before,
+.magnifier-pointer::after {
+  content: '';
+  position: absolute;
+  background: #ffffff;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.magnifier-pointer::before {
+  width: 2px;
+  height: 24px;
+}
+
+.magnifier-pointer::after {
+  width: 24px;
+  height: 2px;
+}
+
 .magnifier-clone {
   position: relative;
   width: 100vw;
@@ -423,6 +454,72 @@ iframe.goog-te-banner-frame.skiptranslate {
   position: absolute;
   width: 100vw;
   min-height: 100vh;
+}
+
+.magnifier-clone .kiosk-header,
+.magnifier-clone .kiosk-categories-panel,
+.magnifier-clone .kiosk-order-panel {
+  position: absolute;
+  background: var(--panel-bg);
+  z-index: 90;
+}
+
+.magnifier-clone .kiosk-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: calc(var(--kiosk-categories-height, 0px) + 12px);
+  background: var(--panel-bg);
+}
+
+.magnifier-clone #page-kiosk.kiosk-active::before {
+  position: absolute;
+  background: var(--panel-bg);
+  z-index: 80;
+}
+
+.magnifier-clone .kiosk-categories-panel .kiosk-cat-row {
+  background: var(--panel-bg);
+}
+
+.magnifier-clone .kiosk-categories-panel button {
+  background: var(--btn-bg);
+}
+
+.magnifier-clone .kiosk-categories-panel button.active {
+  background: var(--active-btn);
+}
+
+.magnifier-clone:has(.kiosk-modal-backdrop) .kiosk-header,
+.magnifier-clone:has(.kiosk-modal-backdrop) .kiosk-categories-panel,
+.magnifier-clone:has(.kiosk-modal-backdrop) .kiosk-order-panel {
+  display: none;
+}
+
+.magnifier-clone:has(.kiosk-modal-backdrop) #page-kiosk.kiosk-active::before {
+  display: none;
+}
+
+.magnifier-clone:has(.cashier-modal-backdrop) .swing-header,
+.magnifier-clone:has(.cashier-modal-backdrop) .cashier-confirmation,
+.magnifier-clone:has(.cashier-modal-backdrop) .cashier-layout,
+.magnifier-clone:has(.cashier-modal-backdrop) .cashier-bottom-bar {
+  display: none;
+}
+
+.magnifier-clone .cashier-modal-backdrop {
+  z-index: 90;
+}
+
+.magnifier-clone .cashier-page .swing-panel,
+.magnifier-clone .cashier-page .order-panel,
+.magnifier-clone .manager-page .swing-panel,
+.magnifier-clone .manager-page .manager-nav,
+.magnifier-clone .manager-page .manager-action-row,
+.magnifier-clone .manager-page .metric-box {
+  background: var(--panel-bg);
 }
 
 body[data-contrast='high'] .accessibility-panel-header p,
@@ -1066,14 +1163,14 @@ body[data-contrast='soft'] .helper-text {
   }
 
   .accessibility-widget {
-    left: 170px;
     right: 12px;
     bottom: 12px;
   }
 
   body[data-chat-page='true'] .accessibility-widget,
   body[data-page='kiosk'] .accessibility-widget {
-    left: 170px;
+    right: 12px;
+    bottom: 74px;
   }
 
   .accessibility-trigger {
@@ -1413,6 +1510,22 @@ body[data-contrast='soft'] .helper-text {
   font-size: 17px;
 }
 
+.cashier-kiosk-modal {
+  width: min(640px, 100%);
+}
+
+.cashier-modal-ice-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cashier-modal-quantity input {
+  min-height: 42px;
+  width: 120px;
+  padding: 8px 10px;
+  font-size: 15px;
+}
+
 /* Manager */
 #page-manager,
 .manager-page {
@@ -1699,9 +1812,10 @@ body[data-contrast='soft'] .helper-text {
   position: fixed;
   left: 0;
   right: 358px;
-  top: var(--kiosk-header-height, 0px);
-  border-radius: 0 0 var(--radius) 0;
+  top: calc(var(--kiosk-header-height, 0px) - 1px);
+  border-radius: 0;
   border-left: none;
+  border-top: none;
   z-index: 40;
 }
 
@@ -2236,12 +2350,12 @@ body[data-contrast='high'] .kiosk-brand-wordmark strong {
 
 .chat-widget {
   position: fixed;
-  left: 18px;
+  right: 18px;
   bottom: 18px;
-  z-index: 50;
+  z-index: 115;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   gap: 8px;
 }
 

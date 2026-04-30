@@ -10,9 +10,10 @@ const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
 const LENS_SIZE = 200;
 const LENS_RADIUS = LENS_SIZE / 2;
+const LENS_EDGE_MARGIN = 2;
 const MAGNIFIER_OFFSET = {
   default: { x: 0, y: 0 },
-  modal: { x: -5, y: -495},
+  modal: { x: 0, y: 0 },
 };
 
 const LANGUAGE_OPTIONS = [
@@ -192,6 +193,39 @@ export default function AccessibilityWidget() {
     });
   };
 
+  const syncFixedClonePositions = (sourceRoot, cloneRoot) => {
+    if (!sourceRoot || !cloneRoot) {
+      return;
+    }
+
+    const rootRect = sourceRoot.getBoundingClientRect();
+    const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
+    const cloneElements = [cloneRoot, ...cloneRoot.querySelectorAll('*')];
+
+    sourceElements.forEach((sourceElement, index) => {
+      if (window.getComputedStyle(sourceElement).position !== 'fixed') {
+        return;
+      }
+
+      const cloneElement = cloneElements[index];
+      if (!cloneElement) {
+        return;
+      }
+
+      const rect = sourceElement.getBoundingClientRect();
+      Object.assign(cloneElement.style, {
+        position: 'absolute',
+        left: `${rect.left - rootRect.left}px`,
+        top: `${rect.top - rootRect.top}px`,
+        right: 'auto',
+        bottom: 'auto',
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        margin: '0',
+      });
+    });
+  };
+
   // Saves the chosen language, sets/clears the Google Translate cookie, and triggers a translation.
   const handleLanguageChange = (nextLanguage) => {
     if (nextLanguage === language) {
@@ -265,7 +299,11 @@ export default function AccessibilityWidget() {
       lensContent.appendChild(clone);
       cloneRootRef.current = clone;
       syncCloneScrollPositions(appShell, clone);
-      window.requestAnimationFrame(() => syncCloneScrollPositions(appShell, clone));
+      syncFixedClonePositions(appShell, clone);
+      window.requestAnimationFrame(() => {
+        syncCloneScrollPositions(appShell, clone);
+        syncFixedClonePositions(appShell, clone);
+      });
     };
 
     syncClone();
@@ -288,7 +326,21 @@ export default function AccessibilityWidget() {
       const appShell = updateAppShellRect();
       if (appShell && cloneRootRef.current) {
         syncCloneScrollPositions(appShell, cloneRootRef.current);
+        syncFixedClonePositions(appShell, cloneRootRef.current);
       }
+    };
+
+    let refreshFrameId = null;
+    const handleScrollOrResize = () => {
+      if (refreshFrameId) {
+        window.cancelAnimationFrame(refreshFrameId);
+      }
+
+      refreshFrameId = window.requestAnimationFrame(() => {
+        refreshFrameId = null;
+        syncLivePosition();
+        setPointerPosition((current) => ({ ...current }));
+      });
     };
 
     const handleMouseMove = (event) => {
@@ -335,12 +387,20 @@ export default function AccessibilityWidget() {
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('touchend', handleTouchEnd);
     window.addEventListener('touchcancel', handleTouchEnd);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    document.addEventListener('scroll', handleScrollOrResize, true);
+    document.addEventListener('wheel', handleScrollOrResize, true);
+    document.addEventListener('touchmove', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
     appShell?.addEventListener('scroll', syncLivePosition, true);
 
     return () => {
       if (mutationObserverRef.current) {
         mutationObserverRef.current.disconnect();
         mutationObserverRef.current = null;
+      }
+      if (refreshFrameId) {
+        window.cancelAnimationFrame(refreshFrameId);
       }
       cloneRootRef.current = null;
       window.removeEventListener('mousemove', handleMouseMove);
@@ -349,6 +409,11 @@ export default function AccessibilityWidget() {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      document.removeEventListener('scroll', handleScrollOrResize, true);
+      document.removeEventListener('wheel', handleScrollOrResize, true);
+      document.removeEventListener('touchmove', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
       appShell?.removeEventListener('scroll', syncLivePosition, true);
     };
   }, [scale]);
@@ -419,13 +484,23 @@ export default function AccessibilityWidget() {
 
   // Lens follows the cursor directly, clamped to the viewport.
   const lensCenterX = Math.min(
-    Math.max(pointerPosition.x, LENS_RADIUS + 12),
-    window.innerWidth - LENS_RADIUS - 12,
+    Math.max(pointerPosition.x, LENS_RADIUS + LENS_EDGE_MARGIN),
+    window.innerWidth - LENS_RADIUS - LENS_EDGE_MARGIN,
   );
   const lensCenterY = Math.min(
-    Math.max(pointerPosition.y, LENS_RADIUS + 12),
-    window.innerHeight - LENS_RADIUS - 12,
+    Math.max(pointerPosition.y, LENS_RADIUS + LENS_EDGE_MARGIN),
+    window.innerHeight - LENS_RADIUS - LENS_EDGE_MARGIN,
   );
+  const pointerOffsetX = pointerPosition.x - lensCenterX;
+  const pointerOffsetY = pointerPosition.y - lensCenterY;
+  const pointerOffsetDistance = Math.hypot(pointerOffsetX, pointerOffsetY);
+  const pointerMarkerMaxOffset = LENS_RADIUS - 18;
+  const pointerMarkerScale =
+    pointerOffsetDistance > pointerMarkerMaxOffset && pointerOffsetDistance > 0
+      ? pointerMarkerMaxOffset / pointerOffsetDistance
+      : 1;
+  const pointerMarkerX = LENS_RADIUS + pointerOffsetX * pointerMarkerScale;
+  const pointerMarkerY = LENS_RADIUS + pointerOffsetY * pointerMarkerScale;
   const magnifiedSourceX = pointerPosition.x - appShellRectRef.current.left;
   const magnifiedSourceY = pointerPosition.y - appShellRectRef.current.top;
   const isPointingAtModal = Boolean(
@@ -453,10 +528,17 @@ export default function AccessibilityWidget() {
               className="magnifier-lens-content"
               ref={lensContentRef}
               style={{
-                transform: `translate(${LENS_RADIUS}px, ${LENS_RADIUS}px) scale(${scale}) translate(${-magnifiedSourceX + magnifierOffset.x}px, ${-magnifiedSourceY + magnifierOffset.y}px)`,
+                transform: `translate(${pointerMarkerX}px, ${pointerMarkerY}px) scale(${scale}) translate(${-magnifiedSourceX + magnifierOffset.x}px, ${-magnifiedSourceY + magnifierOffset.y}px)`,
               }}
             />
           </div>
+          <div
+            className="magnifier-pointer"
+            style={{
+              left: `${pointerMarkerX}px`,
+              top: `${pointerMarkerY}px`,
+            }}
+          />
         </div>
       ) : null}
 
