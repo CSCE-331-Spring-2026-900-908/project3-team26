@@ -742,11 +742,9 @@ export default function KioskPage() {
               <span className="kiosk-price-value">{formatCurrency(sliderValue)}</span>
             </div>
             <span className="helper-text kiosk-filter-summary">
-              menuLoaded && (
               Showing {visibleItems.length} item{visibleItems.length === 1 ? '' : 's'} in{' '}
               {activeCategory} for {activeFilterLabel} from {formatCurrency(minPriceLimit)} to{' '}
               {formatCurrency(sliderValue)}
-              )
             </span>
           </div>
         </div>
