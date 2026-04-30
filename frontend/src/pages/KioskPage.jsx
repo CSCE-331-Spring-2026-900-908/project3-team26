@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
-import { getMenuImage } from '../utils/menuImages.js';
+// import { getMenuImage } from '../utils/menuImages.js';
+import { getMenuImage, knownMenuItemNames } from '../utils/menuImages.js';
 import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
 import { TOPPING_PRICES, toppingOptions } from '../utils/toppings.js';
 
@@ -87,6 +88,11 @@ const SPECIALTY_OVERRIDES = new Set([
   'creme brulee milk tea',
 ]);
 
+// Converts a lowercase imageMap key ('classic milk tea') into a display name.
+function toTitleCase(str) {
+  return str.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 // Buckets a drink into one of the four kiosk categories based on keywords in its name.
 function inferCategory(name = '') {
   const normalized = name.toLowerCase().trim();
@@ -110,6 +116,19 @@ function inferCategory(name = '') {
   }
   return 'Specialty';
 }
+
+// Placeholder items built entirely from the local imageMap — no network call needed.
+// They render images and names instantly on first visit, with _isPlaceholder: true
+// so the render logic can show "Loading..." instead of a real price.
+const STATIC_SEED = knownMenuItemNames.map((key) => ({
+  id: `seed-${key}`,
+  name: toTitleCase(key),
+  price: 0,
+  availability: true,
+  category: inferCategory(key),
+  ingredients: [],
+  _isPlaceholder: true,
+}));
 
 function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
@@ -162,7 +181,8 @@ function matchesSpecialFilter(item, filterValue) {
 export default function KioskPage() {
   const navigate = useNavigate();
   const [started, setStarted] = useState(false);
-  const [menuItems, setMenuItems] = useState([]);
+  // const [menuItems, setMenuItems] = useState([]);
+  const [menuItems, setMenuItems] = useState(STATIC_SEED);
   const [activeCategory, setActiveCategory] = useState('Milk Tea');
   const [activeFilterValue, setActiveFilterValue] = useState(allIngredientsValue);
   const [activeMaxPrice, setActiveMaxPrice] = useState(0);
@@ -183,6 +203,9 @@ export default function KioskPage() {
     header: 0,
     categories: 0,
   });
+
+  // True only once real items (with real prices) have replaced the seed.
+  const menuLoaded = menuItems.length > 0 && !menuItems[0]?._isPlaceholder;
 
   useKioskBodyFlag(started, Boolean(confirmation));
 
@@ -371,6 +394,7 @@ export default function KioskPage() {
 
   // Opens the customization modal for the chosen menu item with default options.
   function openCustomization(item) {
+    if (item._isPlaceholder) return; // prices not ready yet
     setEditingLine(null);
     setCustomizingItem(item);
     setDraftCustomization(DEFAULT_CUSTOMIZATION);
@@ -718,9 +742,11 @@ export default function KioskPage() {
               <span className="kiosk-price-value">{formatCurrency(sliderValue)}</span>
             </div>
             <span className="helper-text kiosk-filter-summary">
+              menuLoaded && (
               Showing {visibleItems.length} item{visibleItems.length === 1 ? '' : 's'} in{' '}
               {activeCategory} for {activeFilterLabel} from {formatCurrency(minPriceLimit)} to{' '}
               {formatCurrency(sliderValue)}
+              )
             </span>
           </div>
         </div>
@@ -768,7 +794,7 @@ export default function KioskPage() {
                         />
                       ) : null}
                       <span>{item.name}</span>
-                      <strong>{formatCurrency(item.price)}</strong>
+                      <strong>{item._isPlaceholder ? 'Loading...' : formatCurrency(item.price)}</strong>
                     </button>
                   );
                 })
