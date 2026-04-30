@@ -20,6 +20,20 @@ async function nextId(client, table) {
   return Number(result.rows[0].next_id);
 }
 
+async function deductInventoryForMenuItem(client, menuItemId, quantity) {
+  await client.query(
+    `UPDATE inventory inv
+     SET quantity = inv.quantity - $1
+     FROM (
+       SELECT DISTINCT ingredient_id
+       FROM menu_item_ingredients
+       WHERE menu_item_id = $2
+     ) used
+     WHERE used.ingredient_id = inv.ingredient_id`,
+    [quantity, menuItemId]
+  );
+}
+
 router.get('/:id', async (req, res, next) => {
   try {
     const orderId = Number(req.params.id);
@@ -118,11 +132,13 @@ router.post('/', async (req, res, next) => {
 
         for (const item of items) {
           const menuItem = menuMap.get(Number(item.menuItemId));
+          const quantity = Number(item.quantity);
           await client.query(
             `INSERT INTO order_items(id, order_id, quantity, price_charged, menu_item_id)
              VALUES ($1, $2, $3, $4, $5)`,
-            [orderItemId, orderId, Number(item.quantity), Number(menuItem.price), Number(item.menuItemId)]
+            [orderItemId, orderId, quantity, Number(menuItem.price), Number(item.menuItemId)]
           );
+          await deductInventoryForMenuItem(client, Number(item.menuItemId), quantity);
           orderItemId += 1;
         }
 
