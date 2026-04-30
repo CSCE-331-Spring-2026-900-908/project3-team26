@@ -185,9 +185,13 @@ function AccessibilitySelect({
 }) {
   const isOpen = activeDropdown === id;
   const selected = options.find((option) => option.value === value) || options[0];
+  const shouldSkipTranslate = id === 'language';
 
   return (
-    <div className="accessibility-select">
+    <div
+      className={shouldSkipTranslate ? 'accessibility-select notranslate' : 'accessibility-select'}
+      translate={shouldSkipTranslate ? 'no' : undefined}
+    >
       <button
         type="button"
         className="accessibility-select-trigger"
@@ -200,7 +204,9 @@ function AccessibilitySelect({
         }}
       >
         <span>{selected.label}</span>
-        <span aria-hidden="true">v</span>
+        <span className="notranslate" translate="no" aria-hidden="true">
+          v
+        </span>
       </button>
 
       {isOpen ? (
