@@ -8,7 +8,6 @@ import OnScreenKeyboard from './OnScreenKeyboard.jsx';
 const SYSTEM_PROMPT = `You are a friendly ordering assistant for a bubble tea shop. Help customers choose drinks, explain menu items, suggest customizations (milk tea, fruit tea, toppings, sweetness levels, ice levels), and guide them through placing their order. Keep responses concise and friendly. Only answer questions related to the menu and ordering process.`;
 const ACCESSIBILITY_STORAGE_KEY = 'bubble-tea-accessibility';
 const ACCESSIBILITY_CHANGE_EVENT = 'bubble-tea-accessibility-change';
-const UI_LAYOUT_CHANGE_EVENT = 'bubble-tea-ui-layout-change';
 
 function getGoogleTranslateLanguage() {
   const match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
@@ -35,16 +34,6 @@ function getStoredKeyboardLanguage() {
   } catch {
     return 'en';
   }
-}
-
-function queueUiLayoutChange() {
-  window.requestAnimationFrame(() => {
-    window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
-  });
-
-  window.setTimeout(() => {
-    window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
-  }, 80);
 }
 
 export default function ChatWidget() {
@@ -103,17 +92,11 @@ export default function ChatWidget() {
   }, []);
 
   useEffect(() => {
-    queueUiLayoutChange();
-  }, [isOpen, showKeyboard, messages.length, input]);
-
-  useEffect(() => {
     if (isOpen) {
       document.body.dataset.chatOpen = 'true';
     } else {
       delete document.body.dataset.chatOpen;
     }
-
-    queueUiLayoutChange();
 
     return () => {
       delete document.body.dataset.chatOpen;

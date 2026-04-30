@@ -1,22 +1,13 @@
-// AccessibilityWidget: floating button + panel offering three tools:
+// AccessibilityWidget: floating button + panel offering two tools:
 //   1) Translation (loads Google Translate's element script and sets its language cookie)
-//   2) Magnifier (renders a circular lens that follows the cursor and shows a scaled clone of the page)
-//   3) Contrast (writes data-contrast on <body> so CSS can swap color schemes)
+//   2) Contrast (writes data-contrast on <body> so CSS can swap color schemes)
 // User preferences persist in localStorage so the choices survive page reloads.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 const STORAGE_KEY = 'bubble-tea-accessibility';
 const ACCESSIBILITY_CHANGE_EVENT = 'bubble-tea-accessibility-change';
-const UI_LAYOUT_CHANGE_EVENT = 'bubble-tea-ui-layout-change';
 const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
-const LENS_SIZE = 200;
-const LENS_RADIUS = LENS_SIZE / 2;
-const LENS_EDGE_MARGIN = 2;
-const MAGNIFIER_OFFSET = {
-  default: { x: 0, y: 0 },
-  modal: { x: 0, y: 0 },
-};
 
 const LANGUAGE_OPTIONS = [
   { value: 'en', label: 'English' },
@@ -31,13 +22,6 @@ const LANGUAGE_OPTIONS = [
   { value: 'ar', label: 'العربية' },
 ];
 
-const MAGNIFIER_OPTIONS = [
-  { value: '1', label: 'Off' },
-  { value: '1.5', label: '1.5x Lens' },
-  { value: '1.8', label: '1.8x Lens' },
-  { value: '2.2', label: '2.2x Lens' },
-];
-
 const CONTRAST_OPTIONS = [
   { value: 'default', label: 'Default' },
   { value: 'high', label: 'High Contrast' },
@@ -49,7 +33,7 @@ const CONTRAST_OPTIONS = [
 // widget stays in sync if the user changed the language outside our UI.
 function getStoredPreferences() {
   if (typeof window === 'undefined') {
-    return { language: 'en', scale: '1', contrast: 'default' };
+    return { language: 'en', contrast: 'default' };
   }
 
   try {
@@ -57,11 +41,10 @@ function getStoredPreferences() {
     const cookieLanguage = getLanguageFromGoogleTranslateCookie();
     return {
       language: cookieLanguage ?? parsed.language ?? 'en',
-      scale: parsed.scale ?? '1',
       contrast: parsed.contrast ?? 'default',
     };
   } catch {
-    return { language: 'en', scale: '1', contrast: 'default' };
+    return { language: 'en', contrast: 'default' };
   }
 }
 
@@ -153,20 +136,6 @@ function forceGoogleTranslate(language) {
   return () => timers.forEach((id) => window.clearTimeout(id));
 }
 
-function queueUiLayoutChange() {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.requestAnimationFrame(() => {
-    window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
-  });
-
-  window.setTimeout(() => {
-    window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
-  }, 80);
-}
-
 function AccessibilitySelect({
   id,
   options,
@@ -190,7 +159,6 @@ function AccessibilitySelect({
         onClick={() => {
           setActiveDropdown(isOpen ? null : id);
           setHoveredOption(null);
-          queueUiLayoutChange();
         }}
       >
         <span>{selected.label}</span>
@@ -218,25 +186,20 @@ function AccessibilitySelect({
                 aria-selected={option.value === value}
                 onMouseEnter={() => {
                   setHoveredOption(optionKey);
-                  queueUiLayoutChange();
                 }}
                 onMouseLeave={() => {
                   setHoveredOption(null);
-                  queueUiLayoutChange();
                 }}
                 onFocus={() => {
                   setHoveredOption(optionKey);
-                  queueUiLayoutChange();
                 }}
                 onBlur={() => {
                   setHoveredOption(null);
-                  queueUiLayoutChange();
                 }}
                 onClick={() => {
                   onChange(option.value);
                   setActiveDropdown(null);
                   setHoveredOption(null);
-                  queueUiLayoutChange();
                 }}
               >
                 {option.label}
@@ -253,131 +216,15 @@ export default function AccessibilityWidget() {
   const defaults = useMemo(() => getStoredPreferences(), []);
   const [isOpen, setIsOpen] = useState(false);
   const [language, setLanguage] = useState(defaults.language);
-  const [scale, setScale] = useState(defaults.scale);
   const [contrast, setContrast] = useState(defaults.contrast);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [hoveredOption, setHoveredOption] = useState(null);
   const [translateReady, setTranslateReady] = useState(false);
-  const [pointerPosition, setPointerPosition] = useState({ x: 240, y: 240 });
-  const [lensVisible, setLensVisible] = useState(false);
-  const lensContentRef = useRef(null);
-  const cloneRootRef = useRef(null);
-  const clonePairsRef = useRef([]);
-  const mutationObserverRef = useRef(null);
-  const isDraggingRef = useRef(false);
-  const appShellRectRef = useRef({ left: 0, top: 0 });
-  const lastPointerRef = useRef({ x: 240, y: 240 });
 
   const closeAccessibilityPanel = () => {
     setIsOpen(false);
     setActiveDropdown(null);
     setHoveredOption(null);
-    queueUiLayoutChange();
-  };
-
-  const updateAppShellRect = () => {
-    const appShell = document.querySelector('.app-shell');
-    if (appShell) {
-      appShellRectRef.current = appShell.getBoundingClientRect();
-    }
-    return appShell;
-  };
-
-  const getMagnifierSourceRoots = () =>
-    [
-      document.querySelector('.app-shell'),
-      document.querySelector('.accessibility-widget'),
-      document.querySelector('.chat-widget'),
-      document.querySelector('.on-screen-keyboard'),
-    ].filter(Boolean);
-
-  const syncCloneScrollPositions = (sourceRoot, cloneRoot) => {
-    if (!sourceRoot || !cloneRoot) {
-      return;
-    }
-
-    const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
-    const cloneElements = [cloneRoot, ...cloneRoot.querySelectorAll('*')];
-
-    sourceElements.forEach((sourceElement, index) => {
-      const cloneElement = cloneElements[index];
-      if (!cloneElement) {
-        return;
-      }
-
-      cloneElement.scrollLeft = sourceElement.scrollLeft;
-      cloneElement.scrollTop = sourceElement.scrollTop;
-    });
-  };
-
-  const syncFixedClonePositions = (sourceRoot, cloneRoot, rootRect = sourceRoot?.getBoundingClientRect()) => {
-    if (!sourceRoot || !cloneRoot) {
-      return;
-    }
-
-    const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
-    const cloneElements = [cloneRoot, ...cloneRoot.querySelectorAll('*')];
-
-    sourceElements.forEach((sourceElement, index) => {
-      if (window.getComputedStyle(sourceElement).position !== 'fixed') {
-        return;
-      }
-
-      const cloneElement = cloneElements[index];
-      if (!cloneElement) {
-        return;
-      }
-
-      const rect = sourceElement.getBoundingClientRect();
-      Object.assign(cloneElement.style, {
-        position: 'absolute',
-        left: `${rect.left - rootRect.left}px`,
-        top: `${rect.top - rootRect.top}px`,
-        right: 'auto',
-        bottom: 'auto',
-        width: `${rect.width}px`,
-        height: `${rect.height}px`,
-        margin: '0',
-      });
-    });
-  };
-
-  const rebuildMagnifierClone = () => {
-    const appShell = document.querySelector('.app-shell');
-    const lensContent = lensContentRef.current;
-    const sourceRoots = getMagnifierSourceRoots();
-
-    if (!appShell || !lensContent || scale === '1') {
-      return;
-    }
-
-    appShellRectRef.current = appShell.getBoundingClientRect();
-    lensContent.innerHTML = '';
-    const clone = document.createElement('div');
-    clone.classList.add('magnifier-clone');
-    clone.setAttribute('aria-hidden', 'true');
-
-    const clonePairs = sourceRoots.map((sourceRoot) => {
-      const clonedRoot = sourceRoot.cloneNode(true);
-      clone.appendChild(clonedRoot);
-      return { sourceRoot, clonedRoot };
-    });
-
-    lensContent.appendChild(clone);
-    cloneRootRef.current = clone;
-    clonePairsRef.current = clonePairs;
-
-    clonePairs.forEach(({ sourceRoot, clonedRoot }) => {
-      syncCloneScrollPositions(sourceRoot, clonedRoot);
-      syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
-    });
-
-    window.requestAnimationFrame(() => {
-      clonePairsRef.current.forEach(({ sourceRoot, clonedRoot }) => {
-        syncCloneScrollPositions(sourceRoot, clonedRoot);
-        syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
-      });
-    });
   };
 
   // Saves the chosen language, sets/clears the Google Translate cookie, and triggers a translation.
@@ -391,7 +238,7 @@ export default function AccessibilityWidget() {
     try {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ language: nextLanguage, scale, contrast }),
+        JSON.stringify({ language: nextLanguage, contrast }),
       );
     } catch {
       // Ignore storage failures.
@@ -406,7 +253,7 @@ export default function AccessibilityWidget() {
   };
 
   // Mirrors the contrast choice onto <body data-contrast="..."> so our CSS can react,
-  // and persists all three preferences to localStorage on every change.
+  // and persists preferences to localStorage on every change.
   useEffect(() => {
     document.body.dataset.contrast = contrast;
     document.documentElement.lang = language;
@@ -414,7 +261,7 @@ export default function AccessibilityWidget() {
     try {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ language, scale, contrast }),
+        JSON.stringify({ language, contrast }),
       );
     } catch {
       // Ignore storage failures so the panel still works in restricted browsers.
@@ -422,10 +269,10 @@ export default function AccessibilityWidget() {
 
     window.dispatchEvent(
       new CustomEvent(ACCESSIBILITY_CHANGE_EVENT, {
-        detail: { language, scale, contrast },
+        detail: { language, contrast },
       }),
     );
-  }, [contrast, language, scale]);
+  }, [contrast, language]);
 
   useEffect(() => {
     if (isOpen) {
@@ -451,225 +298,11 @@ export default function AccessibilityWidget() {
 
       setActiveDropdown(null);
       setHoveredOption(null);
-      queueUiLayoutChange();
     };
 
     document.addEventListener('pointerdown', closeDropdown);
     return () => document.removeEventListener('pointerdown', closeDropdown);
   }, [activeDropdown]);
-
-  useEffect(() => {
-    if (scale === '1') {
-      return;
-    }
-
-    setPointerPosition(lastPointerRef.current);
-    setLensVisible(true);
-    queueUiLayoutChange();
-    const frameId = window.requestAnimationFrame(rebuildMagnifierClone);
-    const timeoutId = window.setTimeout(rebuildMagnifierClone, 120);
-
-    return () => {
-      window.cancelAnimationFrame(frameId);
-      window.clearTimeout(timeoutId);
-    };
-  }, [activeDropdown, hoveredOption, isOpen, scale, language, contrast]);
-
-  useEffect(() => {
-    const trackPointer = (event) => {
-      lastPointerRef.current = { x: event.clientX, y: event.clientY };
-    };
-
-    window.addEventListener('pointermove', trackPointer, { passive: true });
-    window.addEventListener('pointerdown', trackPointer, { passive: true });
-
-    return () => {
-      window.removeEventListener('pointermove', trackPointer);
-      window.removeEventListener('pointerdown', trackPointer);
-    };
-  }, []);
-
-  // Magnifier setup: when scale > 1, clones the app DOM into a circular lens that
-  // follows the cursor/touch. A MutationObserver re-clones the DOM whenever the page
-  // changes so the lens stays in sync with the live UI. Cleans up on unmount/scale=1.
-  useEffect(() => {
-    if (scale === '1') {
-      setLensVisible(false);
-      if (mutationObserverRef.current) {
-        mutationObserverRef.current.disconnect();
-        mutationObserverRef.current = null;
-      }
-      if (lensContentRef.current) {
-        lensContentRef.current.innerHTML = '';
-      }
-      cloneRootRef.current = null;
-      clonePairsRef.current = [];
-      return undefined;
-    }
-
-    let cloneFrameId = null;
-    let lastTimedCloneSync = 0;
-    const requestCloneSync = () => {
-      if (cloneFrameId) {
-        return;
-      }
-
-      cloneFrameId = window.requestAnimationFrame(() => {
-        cloneFrameId = null;
-        rebuildMagnifierClone();
-        setPointerPosition((current) => ({ ...current }));
-      });
-    };
-
-    const requestTimedCloneSync = () => {
-      const now = window.performance?.now?.() ?? Date.now();
-      if (now - lastTimedCloneSync < 120) {
-        return;
-      }
-
-      lastTimedCloneSync = now;
-      requestCloneSync();
-    };
-
-    rebuildMagnifierClone();
-
-    const appRoot = document.body;
-    if (appRoot) {
-      mutationObserverRef.current = new MutationObserver((mutations) => {
-        const onlyMagnifierChanged = mutations.every((mutation) => {
-          const target =
-            mutation.target instanceof Element ? mutation.target : mutation.target.parentElement;
-          return Boolean(target?.closest('.magnifier-lens'));
-        });
-        if (onlyMagnifierChanged) {
-          return;
-        }
-
-        requestCloneSync();
-      });
-
-      mutationObserverRef.current.observe(appRoot, {
-        childList: true,
-        subtree: true,
-        characterData: true,
-        attributes: true,
-      });
-    }
-
-    const syncLivePosition = () => {
-      const appShell = updateAppShellRect();
-      if (appShell && cloneRootRef.current) {
-        clonePairsRef.current.forEach(({ sourceRoot, clonedRoot }) => {
-          if (!document.body.contains(sourceRoot)) {
-            return;
-          }
-
-          syncCloneScrollPositions(sourceRoot, clonedRoot);
-          syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
-        });
-      }
-    };
-
-    let refreshFrameId = null;
-    const handleScrollOrResize = () => {
-      if (refreshFrameId) {
-        window.cancelAnimationFrame(refreshFrameId);
-      }
-
-      refreshFrameId = window.requestAnimationFrame(() => {
-        refreshFrameId = null;
-        syncLivePosition();
-        setPointerPosition((current) => ({ ...current }));
-      });
-    };
-
-    const handleMouseMove = (event) => {
-      lastPointerRef.current = { x: event.clientX, y: event.clientY };
-      requestTimedCloneSync();
-      syncLivePosition();
-      setPointerPosition({ x: event.clientX, y: event.clientY });
-      setLensVisible(true);
-    };
-
-    const handleMouseLeave = () => {
-      if (!isDraggingRef.current) {
-        setLensVisible(false);
-      }
-    };
-
-    const handleTouchMove = (event) => {
-      const touch = event.touches[0];
-      if (!touch) {
-        return;
-      }
-      lastPointerRef.current = { x: touch.clientX, y: touch.clientY };
-      requestTimedCloneSync();
-      syncLivePosition();
-      setPointerPosition({ x: touch.clientX, y: touch.clientY });
-      setLensVisible(true);
-      isDraggingRef.current = true;
-    };
-
-    const handleTouchStart = (event) => {
-      const touch = event.touches[0];
-      if (!touch) {
-        return;
-      }
-      lastPointerRef.current = { x: touch.clientX, y: touch.clientY };
-      requestTimedCloneSync();
-      syncLivePosition();
-      setPointerPosition({ x: touch.clientX, y: touch.clientY });
-      setLensVisible(true);
-      isDraggingRef.current = true;
-    };
-
-    const handleTouchEnd = () => {
-      isDraggingRef.current = false;
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseleave', handleMouseLeave);
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd);
-    window.addEventListener('touchcancel', handleTouchEnd);
-    window.addEventListener('scroll', handleScrollOrResize, true);
-    document.addEventListener('scroll', handleScrollOrResize, true);
-    document.addEventListener('wheel', handleScrollOrResize, true);
-    document.addEventListener('touchmove', handleScrollOrResize, true);
-    window.addEventListener('resize', handleScrollOrResize);
-    window.addEventListener(UI_LAYOUT_CHANGE_EVENT, requestCloneSync);
-    const scrollRoot = updateAppShellRect();
-    scrollRoot?.addEventListener('scroll', syncLivePosition, true);
-
-    return () => {
-      if (mutationObserverRef.current) {
-        mutationObserverRef.current.disconnect();
-        mutationObserverRef.current = null;
-      }
-      if (refreshFrameId) {
-        window.cancelAnimationFrame(refreshFrameId);
-      }
-      if (cloneFrameId) {
-        window.cancelAnimationFrame(cloneFrameId);
-      }
-      cloneRootRef.current = null;
-      clonePairsRef.current = [];
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseleave', handleMouseLeave);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
-      window.removeEventListener('touchcancel', handleTouchEnd);
-      window.removeEventListener('scroll', handleScrollOrResize, true);
-      document.removeEventListener('scroll', handleScrollOrResize, true);
-      document.removeEventListener('wheel', handleScrollOrResize, true);
-      document.removeEventListener('touchmove', handleScrollOrResize, true);
-      window.removeEventListener('resize', handleScrollOrResize);
-      window.removeEventListener(UI_LAYOUT_CHANGE_EVENT, requestCloneSync);
-      scrollRoot?.removeEventListener('scroll', syncLivePosition, true);
-    };
-  }, [scale]);
 
   // Lazily loads Google Translate's element script the first time a non-English language
   // is selected. Skips loading on subsequent visits if the global is already present.
@@ -735,65 +368,9 @@ export default function AccessibilityWidget() {
     return forceGoogleTranslate(language);
   }, [language, translateReady]);
 
-  // Lens follows the cursor directly, clamped to the viewport.
-  const lensCenterX = Math.min(
-    Math.max(pointerPosition.x, LENS_RADIUS + LENS_EDGE_MARGIN),
-    window.innerWidth - LENS_RADIUS - LENS_EDGE_MARGIN,
-  );
-  const lensCenterY = Math.min(
-    Math.max(pointerPosition.y, LENS_RADIUS + LENS_EDGE_MARGIN),
-    window.innerHeight - LENS_RADIUS - LENS_EDGE_MARGIN,
-  );
-  const pointerOffsetX = pointerPosition.x - lensCenterX;
-  const pointerOffsetY = pointerPosition.y - lensCenterY;
-  const pointerOffsetDistance = Math.hypot(pointerOffsetX, pointerOffsetY);
-  const pointerMarkerMaxOffset = LENS_RADIUS - 18;
-  const pointerMarkerScale =
-    pointerOffsetDistance > pointerMarkerMaxOffset && pointerOffsetDistance > 0
-      ? pointerMarkerMaxOffset / pointerOffsetDistance
-      : 1;
-  const pointerMarkerX = LENS_RADIUS + pointerOffsetX * pointerMarkerScale;
-  const pointerMarkerY = LENS_RADIUS + pointerOffsetY * pointerMarkerScale;
-  const magnifiedSourceX = pointerPosition.x - appShellRectRef.current.left;
-  const magnifiedSourceY = pointerPosition.y - appShellRectRef.current.top;
-  const isPointingAtModal = Boolean(
-    document
-      .elementFromPoint(pointerPosition.x, pointerPosition.y)
-      ?.closest('.kiosk-modal, .cashier-modal')
-  );
-  const magnifierOffset = isPointingAtModal ? MAGNIFIER_OFFSET.modal : MAGNIFIER_OFFSET.default;
-
   return (
     <>
       <div className="google-translate-host" id={GOOGLE_HOST_ID} aria-hidden="true" />
-
-      {scale !== '1' ? (
-        <div
-          className={lensVisible ? 'magnifier-lens active' : 'magnifier-lens'}
-          aria-hidden="true"
-          style={{
-            left: `${lensCenterX - LENS_RADIUS}px`,
-            top: `${lensCenterY - LENS_RADIUS}px`,
-          }}
-        >
-          <div className="magnifier-lens-frame">
-            <div
-              className="magnifier-lens-content"
-              ref={lensContentRef}
-              style={{
-                transform: `translate(${pointerMarkerX}px, ${pointerMarkerY}px) scale(${scale}) translate(${-magnifiedSourceX + magnifierOffset.x}px, ${-magnifiedSourceY + magnifierOffset.y}px)`,
-              }}
-            />
-          </div>
-          <div
-            className="magnifier-pointer"
-            style={{
-              left: `${pointerMarkerX}px`,
-              top: `${pointerMarkerY}px`,
-            }}
-          />
-        </div>
-      ) : null}
 
       <div className="accessibility-widget">
         <button
@@ -810,7 +387,6 @@ export default function AccessibilityWidget() {
             setIsOpen(true);
             setActiveDropdown(null);
             setHoveredOption(null);
-            queueUiLayoutChange();
           }}
         >
           Accessibility
@@ -821,7 +397,7 @@ export default function AccessibilityWidget() {
             <div className="accessibility-panel-header">
               <div>
                 <strong>Accessibility Tools</strong>
-                <p>Translate the page, enlarge the interface, or improve readability.</p>
+                <p>Translate the page or improve readability.</p>
               </div>
               <button
                 type="button"
@@ -838,20 +414,6 @@ export default function AccessibilityWidget() {
                 options={LANGUAGE_OPTIONS}
                 value={language}
                 onChange={handleLanguageChange}
-                activeDropdown={activeDropdown}
-                setActiveDropdown={setActiveDropdown}
-                hoveredOption={hoveredOption}
-                setHoveredOption={setHoveredOption}
-              />
-            </label>
-
-            <label className="accessibility-field">
-              <span>Magnifier</span>
-              <AccessibilitySelect
-                id="magnifier"
-                options={MAGNIFIER_OPTIONS}
-                value={scale}
-                onChange={setScale}
                 activeDropdown={activeDropdown}
                 setActiveDropdown={setActiveDropdown}
                 hoveredOption={hoveredOption}
