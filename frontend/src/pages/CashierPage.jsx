@@ -85,6 +85,15 @@ export default function CashierPage() {
   const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    document.body.dataset.page = 'cashier';
+    return () => {
+      if (document.body.dataset.page === 'cashier') {
+        delete document.body.dataset.page;
+      }
+    };
+  }, []);
+
   // Loads the menu from the backend on mount; only available items are shown.
   useEffect(() => {
     let active = true;

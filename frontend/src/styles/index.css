@@ -318,6 +318,22 @@ body[data-page='kiosk'] .accessibility-widget {
   right: 190px;
 }
 
+body[data-page='cashier'] .accessibility-widget {
+  bottom: 74px;
+  right: 18px;
+}
+
+body[data-page='cashier'] {
+  overflow: hidden;
+}
+
+body[data-page='cashier'] .app-shell,
+body[data-page='cashier'] .page-shell {
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .language-select {
   font-family: Arial, 'Noto Sans', 'PingFang SC', 'Hiragino Sans', 'Microsoft YaHei',
     'Yu Gothic', 'Malgun Gothic', sans-serif;
@@ -1209,8 +1225,13 @@ body[data-contrast='soft'] .helper-text {
 /* Cashier */
 #page-cashier,
 .cashier-page {
-  padding: 10px;
-  gap: 8px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  min-height: 0;
+  overflow: hidden;
+  padding: 6px;
+  gap: 6px;
 }
 
 .cashier-header,
@@ -1222,8 +1243,8 @@ body[data-contrast='soft'] .helper-text {
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
-  padding: 12px 18px;
-  min-height: 54px;
+  padding: 8px 14px;
+  min-height: 42px;
 }
 
 .cashier-header h2,
@@ -1255,8 +1276,9 @@ body[data-contrast='soft'] .helper-text {
 .cashier-body,
 .cashier-layout {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -1264,9 +1286,33 @@ body[data-contrast='soft'] .helper-text {
 .cashier-main {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   overflow: hidden;
+}
+
+.cashier-main > .swing-panel {
+  min-height: 0;
+  overflow: hidden;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.cashier-main > .swing-panel:first-child {
+  flex: 0 0 auto;
+  padding-bottom: 6px;
+}
+
+.cashier-main > .swing-panel:nth-child(2) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 6px;
 }
 
 .cashier-right {
@@ -1279,26 +1325,36 @@ body[data-contrast='soft'] .helper-text {
 .cashier-categories {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  gap: 5px;
+}
+
+.cashier-categories button {
+  min-height: 30px;
+  padding: 4px 8px;
 }
 
 .menu-grid,
 .cashier-menu-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
   flex: 1;
+  min-height: 0;
 }
 
 .cashier-menu-grid {
-  align-content: start;
-  overflow-y: auto;
+  grid-auto-rows: minmax(0, 1fr);
+  align-content: stretch;
+  overflow: hidden;
+  padding: 0 6px 6px;
 }
 
 .menu-btn,
 .menu-tile {
-  height: 130px;
-  font-size: 13px;
+  height: auto;
+  min-height: 0;
+  min-width: 0;
+  font-size: 12px;
   font-weight: bold;
   text-align: center;
   padding: 4px;
@@ -1306,28 +1362,51 @@ body[data-contrast='soft'] .helper-text {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   overflow: hidden;
+}
+
+.cashier-page .menu-tile {
+  height: 100%;
 }
 
 .menu-tile-image {
   width: 100%;
   flex: 1;
   min-height: 0;
+  max-height: 62%;
   object-fit: contain;
   display: block;
 }
 
 .menu-tile-name {
-  font-size: 12px;
-  line-height: 1.2;
+  font-size: 11px;
+  line-height: 1.1;
   white-space: normal;
   word-break: break-word;
+}
+
+.menu-tile strong {
+  font-size: 12px;
+  line-height: 1.1;
 }
 
 .cashier-empty-state {
   grid-column: 1 / -1;
   padding: 12px;
+}
+
+.current-order-panel {
+  width: 330px;
+  flex: 0 0 330px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--panel-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
 }
 
 .menu-btn.active,
@@ -1457,10 +1536,14 @@ body[data-contrast='soft'] .helper-text {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+  flex: 0 0 auto;
+  min-height: 34px;
 }
 
 .cashier-bottom-bar button {
   min-width: 160px;
+  min-height: 30px;
+  padding-block: 4px;
 }
 
 .cashier-modal-backdrop {
