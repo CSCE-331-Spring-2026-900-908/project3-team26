@@ -295,7 +295,7 @@ fieldset.panel legend {
   position: fixed;
   left: 18px;
   bottom: 18px;
-  z-index: 50;
+  z-index: 120;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -388,7 +388,7 @@ iframe.goog-te-banner-frame.skiptranslate {
   height: 200px;
   pointer-events: none;
   opacity: 0;
-  z-index: 45;
+  z-index: 110;
   transition: opacity 120ms ease-out;
 }
 
@@ -412,9 +412,17 @@ iframe.goog-te-banner-frame.skiptranslate {
 }
 
 .magnifier-clone {
+  position: relative;
   width: 100vw;
   min-height: 100vh;
   background: var(--page-bg);
+}
+
+.magnifier-clone .kiosk-modal-backdrop,
+.magnifier-clone .cashier-modal-backdrop {
+  position: absolute;
+  width: 100vw;
+  min-height: 100vh;
 }
 
 body[data-contrast='high'] .accessibility-panel-header p,

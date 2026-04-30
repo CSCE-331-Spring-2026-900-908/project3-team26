@@ -10,6 +10,10 @@ const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
 const LENS_SIZE = 200;
 const LENS_RADIUS = LENS_SIZE / 2;
+const MAGNIFIER_OFFSET = {
+  default: { x: 0, y: 0 },
+  modal: { x: -5, y: -495},
+};
 
 const LANGUAGE_OPTIONS = [
   { value: 'en', label: 'English' },
@@ -156,8 +160,37 @@ export default function AccessibilityWidget() {
   const [pointerPosition, setPointerPosition] = useState({ x: 240, y: 240 });
   const [lensVisible, setLensVisible] = useState(false);
   const lensContentRef = useRef(null);
+  const cloneRootRef = useRef(null);
   const mutationObserverRef = useRef(null);
   const isDraggingRef = useRef(false);
+  const appShellRectRef = useRef({ left: 0, top: 0 });
+
+  const updateAppShellRect = () => {
+    const appShell = document.querySelector('.app-shell');
+    if (appShell) {
+      appShellRectRef.current = appShell.getBoundingClientRect();
+    }
+    return appShell;
+  };
+
+  const syncCloneScrollPositions = (sourceRoot, cloneRoot) => {
+    if (!sourceRoot || !cloneRoot) {
+      return;
+    }
+
+    const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
+    const cloneElements = [cloneRoot, ...cloneRoot.querySelectorAll('*')];
+
+    sourceElements.forEach((sourceElement, index) => {
+      const cloneElement = cloneElements[index];
+      if (!cloneElement) {
+        return;
+      }
+
+      cloneElement.scrollLeft = sourceElement.scrollLeft;
+      cloneElement.scrollTop = sourceElement.scrollTop;
+    });
+  };
 
   // Saves the chosen language, sets/clears the Google Translate cookie, and triggers a translation.
   const handleLanguageChange = (nextLanguage) => {
@@ -212,6 +245,7 @@ export default function AccessibilityWidget() {
       if (lensContentRef.current) {
         lensContentRef.current.innerHTML = '';
       }
+      cloneRootRef.current = null;
       return undefined;
     }
 
@@ -223,11 +257,15 @@ export default function AccessibilityWidget() {
         return;
       }
 
+      appShellRectRef.current = appShell.getBoundingClientRect();
       lensContent.innerHTML = '';
       const clone = appShell.cloneNode(true);
       clone.classList.add('magnifier-clone');
       clone.setAttribute('aria-hidden', 'true');
       lensContent.appendChild(clone);
+      cloneRootRef.current = clone;
+      syncCloneScrollPositions(appShell, clone);
+      window.requestAnimationFrame(() => syncCloneScrollPositions(appShell, clone));
     };
 
     syncClone();
@@ -246,7 +284,15 @@ export default function AccessibilityWidget() {
       });
     }
 
+    const syncLivePosition = () => {
+      const appShell = updateAppShellRect();
+      if (appShell && cloneRootRef.current) {
+        syncCloneScrollPositions(appShell, cloneRootRef.current);
+      }
+    };
+
     const handleMouseMove = (event) => {
+      syncLivePosition();
       setPointerPosition({ x: event.clientX, y: event.clientY });
       setLensVisible(true);
     };
@@ -262,6 +308,7 @@ export default function AccessibilityWidget() {
       if (!touch) {
         return;
       }
+      syncLivePosition();
       setPointerPosition({ x: touch.clientX, y: touch.clientY });
       setLensVisible(true);
       isDraggingRef.current = true;
@@ -272,6 +319,7 @@ export default function AccessibilityWidget() {
       if (!touch) {
         return;
       }
+      syncLivePosition();
       setPointerPosition({ x: touch.clientX, y: touch.clientY });
       setLensVisible(true);
       isDraggingRef.current = true;
@@ -287,18 +335,21 @@ export default function AccessibilityWidget() {
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('touchend', handleTouchEnd);
     window.addEventListener('touchcancel', handleTouchEnd);
+    appShell?.addEventListener('scroll', syncLivePosition, true);
 
     return () => {
       if (mutationObserverRef.current) {
         mutationObserverRef.current.disconnect();
         mutationObserverRef.current = null;
       }
+      cloneRootRef.current = null;
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
+      appShell?.removeEventListener('scroll', syncLivePosition, true);
     };
   }, [scale]);
 
@@ -375,14 +426,22 @@ export default function AccessibilityWidget() {
     Math.max(pointerPosition.y, LENS_RADIUS + 12),
     window.innerHeight - LENS_RADIUS - 12,
   );
+  const magnifiedSourceX = pointerPosition.x - appShellRectRef.current.left;
+  const magnifiedSourceY = pointerPosition.y - appShellRectRef.current.top;
+  const isPointingAtModal = Boolean(
+    document
+      .elementFromPoint(pointerPosition.x, pointerPosition.y)
+      ?.closest('.kiosk-modal, .cashier-modal')
+  );
+  const magnifierOffset = isPointingAtModal ? MAGNIFIER_OFFSET.modal : MAGNIFIER_OFFSET.default;
 
   return (
     <>
       <div className="google-translate-host" id={GOOGLE_HOST_ID} aria-hidden="true" />
 
-      {scale !== '1' && lensVisible ? (
+      {scale !== '1' ? (
         <div
-          className="magnifier-lens active"
+          className={lensVisible ? 'magnifier-lens active' : 'magnifier-lens'}
           aria-hidden="true"
           style={{
             left: `${lensCenterX - LENS_RADIUS}px`,
@@ -394,7 +453,7 @@ export default function AccessibilityWidget() {
               className="magnifier-lens-content"
               ref={lensContentRef}
               style={{
-                transform: `translate(${-pointerPosition.x * Number(scale) + LENS_RADIUS}px, ${-pointerPosition.y * Number(scale) + LENS_RADIUS}px) scale(${scale})`,
+                transform: `translate(${LENS_RADIUS}px, ${LENS_RADIUS}px) scale(${scale}) translate(${-magnifiedSourceX + magnifierOffset.x}px, ${-magnifiedSourceY + magnifierOffset.y}px)`,
               }}
             />
           </div>
