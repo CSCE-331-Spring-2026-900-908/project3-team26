@@ -251,9 +251,6 @@ export default function LoginPage() {
           {googleError ? <div className="login-error">{googleError}</div> : null}
         </div>
 
-        <p className="login-pin-hint">
-          Manager PIN: 55555 &middot; Cashier PINs: 44444, 33333
-        </p>
       </div>
     </section>
   );

@@ -4,6 +4,14 @@ import { getSchemaSupport } from '../db/compat.js';
 
 const router = Router();
 
+// Texas state sales tax (6.25%) plus typical College Station local rate (2.0%) = 8.25%.
+// Applied to every order subtotal before storing the total in the orders table.
+const TEXAS_TAX_RATE = 0.0825;
+
+function roundCurrency(value) {
+  return Math.round(Number(value) * 100) / 100;
+}
+
 async function nextId(client, table) {
   const result = await client.query(`SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM ${table}`);
   return Number(result.rows[0].next_id);
@@ -71,15 +79,19 @@ router.post('/', async (req, res, next) => {
         );
         const menuMap = new Map(menuResult.rows.map((row) => [Number(row.id), row]));
 
-        let total = 0;
+        // Compute the pre-tax subtotal from menu prices; line items are stored at their unit price.
+        let subtotal = 0;
         for (const item of items) {
           const quantity = Number(item.quantity || 0);
           const menuItem = menuMap.get(Number(item.menuItemId));
           if (!menuItem || !menuItem.availability || quantity <= 0) {
             throw new Error(`Invalid menu selection for item ${item.menuItemId}.`);
           }
-          total += Number(menuItem.price) * quantity;
+          subtotal += Number(menuItem.price) * quantity;
         }
+        subtotal = roundCurrency(subtotal);
+        const tax = roundCurrency(subtotal * TEXAS_TAX_RATE);
+        const grandTotal = roundCurrency(subtotal + tax);
 
         const orderId = await nextId(client, 'orders');
         let orderItemId = await nextId(client, 'order_items');
@@ -91,13 +103,13 @@ router.post('/', async (req, res, next) => {
           await client.query(
             `INSERT INTO orders(id, order_time, total_amount, cashier, order_source)
              VALUES ($1, $2, $3, $4, $5)`,
-            [orderId, now, total.toFixed(2), cashierId || null, normalizedSource]
+            [orderId, now, grandTotal.toFixed(2), cashierId || null, normalizedSource]
           );
         } else {
           await client.query(
             `INSERT INTO orders(id, order_time, total_amount, cashier)
              VALUES ($1, $2, $3, $4)`,
-            [orderId, now, total.toFixed(2), cashierId || null]
+            [orderId, now, grandTotal.toFixed(2), cashierId || null]
           );
         }
 
@@ -117,7 +129,7 @@ router.post('/', async (req, res, next) => {
              VALUES ($1, $2, $3, $4)
              ON CONFLICT (order_id)
              DO UPDATE SET business_date = EXCLUDED.business_date, method = EXCLUDED.method, amount = EXCLUDED.amount`,
-            [orderId, now.toISOString().slice(0, 10), normalizedPayment, total.toFixed(2)]
+            [orderId, now.toISOString().slice(0, 10), normalizedPayment, grandTotal.toFixed(2)]
           );
         }
 
@@ -136,7 +148,10 @@ router.post('/', async (req, res, next) => {
         return {
           id: orderId,
           orderTime: now,
-          totalAmount: Number(total.toFixed(2)),
+          subtotal,
+          tax,
+          taxRate: TEXAS_TAX_RATE,
+          totalAmount: grandTotal,
           cashierId,
           source: normalizedSource,
           paymentMethod: normalizedPayment,
