@@ -11,6 +11,7 @@ export const toppingOptions = [
   'Egg Pudding',
   'Red Bean',
   'Grass Jelly',
+  'Ice Cream',
 ];
 
 export const TOPPING_PRICES = {
@@ -25,4 +26,5 @@ export const TOPPING_PRICES = {
   'Egg Pudding': 0.85,
   'Red Bean': 0.75,
   'Grass Jelly': 0.75,
+  'Ice Cream': 1.00,
 };
