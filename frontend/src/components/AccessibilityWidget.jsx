@@ -167,6 +167,12 @@ function queueUiLayoutChange() {
   }, 80);
 }
 
+function queueUiLayoutChangeAfterCommit() {
+  queueUiLayoutChange();
+  window.setTimeout(queueUiLayoutChange, 0);
+  window.setTimeout(queueUiLayoutChange, 160);
+}
+
 function AccessibilitySelect({
   id,
   options,
@@ -222,7 +228,7 @@ function AccessibilitySelect({
                   onChange(option.value);
                   setActiveDropdown(null);
                   setHoveredOption(null);
-                  queueUiLayoutChange();
+                  queueUiLayoutChangeAfterCommit();
                 }}
               >
                 {option.label}
@@ -263,7 +269,13 @@ export default function AccessibilityWidget() {
     }
     cloneRootRef.current = null;
     clonePairsRef.current = [];
-    queueUiLayoutChange();
+    queueUiLayoutChangeAfterCommit();
+  };
+
+  const handleAccessibilityClosePointerDown = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    closeAccessibilityPanel();
   };
 
   const updateAppShellRect = () => {
@@ -277,9 +289,6 @@ export default function AccessibilityWidget() {
   const getMagnifierSourceRoots = () =>
     [
       document.querySelector('.app-shell'),
-      document.querySelector('.accessibility-widget'),
-      document.querySelector('.chat-widget'),
-      document.querySelector('.on-screen-keyboard'),
     ].filter(Boolean);
 
   const syncCloneScrollPositions = (sourceRoot, cloneRoot) => {
@@ -331,6 +340,36 @@ export default function AccessibilityWidget() {
         margin: '0',
       });
     });
+  };
+
+  const getCloneRootRect = (sourceRoot) => {
+    if (sourceRoot?.classList?.contains('app-shell')) {
+      return appShellRectRef.current;
+    }
+
+    return { left: 0, top: 0 };
+  };
+
+  const appendFloatingClone = (clone, selector, className) => {
+    const sourceRoot = document.querySelector(selector);
+    if (!sourceRoot) {
+      return;
+    }
+
+    const rect = sourceRoot.getBoundingClientRect();
+    const clonedRoot = sourceRoot.cloneNode(true);
+    clonedRoot.classList.add(className);
+    Object.assign(clonedRoot.style, {
+      position: 'absolute',
+      left: `${rect.left}px`,
+      top: `${rect.top}px`,
+      right: 'auto',
+      bottom: 'auto',
+      width: `${rect.width}px`,
+      minHeight: `${rect.height}px`,
+      margin: '0',
+    });
+    clone.appendChild(clonedRoot);
   };
 
   // Saves the chosen language, sets/clears the Google Translate cookie, and triggers a translation.
@@ -456,17 +495,20 @@ export default function AccessibilityWidget() {
         clone.appendChild(clonedRoot);
         return { sourceRoot, clonedRoot };
       });
+      appendFloatingClone(clone, '.accessibility-widget', 'magnifier-accessibility-clone');
+      appendFloatingClone(clone, '.chat-widget', 'magnifier-chat-clone');
+      appendFloatingClone(clone, '.on-screen-keyboard', 'magnifier-keyboard-clone');
       lensContent.appendChild(clone);
       cloneRootRef.current = clone;
       clonePairsRef.current = clonePairs;
       clonePairs.forEach(({ sourceRoot, clonedRoot }) => {
         syncCloneScrollPositions(sourceRoot, clonedRoot);
-        syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
+        syncFixedClonePositions(sourceRoot, clonedRoot, getCloneRootRect(sourceRoot));
       });
       window.requestAnimationFrame(() => {
         clonePairsRef.current.forEach(({ sourceRoot, clonedRoot }) => {
           syncCloneScrollPositions(sourceRoot, clonedRoot);
-          syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
+          syncFixedClonePositions(sourceRoot, clonedRoot, getCloneRootRect(sourceRoot));
         });
       });
     };
@@ -529,7 +571,7 @@ export default function AccessibilityWidget() {
           }
 
           syncCloneScrollPositions(sourceRoot, clonedRoot);
-          syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
+          syncFixedClonePositions(sourceRoot, clonedRoot, getCloneRootRect(sourceRoot));
         });
       }
     };
@@ -588,12 +630,26 @@ export default function AccessibilityWidget() {
       isDraggingRef.current = false;
     };
 
+    const handleFloatingUiToggle = (event) => {
+      if (!event.target?.closest?.('.chat-widget, .accessibility-widget')) {
+        return;
+      }
+      if (event.target?.closest?.('[data-accessibility-close="true"]')) {
+        return;
+      }
+
+      window.requestAnimationFrame(requestCloneSync);
+      window.setTimeout(requestCloneSync, 80);
+      window.setTimeout(requestCloneSync, 180);
+    };
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseleave', handleMouseLeave);
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('touchend', handleTouchEnd);
     window.addEventListener('touchcancel', handleTouchEnd);
+    document.addEventListener('click', handleFloatingUiToggle, true);
     window.addEventListener('scroll', handleScrollOrResize, true);
     document.addEventListener('scroll', handleScrollOrResize, true);
     document.addEventListener('wheel', handleScrollOrResize, true);
@@ -622,6 +678,7 @@ export default function AccessibilityWidget() {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
+      document.removeEventListener('click', handleFloatingUiToggle, true);
       window.removeEventListener('scroll', handleScrollOrResize, true);
       document.removeEventListener('scroll', handleScrollOrResize, true);
       document.removeEventListener('wheel', handleScrollOrResize, true);
@@ -715,8 +772,8 @@ export default function AccessibilityWidget() {
       : 1;
   const pointerMarkerX = LENS_RADIUS + pointerOffsetX * pointerMarkerScale;
   const pointerMarkerY = LENS_RADIUS + pointerOffsetY * pointerMarkerScale;
-  const magnifiedSourceX = pointerPosition.x - appShellRectRef.current.left;
-  const magnifiedSourceY = pointerPosition.y - appShellRectRef.current.top;
+  const magnifiedSourceX = pointerPosition.x;
+  const magnifiedSourceY = pointerPosition.y;
   const isPointingAtModal = Boolean(
     document
       .elementFromPoint(pointerPosition.x, pointerPosition.y)
@@ -762,6 +819,12 @@ export default function AccessibilityWidget() {
           className="accessibility-trigger"
           aria-expanded={isOpen}
           aria-controls="accessibility-panel"
+          data-accessibility-close={isOpen ? 'true' : undefined}
+          onPointerDown={(event) => {
+            if (isOpen) {
+              handleAccessibilityClosePointerDown(event);
+            }
+          }}
           onClick={() => {
             if (isOpen) {
               closeAccessibilityPanel();
@@ -786,6 +849,8 @@ export default function AccessibilityWidget() {
               </div>
               <button
                 type="button"
+                data-accessibility-close="true"
+                onPointerDown={handleAccessibilityClosePointerDown}
                 onClick={closeAccessibilityPanel}
               >
                 Close

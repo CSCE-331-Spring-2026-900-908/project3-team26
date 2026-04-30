@@ -302,7 +302,7 @@ fieldset.panel legend {
   position: fixed;
   right: 18px;
   bottom: 18px;
-  z-index: 120;
+  z-index: 100020;
   display: flex;
   flex-direction: column-reverse;
   align-items: flex-end;
@@ -468,7 +468,7 @@ iframe.goog-te-banner-frame.skiptranslate {
   height: 200px;
   pointer-events: none;
   opacity: 0;
-  z-index: 100010;
+  z-index: 100030;
   transition: opacity 120ms ease-out;
 }
 
@@ -527,6 +527,35 @@ iframe.goog-te-banner-frame.skiptranslate {
   width: 100vw;
   min-height: 100vh;
   background: var(--page-bg);
+}
+
+.magnifier-clone .magnifier-accessibility-clone,
+.magnifier-clone .magnifier-chat-clone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  z-index: 220;
+  overflow: visible;
+}
+
+.magnifier-clone .magnifier-accessibility-clone {
+  flex-direction: column-reverse;
+  z-index: 230;
+}
+
+.magnifier-clone .magnifier-accessibility-clone .accessibility-panel {
+  background: var(--panel-bg);
+}
+
+.magnifier-clone .magnifier-chat-clone .chat-panel {
+  background: var(--panel-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.magnifier-clone .magnifier-keyboard-clone {
+  z-index: 135;
 }
 
 .magnifier-clone .kiosk-modal-backdrop,
@@ -3424,6 +3453,14 @@ body[data-contrast='high'] .kiosk-brand-wordmark strong {
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
+}
+
+.chat-widget--keyboard-open {
+  bottom: 282px;
+}
+
+.chat-widget--keyboard-open .chat-trigger {
+  display: none;
 }
 
 .on-screen-keyboard {
