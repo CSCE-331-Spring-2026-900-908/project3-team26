@@ -53,3 +53,6 @@ export function getMenuImage(name) {
 export function getMenuImageOrPlaceholder(name) {
   return getMenuImage(name) || PLACEHOLDER;
 }
+
+// Exports the raw lowercase keys
+export const knownMenuItemNames = Object.keys(imageMap);
