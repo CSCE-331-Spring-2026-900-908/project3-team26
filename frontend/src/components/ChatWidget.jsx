@@ -2,6 +2,7 @@
 // Sends the conversation to the backend's /chat endpoint, which proxies it to the LLM
 // (Groq/OpenAI-compatible API). The reply is appended to the message list.
 import { useState, useRef, useEffect } from 'react';
+import OnScreenKeyboard from './OnScreenKeyboard.jsx';
 
 // System prompt that scopes the assistant to bubble-tea ordering questions only.
 const SYSTEM_PROMPT = `You are a friendly ordering assistant for a bubble tea shop. Help customers choose drinks, explain menu items, suggest customizations (milk tea, fruit tea, toppings, sweetness levels, ice levels), and guide them through placing their order. Keep responses concise and friendly. Only answer questions related to the menu and ordering process.`;
@@ -13,7 +14,27 @@ export default function ChatWidget() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showKeyboard, setShowKeyboard] = useState(false); 
   const bottomRef = useRef(null);
+
+  // 2. closeChat — replaces calling setIsOpen(false) directly
+  function closeChat() {
+    setIsOpen(false);
+    setShowKeyboard(false);
+  }
+
+  // 3. On-screen keyboard handlers — passed as props to OnScreenKeyboard
+  function handleOskKey(char) {
+    setInput((prev) => prev + char);
+  }
+
+  function handleOskBackspace() {
+    setInput((prev) => prev.slice(0, -1));
+  }
+
+  function handleOskSpace() {
+    setInput((prev) => prev + ' ');
+  }
 
   // Auto-scrolls the message list to the bottom whenever a new message is added.
   useEffect(() => {
@@ -66,44 +87,65 @@ export default function ChatWidget() {
   };
 
   return (
-    <div className="chat-widget">
-      {isOpen && (
-        <div className="chat-panel panel">
-          <div className="chat-panel-header">
-            <strong>Order Assistant</strong>
-            <button onClick={() => setIsOpen(false)} aria-label="Close chat">✕</button>
+    <>
+      <div className="chat-widget" style={showKeyboard ? { bottom: '265px' } : undefined}>
+        {isOpen && (
+          <div className="chat-panel panel">
+            <div className="chat-panel-header">
+              <strong>Order Assistant</strong>
+              <button
+                onClick={() => setShowKeyboard((k) => !k)}
+                title={showKeyboard ? 'Hide keyboard' : 'Show on-screen keyboard'}
+                aria-label="Toggle on-screen keyboard"
+              >
+                ⌨️
+              </button>
+              <button onClick={closeChat} aria-label="Close chat">✕</button>
+            </div>
+            <div className="chat-messages">
+              {messages.map((m, i) => (
+                <div key={i} className={`chat-message chat-message--${m.role}`}>
+                  {m.text}
+                </div>
+              ))}
+              {loading && <div className="chat-message chat-message--assistant">Typing…</div>}
+              <div ref={bottomRef} />
+            </div>
+            <div className="chat-input-row">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                readOnly={showKeyboard}
+                placeholder="Ask about the menu…"
+                aria-label="Chat input"
+              />
+              <button onClick={sendMessage} disabled={loading} className="primary">
+                Send
+              </button>
+            </div>
           </div>
-          <div className="chat-messages">
-            {messages.map((m, i) => (
-              <div key={i} className={`chat-message chat-message--${m.role}`}>
-                {m.text}
-              </div>
-            ))}
-            {loading && <div className="chat-message chat-message--assistant">Typing…</div>}
-            <div ref={bottomRef} />
-          </div>
-          <div className="chat-input-row">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Ask about the menu…"
-              aria-label="Chat input"
-            />
-            <button onClick={sendMessage} disabled={loading} className="primary">
-              Send
-            </button>
-          </div>
-        </div>
+        )}
+        <button
+          className="chat-trigger accessibility-trigger"
+          onClick={() => setIsOpen((o) => !o)}
+          aria-label="Toggle order assistant"
+        >
+          💬 Order Help
+        </button>
+      </div>
+
+      {/* ← Change D: keyboard lives OUTSIDE the chat-widget div */}
+      {isOpen && showKeyboard && (
+        <OnScreenKeyboard
+          onKey={handleOskKey}
+          onBackspace={handleOskBackspace}
+          onSpace={handleOskSpace}
+          onSend={sendMessage}
+          onClose={() => setShowKeyboard(false)}
+        />
       )}
-      <button
-        className="chat-trigger accessibility-trigger"
-        onClick={() => setIsOpen((o) => !o)}
-        aria-label="Toggle order assistant"
-      >
-        💬 Order Help
-      </button>
-    </div>
+    </>
   );
 }
