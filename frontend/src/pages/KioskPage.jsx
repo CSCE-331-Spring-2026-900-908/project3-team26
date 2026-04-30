@@ -10,6 +10,7 @@ import { logoutUser } from '../utils/session.js';
 import { getMenuImage, knownMenuItemNames } from '../utils/menuImages.js';
 import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
 import { TOPPING_PRICES, toppingOptions } from '../utils/toppings.js';
+import WeatherWidget from '../components/WeatherWidget.jsx';
 
 // Tags <body> with data-page="kiosk" while the kiosk is active so kiosk-specific CSS can apply
 // (e.g., repositioning the accessibility/chat buttons). Cleans up on unmount.
@@ -773,10 +774,15 @@ export default function KioskPage() {
               <strong>Boba</strong>
             </div>
             <h2>KIOSK - SELF ORDERING</h2>
-            <div className="kiosk-header-actions">
-              {renderThemeButton()}
-              <button onClick={resetKiosk}>RESET</button>
-              <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
+            <div className="kiosk-header-actions-stack">
+              <div className="kiosk-header-actions">
+                {renderThemeButton()}
+                <button onClick={resetKiosk}>RESET</button>
+                <button onClick={() => logoutUser(navigate)}>LOGOUT</button>
+              </div>
+              <div className="kiosk-header-weather">
+                <WeatherWidget />
+              </div>
             </div>
           </div>
           <div className="kiosk-banner-row kiosk-banner-row-filter">
