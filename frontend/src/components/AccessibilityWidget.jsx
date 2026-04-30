@@ -163,6 +163,7 @@ export default function AccessibilityWidget() {
   const [lensVisible, setLensVisible] = useState(false);
   const lensContentRef = useRef(null);
   const cloneRootRef = useRef(null);
+  const clonePairsRef = useRef([]);
   const mutationObserverRef = useRef(null);
   const isDraggingRef = useRef(false);
   const appShellRectRef = useRef({ left: 0, top: 0 });
@@ -174,6 +175,14 @@ export default function AccessibilityWidget() {
     }
     return appShell;
   };
+
+  const getMagnifierSourceRoots = () =>
+    [
+      document.querySelector('.app-shell'),
+      document.querySelector('.accessibility-widget'),
+      document.querySelector('.chat-widget'),
+      document.querySelector('.on-screen-keyboard'),
+    ].filter(Boolean);
 
   const syncCloneScrollPositions = (sourceRoot, cloneRoot) => {
     if (!sourceRoot || !cloneRoot) {
@@ -194,12 +203,11 @@ export default function AccessibilityWidget() {
     });
   };
 
-  const syncFixedClonePositions = (sourceRoot, cloneRoot) => {
+  const syncFixedClonePositions = (sourceRoot, cloneRoot, rootRect = sourceRoot?.getBoundingClientRect()) => {
     if (!sourceRoot || !cloneRoot) {
       return;
     }
 
-    const rootRect = sourceRoot.getBoundingClientRect();
     const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
     const cloneElements = [cloneRoot, ...cloneRoot.querySelectorAll('*')];
 
@@ -288,12 +296,14 @@ export default function AccessibilityWidget() {
         lensContentRef.current.innerHTML = '';
       }
       cloneRootRef.current = null;
+      clonePairsRef.current = [];
       return undefined;
     }
 
     const syncClone = () => {
       const appShell = document.querySelector('.app-shell');
       const lensContent = lensContentRef.current;
+      const sourceRoots = getMagnifierSourceRoots();
 
       if (!appShell || !lensContent) {
         return;
@@ -301,28 +311,47 @@ export default function AccessibilityWidget() {
 
       appShellRectRef.current = appShell.getBoundingClientRect();
       lensContent.innerHTML = '';
-      const clone = appShell.cloneNode(true);
+      const clone = document.createElement('div');
       clone.classList.add('magnifier-clone');
       clone.setAttribute('aria-hidden', 'true');
+      const clonePairs = sourceRoots.map((sourceRoot) => {
+        const clonedRoot = sourceRoot.cloneNode(true);
+        clone.appendChild(clonedRoot);
+        return { sourceRoot, clonedRoot };
+      });
       lensContent.appendChild(clone);
       cloneRootRef.current = clone;
-      syncCloneScrollPositions(appShell, clone);
-      syncFixedClonePositions(appShell, clone);
+      clonePairsRef.current = clonePairs;
+      clonePairs.forEach(({ sourceRoot, clonedRoot }) => {
+        syncCloneScrollPositions(sourceRoot, clonedRoot);
+        syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
+      });
       window.requestAnimationFrame(() => {
-        syncCloneScrollPositions(appShell, clone);
-        syncFixedClonePositions(appShell, clone);
+        clonePairsRef.current.forEach(({ sourceRoot, clonedRoot }) => {
+          syncCloneScrollPositions(sourceRoot, clonedRoot);
+          syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
+        });
       });
     };
 
     syncClone();
 
-    const appShell = document.querySelector('.app-shell');
-    if (appShell) {
-      mutationObserverRef.current = new MutationObserver(() => {
+    const appRoot = document.getElementById('root') || document.body;
+    if (appRoot) {
+      mutationObserverRef.current = new MutationObserver((mutations) => {
+        const onlyMagnifierChanged = mutations.every((mutation) => {
+          const target =
+            mutation.target instanceof Element ? mutation.target : mutation.target.parentElement;
+          return Boolean(target?.closest('.magnifier-lens'));
+        });
+        if (onlyMagnifierChanged) {
+          return;
+        }
+
         window.requestAnimationFrame(syncClone);
       });
 
-      mutationObserverRef.current.observe(appShell, {
+      mutationObserverRef.current.observe(appRoot, {
         childList: true,
         subtree: true,
         characterData: true,
@@ -333,8 +362,14 @@ export default function AccessibilityWidget() {
     const syncLivePosition = () => {
       const appShell = updateAppShellRect();
       if (appShell && cloneRootRef.current) {
-        syncCloneScrollPositions(appShell, cloneRootRef.current);
-        syncFixedClonePositions(appShell, cloneRootRef.current);
+        clonePairsRef.current.forEach(({ sourceRoot, clonedRoot }) => {
+          if (!document.body.contains(sourceRoot)) {
+            return;
+          }
+
+          syncCloneScrollPositions(sourceRoot, clonedRoot);
+          syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
+        });
       }
     };
 
@@ -411,6 +446,7 @@ export default function AccessibilityWidget() {
         window.cancelAnimationFrame(refreshFrameId);
       }
       cloneRootRef.current = null;
+      clonePairsRef.current = [];
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('touchstart', handleTouchStart);
@@ -550,7 +586,7 @@ export default function AccessibilityWidget() {
         </div>
       ) : null}
 
-      <div className="accessibility-widget notranslate" translate="no">
+      <div className="accessibility-widget">
         <button
           type="button"
           className="accessibility-trigger"

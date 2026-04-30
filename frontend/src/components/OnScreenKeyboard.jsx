@@ -338,7 +338,7 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
 
   return (
     <div
-      className="notranslate"
+      className="on-screen-keyboard notranslate"
       translate="no"
       style={{ ...S.overlay, direction: layout.direction || 'ltr' }}
       aria-label="On-screen keyboard"
