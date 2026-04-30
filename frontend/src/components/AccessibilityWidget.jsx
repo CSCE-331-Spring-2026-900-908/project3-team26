@@ -204,9 +204,7 @@ function AccessibilitySelect({
         }}
       >
         <span>{selected.label}</span>
-        <span className="notranslate" translate="no" aria-hidden="true">
-          v
-        </span>
+        <span className="accessibility-select-arrow notranslate" translate="no" aria-hidden="true" />
       </button>
 
       {isOpen ? (
