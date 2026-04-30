@@ -461,7 +461,7 @@ export default function AccessibilityWidget() {
       window.removeEventListener('resize', handleScrollOrResize);
       scrollRoot?.removeEventListener('scroll', syncLivePosition, true);
     };
-  }, [scale]);
+  }, [scale, isOpen]);
 
   // Lazily loads Google Translate's element script the first time a non-English language
   // is selected. Skips loading on subsequent visits if the global is already present.
