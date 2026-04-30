@@ -2259,19 +2259,13 @@ body[data-contrast='soft'] .helper-text {
   --primary-fg: #ffffff;
   --accent: #6c5ce7;
   --kiosk-sticky-bg:
-    linear-gradient(
-      90deg,
-      rgba(5, 116, 111, 0.16),
-      transparent 24%,
-      transparent 76%,
-      rgba(119, 73, 173, 0.14)
-    ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 244, 230, 0.92)),
-    #fff4e6;
+    linear-gradient(90deg, rgba(232, 167, 127, 0.18), rgba(240, 82, 117, 0.08)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.91), rgba(255, 245, 236, 0.92)),
+    #fff5ec;
   background:
-    linear-gradient(135deg, rgba(255, 89, 125, 0.26), transparent 32%),
-    linear-gradient(225deg, rgba(255, 177, 61, 0.28), transparent 34%),
-    linear-gradient(0deg, rgba(123, 201, 88, 0.18), transparent 36%),
+    linear-gradient(135deg, rgba(255, 112, 139, 0.18), transparent 32%),
+    linear-gradient(225deg, rgba(233, 177, 120, 0.24), transparent 34%),
+    linear-gradient(0deg, rgba(228, 186, 145, 0.2), transparent 36%),
     #fff4e6;
   color: var(--text);
 }
@@ -2458,6 +2452,13 @@ body[data-contrast='soft'] .helper-text {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 244, 230, 0.84)),
     var(--panel-bg);
+}
+
+.kiosk-page.kiosk-theme-hue .kiosk-categories-panel {
+  background:
+    linear-gradient(90deg, rgba(232, 167, 127, 0.18), rgba(240, 82, 117, 0.08)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 245, 236, 0.9)),
+    #fff5ec;
 }
 
 .kiosk-page.kiosk-theme-hue .kiosk-panel-label {
