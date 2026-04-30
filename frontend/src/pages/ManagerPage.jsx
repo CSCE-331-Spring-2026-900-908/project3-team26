@@ -202,6 +202,7 @@ export default function ManagerPage() {
   const [menuEdit, setMenuEdit] = useState(initialMenuEdit);
   const [employeeForm, setEmployeeForm] = useState(initialEmployeeForm);
   const [employeePermissionOpen, setEmployeePermissionOpen] = useState(false);
+  const [hoveredEmployeePermission, setHoveredEmployeePermission] = useState('');
   const [voidOrderId, setVoidOrderId] = useState('');
   const [zClosing, setZClosing] = useState(false);
   const [zReopening, setZReopening] = useState(false);
@@ -247,12 +248,14 @@ export default function ManagerPage() {
     const closeOnOutsideClick = (event) => {
       if (!employeePermissionRef.current?.contains(event.target)) {
         setEmployeePermissionOpen(false);
+        setHoveredEmployeePermission('');
       }
     };
 
     const closeOnEscape = (event) => {
       if (event.key === 'Escape') {
         setEmployeePermissionOpen(false);
+        setHoveredEmployeePermission('');
       }
     };
 
@@ -480,6 +483,7 @@ export default function ManagerPage() {
   function chooseEmployeePermission(permission) {
     setEmployeeForm((current) => ({ ...current, permission }));
     setEmployeePermissionOpen(false);
+    setHoveredEmployeePermission('');
   }
 
   // Voids an order by ID. Backend records the void with the manager's employee ID
@@ -842,7 +846,10 @@ export default function ManagerPage() {
                     aria-haspopup="listbox"
                     aria-expanded={employeePermissionOpen}
                     aria-controls="employee-permission-options"
-                    onClick={() => setEmployeePermissionOpen((open) => !open)}
+                    onClick={() => {
+                      setHoveredEmployeePermission(employeeForm.permission);
+                      setEmployeePermissionOpen((open) => !open);
+                    }}
                   >
                     <span>{employeeForm.permission}</span>
                     <span className="manager-permission-arrow" aria-hidden="true" />
@@ -853,19 +860,31 @@ export default function ManagerPage() {
                       id="employee-permission-options"
                       role="listbox"
                       aria-label="Employee permission options"
+                      onPointerLeave={() => setHoveredEmployeePermission('')}
                     >
-                      {employeePermissionOptions.map((permission) => (
-                        <button
-                          key={permission}
-                          type="button"
-                          role="option"
-                          aria-selected={employeeForm.permission === permission}
-                          className={employeeForm.permission === permission ? 'active' : ''}
-                          onClick={() => chooseEmployeePermission(permission)}
-                        >
-                          {permission}
-                        </button>
-                      ))}
+                      {employeePermissionOptions.map((permission) => {
+                        const isActive = employeeForm.permission === permission;
+                        const isHovered = hoveredEmployeePermission === permission;
+                        return (
+                          <button
+                            key={permission}
+                            type="button"
+                            role="option"
+                            aria-selected={isActive}
+                            className={[
+                              !hoveredEmployeePermission && isActive ? 'active' : '',
+                              isHovered ? 'hovered' : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                            onPointerEnter={() => setHoveredEmployeePermission(permission)}
+                            onFocus={() => setHoveredEmployeePermission(permission)}
+                            onClick={() => chooseEmployeePermission(permission)}
+                          >
+                            {permission}
+                          </button>
+                        );
+                      })}
                     </div>
                   ) : null}
                 </div>

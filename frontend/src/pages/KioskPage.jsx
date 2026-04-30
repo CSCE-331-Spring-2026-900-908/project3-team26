@@ -34,21 +34,10 @@ const specialFilterOptions = [
   { value: 'special:caffeine-free', label: 'Caffeine-free' },
   { value: 'special:nut-free', label: 'Nut-free' },
   { value: 'special:contains-milk', label: 'Contains milk' },
-  { value: 'special:contains-toppings', label: 'Contains toppings' },
 ];
 const milkTerms = ['milk'];
 const caffeineTerms = ['black tea', 'green tea', 'oolong tea', 'matcha powder', 'coffee'];
 const nutTerms = ['nuts', 'almond', 'peanut', 'cashew', 'hazelnut', 'walnut', 'pecan', 'pistachio'];
-const toppingTerms = [
-  'tapioca pearls',
-  'jelly',
-  'popping',
-  'boba',
-  'aloe vera',
-  'pudding',
-  'red bean',
-  'grass jelly',
-];
 const sizeOptions = ['Small', 'Medium', 'Large'];
 const temperatureOptions = ['Cold', 'Hot'];
 const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
@@ -65,6 +54,7 @@ const KIOSK_THEMES = {
     nextLabel: 'HUE',
   },
 };
+const DEFAULT_MAX_PRICE = Number.POSITIVE_INFINITY;
 
 const DEFAULT_CUSTOMIZATION = {
   size: 'Medium',
@@ -183,8 +173,6 @@ function matchesSpecialFilter(item, filterValue) {
       return !includesAnyIngredient(item, nutTerms);
     case 'special:contains-milk':
       return includesAnyIngredient(item, milkTerms);
-    case 'special:contains-toppings':
-      return includesAnyIngredient(item, toppingTerms);
     default:
       return true;
   }
@@ -197,7 +185,7 @@ export default function KioskPage() {
   const [menuItems, setMenuItems] = useState(STATIC_SEED);
   const [activeCategory, setActiveCategory] = useState('Milk Tea');
   const [activeFilterValue, setActiveFilterValue] = useState(allIngredientsValue);
-  const [activeMaxPrice, setActiveMaxPrice] = useState(0);
+  const [activeMaxPrice, setActiveMaxPrice] = useState(DEFAULT_MAX_PRICE);
   const [cart, setCart] = useState([]);
   const [confirmation, setConfirmation] = useState(null);
   const [error, setError] = useState('');
@@ -379,10 +367,6 @@ export default function KioskPage() {
       setActiveFilterValue(allIngredientsValue);
     }
   }, [activeFilterValue, filterOptions]);
-
-  useEffect(() => {
-    setActiveMaxPrice(maxPriceLimit);
-  }, [minPriceLimit, maxPriceLimit]);
 
   const sliderValue = baseFilteredItems.length
     ? Math.min(Math.max(activeMaxPrice, minPriceLimit), maxPriceLimit)
@@ -596,7 +580,7 @@ export default function KioskPage() {
     setCheckoutStep(null);
     setActiveCategory('Milk Tea');
     setActiveFilterValue(allIngredientsValue);
-    setActiveMaxPrice(maxPriceLimit);
+    setActiveMaxPrice(DEFAULT_MAX_PRICE);
     closeCustomization();
   }
 

@@ -1935,6 +1935,7 @@ body[data-contrast='soft'] .helper-text {
 }
 
 .manager-permission-options button:hover,
+.manager-permission-options button.hovered,
 .manager-permission-options button.active {
   color: var(--primary-fg);
   background: linear-gradient(135deg, var(--primary), var(--primary-alt));
