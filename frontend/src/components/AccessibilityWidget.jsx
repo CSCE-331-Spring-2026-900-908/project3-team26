@@ -10,6 +10,11 @@ const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
 const LENS_SIZE = 200;
 const LENS_RADIUS = LENS_SIZE / 2;
+const LENS_EDGE_MARGIN = 2;
+const MAGNIFIER_OFFSET = {
+  default: { x: 0, y: 0 },
+  modal: { x: 0, y: 0 },
+};
 
 const LANGUAGE_OPTIONS = [
   { value: 'en', label: 'English' },
@@ -156,8 +161,70 @@ export default function AccessibilityWidget() {
   const [pointerPosition, setPointerPosition] = useState({ x: 240, y: 240 });
   const [lensVisible, setLensVisible] = useState(false);
   const lensContentRef = useRef(null);
+  const cloneRootRef = useRef(null);
   const mutationObserverRef = useRef(null);
   const isDraggingRef = useRef(false);
+  const appShellRectRef = useRef({ left: 0, top: 0 });
+
+  const updateAppShellRect = () => {
+    const appShell = document.querySelector('.app-shell');
+    if (appShell) {
+      appShellRectRef.current = appShell.getBoundingClientRect();
+    }
+    return appShell;
+  };
+
+  const syncCloneScrollPositions = (sourceRoot, cloneRoot) => {
+    if (!sourceRoot || !cloneRoot) {
+      return;
+    }
+
+    const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
+    const cloneElements = [cloneRoot, ...cloneRoot.querySelectorAll('*')];
+
+    sourceElements.forEach((sourceElement, index) => {
+      const cloneElement = cloneElements[index];
+      if (!cloneElement) {
+        return;
+      }
+
+      cloneElement.scrollLeft = sourceElement.scrollLeft;
+      cloneElement.scrollTop = sourceElement.scrollTop;
+    });
+  };
+
+  const syncFixedClonePositions = (sourceRoot, cloneRoot) => {
+    if (!sourceRoot || !cloneRoot) {
+      return;
+    }
+
+    const rootRect = sourceRoot.getBoundingClientRect();
+    const sourceElements = [sourceRoot, ...sourceRoot.querySelectorAll('*')];
+    const cloneElements = [cloneRoot, ...cloneRoot.querySelectorAll('*')];
+
+    sourceElements.forEach((sourceElement, index) => {
+      if (window.getComputedStyle(sourceElement).position !== 'fixed') {
+        return;
+      }
+
+      const cloneElement = cloneElements[index];
+      if (!cloneElement) {
+        return;
+      }
+
+      const rect = sourceElement.getBoundingClientRect();
+      Object.assign(cloneElement.style, {
+        position: 'absolute',
+        left: `${rect.left - rootRect.left}px`,
+        top: `${rect.top - rootRect.top}px`,
+        right: 'auto',
+        bottom: 'auto',
+        width: `${rect.width}px`,
+        height: `${rect.height}px`,
+        margin: '0',
+      });
+    });
+  };
 
   // Saves the chosen language, sets/clears the Google Translate cookie, and triggers a translation.
   const handleLanguageChange = (nextLanguage) => {
@@ -212,6 +279,7 @@ export default function AccessibilityWidget() {
       if (lensContentRef.current) {
         lensContentRef.current.innerHTML = '';
       }
+      cloneRootRef.current = null;
       return undefined;
     }
 
@@ -223,11 +291,19 @@ export default function AccessibilityWidget() {
         return;
       }
 
+      appShellRectRef.current = appShell.getBoundingClientRect();
       lensContent.innerHTML = '';
       const clone = appShell.cloneNode(true);
       clone.classList.add('magnifier-clone');
       clone.setAttribute('aria-hidden', 'true');
       lensContent.appendChild(clone);
+      cloneRootRef.current = clone;
+      syncCloneScrollPositions(appShell, clone);
+      syncFixedClonePositions(appShell, clone);
+      window.requestAnimationFrame(() => {
+        syncCloneScrollPositions(appShell, clone);
+        syncFixedClonePositions(appShell, clone);
+      });
     };
 
     syncClone();
@@ -246,7 +322,29 @@ export default function AccessibilityWidget() {
       });
     }
 
+    const syncLivePosition = () => {
+      const appShell = updateAppShellRect();
+      if (appShell && cloneRootRef.current) {
+        syncCloneScrollPositions(appShell, cloneRootRef.current);
+        syncFixedClonePositions(appShell, cloneRootRef.current);
+      }
+    };
+
+    let refreshFrameId = null;
+    const handleScrollOrResize = () => {
+      if (refreshFrameId) {
+        window.cancelAnimationFrame(refreshFrameId);
+      }
+
+      refreshFrameId = window.requestAnimationFrame(() => {
+        refreshFrameId = null;
+        syncLivePosition();
+        setPointerPosition((current) => ({ ...current }));
+      });
+    };
+
     const handleMouseMove = (event) => {
+      syncLivePosition();
       setPointerPosition({ x: event.clientX, y: event.clientY });
       setLensVisible(true);
     };
@@ -262,6 +360,7 @@ export default function AccessibilityWidget() {
       if (!touch) {
         return;
       }
+      syncLivePosition();
       setPointerPosition({ x: touch.clientX, y: touch.clientY });
       setLensVisible(true);
       isDraggingRef.current = true;
@@ -272,6 +371,7 @@ export default function AccessibilityWidget() {
       if (!touch) {
         return;
       }
+      syncLivePosition();
       setPointerPosition({ x: touch.clientX, y: touch.clientY });
       setLensVisible(true);
       isDraggingRef.current = true;
@@ -287,18 +387,34 @@ export default function AccessibilityWidget() {
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('touchend', handleTouchEnd);
     window.addEventListener('touchcancel', handleTouchEnd);
+    window.addEventListener('scroll', handleScrollOrResize, true);
+    document.addEventListener('scroll', handleScrollOrResize, true);
+    document.addEventListener('wheel', handleScrollOrResize, true);
+    document.addEventListener('touchmove', handleScrollOrResize, true);
+    window.addEventListener('resize', handleScrollOrResize);
+    appShell?.addEventListener('scroll', syncLivePosition, true);
 
     return () => {
       if (mutationObserverRef.current) {
         mutationObserverRef.current.disconnect();
         mutationObserverRef.current = null;
       }
+      if (refreshFrameId) {
+        window.cancelAnimationFrame(refreshFrameId);
+      }
+      cloneRootRef.current = null;
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
+      window.removeEventListener('scroll', handleScrollOrResize, true);
+      document.removeEventListener('scroll', handleScrollOrResize, true);
+      document.removeEventListener('wheel', handleScrollOrResize, true);
+      document.removeEventListener('touchmove', handleScrollOrResize, true);
+      window.removeEventListener('resize', handleScrollOrResize);
+      appShell?.removeEventListener('scroll', syncLivePosition, true);
     };
   }, [scale]);
 
@@ -368,21 +484,39 @@ export default function AccessibilityWidget() {
 
   // Lens follows the cursor directly, clamped to the viewport.
   const lensCenterX = Math.min(
-    Math.max(pointerPosition.x, LENS_RADIUS + 12),
-    window.innerWidth - LENS_RADIUS - 12,
+    Math.max(pointerPosition.x, LENS_RADIUS + LENS_EDGE_MARGIN),
+    window.innerWidth - LENS_RADIUS - LENS_EDGE_MARGIN,
   );
   const lensCenterY = Math.min(
-    Math.max(pointerPosition.y, LENS_RADIUS + 12),
-    window.innerHeight - LENS_RADIUS - 12,
+    Math.max(pointerPosition.y, LENS_RADIUS + LENS_EDGE_MARGIN),
+    window.innerHeight - LENS_RADIUS - LENS_EDGE_MARGIN,
   );
+  const pointerOffsetX = pointerPosition.x - lensCenterX;
+  const pointerOffsetY = pointerPosition.y - lensCenterY;
+  const pointerOffsetDistance = Math.hypot(pointerOffsetX, pointerOffsetY);
+  const pointerMarkerMaxOffset = LENS_RADIUS - 18;
+  const pointerMarkerScale =
+    pointerOffsetDistance > pointerMarkerMaxOffset && pointerOffsetDistance > 0
+      ? pointerMarkerMaxOffset / pointerOffsetDistance
+      : 1;
+  const pointerMarkerX = LENS_RADIUS + pointerOffsetX * pointerMarkerScale;
+  const pointerMarkerY = LENS_RADIUS + pointerOffsetY * pointerMarkerScale;
+  const magnifiedSourceX = pointerPosition.x - appShellRectRef.current.left;
+  const magnifiedSourceY = pointerPosition.y - appShellRectRef.current.top;
+  const isPointingAtModal = Boolean(
+    document
+      .elementFromPoint(pointerPosition.x, pointerPosition.y)
+      ?.closest('.kiosk-modal, .cashier-modal')
+  );
+  const magnifierOffset = isPointingAtModal ? MAGNIFIER_OFFSET.modal : MAGNIFIER_OFFSET.default;
 
   return (
     <>
       <div className="google-translate-host" id={GOOGLE_HOST_ID} aria-hidden="true" />
 
-      {scale !== '1' && lensVisible ? (
+      {scale !== '1' ? (
         <div
-          className="magnifier-lens active"
+          className={lensVisible ? 'magnifier-lens active' : 'magnifier-lens'}
           aria-hidden="true"
           style={{
             left: `${lensCenterX - LENS_RADIUS}px`,
@@ -394,10 +528,17 @@ export default function AccessibilityWidget() {
               className="magnifier-lens-content"
               ref={lensContentRef}
               style={{
-                transform: `translate(${-pointerPosition.x * Number(scale) + LENS_RADIUS}px, ${-pointerPosition.y * Number(scale) + LENS_RADIUS}px) scale(${scale})`,
+                transform: `translate(${pointerMarkerX}px, ${pointerMarkerY}px) scale(${scale}) translate(${-magnifiedSourceX + magnifierOffset.x}px, ${-magnifiedSourceY + magnifierOffset.y}px)`,
               }}
             />
           </div>
+          <div
+            className="magnifier-pointer"
+            style={{
+              left: `${pointerMarkerX}px`,
+              top: `${pointerMarkerY}px`,
+            }}
+          />
         </div>
       ) : null}
 
