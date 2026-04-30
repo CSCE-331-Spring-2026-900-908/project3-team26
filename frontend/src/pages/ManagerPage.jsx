@@ -18,7 +18,19 @@ const initialMenuEdit = { name: '', price: '', ingredientIds: '', availability: 
 const initialEmployeeForm = { id: '', permission: 'Cashier', actions: '', changes: '' };
 
 function formatCurrency(value) {
-  return `$${Number(value || 0).toFixed(2)}`;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(Number(value || 0));
+}
+
+function formatNumber(value, options = {}) {
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 0,
+    ...options,
+  }).format(Number(value || 0));
 }
 
 function parseIdList(value) {
@@ -66,8 +78,8 @@ function SalesTrendChart({ data = [] }) {
         {plotted.map((point) => (
           <g key={`${point.date}-${point.x}`}>
             <circle cx={point.x} cy={point.y} r="5" className="chart-dot" />
-            <text x={point.x - 14} y={point.y - 12} className="chart-value">
-              {Number(point.sales || 0).toFixed(1)}
+            <text x={point.x} y={point.y - 12} className="chart-value" textAnchor="middle">
+              {formatNumber(point.sales, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
             </text>
             <text x={point.x} y={height - 10} className="chart-label" textAnchor="middle">
               {formatShortDate(point.date)}
@@ -87,7 +99,7 @@ function PeakHoursChart({ data = [] }) {
     <div className="manager-chart-body manager-bar-chart" role="img" aria-label="Peak hours bar chart">
       {rows.map((row) => (
         <div className="manager-bar-column" key={row.hour}>
-          <span className="manager-bar-value">{row.orderCount}</span>
+          <span className="manager-bar-value">{formatNumber(row.orderCount)}</span>
           <span className="manager-bar-fill" style={{ height: `${Math.max((row.orderCount / maxOrders) * 100, 3)}%` }} />
           <span className="manager-bar-label">{row.hour}</span>
         </div>
@@ -102,7 +114,7 @@ function TopItemsList({ data = [] }) {
       {data.slice(0, 10).map((item) => (
         <div className="manager-top-row" key={item.name}>
           <span>{item.name}</span>
-          <strong>{item.totalUnitsSold}</strong>
+          <strong>{formatNumber(item.totalUnitsSold)}</strong>
         </div>
       ))}
     </div>
@@ -492,7 +504,7 @@ export default function ManagerPage() {
             </div>
             <div className="metric-box">
               <span>ORDERS</span>
-              <strong>{dashboard?.totals?.orders ?? 0}</strong>
+              <strong>{formatNumber(dashboard?.totals?.orders)}</strong>
             </div>
             <div className="metric-box">
               <span>AVG ORDER</span>
@@ -500,7 +512,7 @@ export default function ManagerPage() {
             </div>
             <div className="metric-box">
               <span>CASHIERS</span>
-              <strong>{dashboard?.totals?.activeCashiers ?? 0}</strong>
+              <strong>{formatNumber(dashboard?.totals?.activeCashiers)}</strong>
             </div>
           </div>
 
@@ -536,7 +548,7 @@ export default function ManagerPage() {
                   <div className="list-row" key={item.ingredient_id}>
                     <span>{item.name}</span>
                     <strong>
-                      {Number(item.quantity).toFixed(0)} / {Number(item.threshold).toFixed(0)}
+                      {formatNumber(item.quantity)} / {formatNumber(item.threshold)}
                     </strong>
                   </div>
                 ))}
@@ -549,7 +561,7 @@ export default function ManagerPage() {
                 {dashboard?.productUsage?.map((item) => (
                   <div className="list-row" key={item.ingredientId}>
                     <span>{item.name}</span>
-                    <strong>{item.unitsUsed}</strong>
+                    <strong>{formatNumber(item.unitsUsed)}</strong>
                   </div>
                 ))}
               </div>
@@ -792,11 +804,11 @@ export default function ManagerPage() {
               <div className="panel-title">X-REPORT</div>
               <div className="report-lines">
                 <p>Date: {xReport?.businessDate || '-'}</p>
-                <p>Sales: {xReport ? `$${xReport.sales}` : '-'}</p>
-                <p>Cash: {xReport ? `$${xReport.cashPayments}` : '-'}</p>
-                <p>Card: {xReport ? `$${xReport.cardPayments}` : '-'}</p>
-                <p>Other: {xReport ? `$${xReport.otherPayments}` : '-'}</p>
-                <p>Voids: {xReport?.voids ?? 0}</p>
+                <p>Sales: {xReport ? formatCurrency(xReport.sales) : '-'}</p>
+                <p>Cash: {xReport ? formatCurrency(xReport.cashPayments) : '-'}</p>
+                <p>Card: {xReport ? formatCurrency(xReport.cardPayments) : '-'}</p>
+                <p>Other: {xReport ? formatCurrency(xReport.otherPayments) : '-'}</p>
+                <p>Voids: {formatNumber(xReport?.voids)}</p>
               </div>
             </article>
 
@@ -804,9 +816,9 @@ export default function ManagerPage() {
               <div className="panel-title">Z-REPORT PREVIEW</div>
               <div className="report-lines">
                 <p>Date: {zPreview?.businessDate || '-'}</p>
-                <p>Sales: {zPreview ? `$${zPreview.sales}` : '-'}</p>
-                <p>Tax: {zPreview ? `$${zPreview.tax}` : '-'}</p>
-                <p>Total Cash: {zPreview ? `$${zPreview.cashPayments}` : '-'}</p>
+                <p>Sales: {zPreview ? formatCurrency(zPreview.sales) : '-'}</p>
+                <p>Tax: {zPreview ? formatCurrency(zPreview.tax) : '-'}</p>
+                <p>Total Cash: {zPreview ? formatCurrency(zPreview.cashPayments) : '-'}</p>
                 <p>Status: {zPreview?.status || '-'}</p>
                 {zPreview?.closedAt ? (
                   <p>Closed: {new Date(zPreview.closedAt).toLocaleString()}</p>
@@ -848,7 +860,7 @@ export default function ManagerPage() {
                   {xReport?.hourly?.map((row) => (
                     <tr key={row.hour}>
                       <td>{String(row.hour).padStart(2, '0')}:00</td>
-                      <td>{row.orderCount}</td>
+                      <td>{formatNumber(row.orderCount)}</td>
                       <td>{formatCurrency(row.sales)}</td>
                     </tr>
                   ))}
