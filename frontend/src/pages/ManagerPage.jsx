@@ -19,6 +19,8 @@ const initialMenuEdit = { name: '', price: '', ingredientIds: '', availability: 
 const initialEmployeeForm = { id: '', permission: 'Cashier', actions: '', changes: '' };
 const employeePermissionOptions = ['Cashier', 'Manager'];
 
+// Formats a number as a full USD currency string with two decimal places
+// Used in order tables, menu prices, and report totals throughout the dashboard
 function formatCurrency(value) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -28,6 +30,8 @@ function formatCurrency(value) {
   }).format(Number(value || 0));
 }
 
+// Formats a number as a currency string, using compact notation above $10,000
+// Used exclusively on chart axes so large values don't overflow the label space
 function formatChartCurrency(value) {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -38,6 +42,8 @@ function formatChartCurrency(value) {
   }).format(Number(value || 0));
 }
 
+// Formats a number with US comma separators and no decimals by default
+// Accepts an optional options object to override formatting behavior when needed
 function formatNumber(value, options = {}) {
   return new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 0,
@@ -45,6 +51,8 @@ function formatNumber(value, options = {}) {
   }).format(Number(value || 0));
 }
 
+// Converts a 24-hour integer into a 12-hour AM/PM label
+// Used to format hour values in the hourly sales breakdown table
 function formatHourLabel(value) {
   const hour = Number(value);
   if (!Number.isFinite(hour)) {
@@ -55,6 +63,8 @@ function formatHourLabel(value) {
   return `${hour12} ${suffix}`;
 }
 
+// Parses a comma-separated string of numbers into a clean array of valid integers
+// Used to convert the ingredient IDs text input on the Menu form into an array
 function parseIdList(value) {
   return String(value || '')
     .split(',')
@@ -64,6 +74,8 @@ function parseIdList(value) {
     .filter(Number.isFinite);
 }
 
+// Converts a date value into a compact string with MM/DD format
+// Used to keep date labels short on the sales trend chart and weekly summary table
 function formatShortDate(value) {
   if (!value) {
     return '-';
@@ -77,6 +89,8 @@ function formatShortDate(value) {
   return new Date(value).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' });
 }
 
+// Renders a raw-SVG line chart of the last 10 days of daily sales for the Dashboard tab
+// Normalizes each data point against the max value to compute SVG path coordinates
 function SalesTrendChart({ data = [] }) {
   const points = data.slice(-10);
   const width = 520;
@@ -113,6 +127,8 @@ function SalesTrendChart({ data = [] }) {
   );
 }
 
+// Renders a bar chart of the top 10 busiest hours sorted by order count
+// Each bar's height is scaled proportionally against the highest order count in the set
 function PeakHoursChart({ data = [] }) {
   const rows = data.slice(0, 10);
   const maxOrders = Math.max(...rows.map((row) => Number(row.orderCount || 0)), 1);
@@ -138,6 +154,8 @@ function PeakHoursChart({ data = [] }) {
   );
 }
 
+// Renders a ranked list of the top 10 menu items by total units sold
+// Used in the Dashboard section's analytics grid as a plain text leaderboard
 function TopItemsList({ data = [] }) {
   return (
     <div className="manager-chart-body manager-top-list">
@@ -154,6 +172,8 @@ function TopItemsList({ data = [] }) {
   );
 }
 
+// Renders a CSS pie chart of revenue broken down by menu category
+// Each slice is sized by its share of total revenue and assigned a color from a fixed palette
 function RevenueCategoryChart({ data = [] }) {
   const palette = ['#557fb0', '#d48645', '#6eaa79', '#bd5c60'];
   const total = data.reduce((sum, row) => sum + Number(row.revenue || 0), 0);
@@ -241,6 +261,8 @@ export default function ManagerPage() {
     loadPage();
   }, []);
 
+  // Switches the active dashboard section and refreshes data for data-heavy tabs
+  // Only re-fetches when switching to DASHBOARD, ORDERS, or INVENTORY to avoid redundancy
   function handleSectionSelect(section) {
     setActiveSection(section);
     if (section !== activeSection && ['DASHBOARD', 'ORDERS', 'INVENTORY'].includes(section)) {
@@ -314,6 +336,8 @@ export default function ManagerPage() {
     }
   }
 
+  // Opens the inline edit row for an inventory item and pre-fills the draft with current values
+  // Sets editingInventoryId so the table knows which row to render in edit mode
   function startInventoryEdit(item) {
     const ingredientId = item.ingredientId || item.ingredient_id;
     setEditingInventoryId(ingredientId);
@@ -326,15 +350,22 @@ export default function ManagerPage() {
     });
   }
 
+  // Merges a partial update into the in-progress inventory edit draft
+  // Used by each individual field's onChange handler to update only that field
   function updateInventoryEdit(partial) {
     setInventoryEdit((current) => ({ ...current, ...partial }));
   }
 
+  // Cancels the active inventory inline edit and resets the draft to its initial state
+  // Clears editingInventoryId so the table returns to its read-only display
   function cancelInventoryEdit() {
     setEditingInventoryId(null);
     setInventoryEdit(initialInventoryEdit);
   }
 
+  // Validates the inventory edit draft and patches the ingredient record on the backend
+  // Shows an error if name, quantity, or threshold are missing
+  // Refreshes the page on success
   async function saveInventoryEdit(ingredientId) {
     setFeedback('');
     setError('');
@@ -360,6 +391,8 @@ export default function ManagerPage() {
     }
   }
 
+  // Confirms with the manager, then deletes the ingredient and its menu ingredient links
+  // Cancels the inline edit row if that item was being edited, then refreshes the page
   async function deleteInventoryItem(item) {
     const ingredientId = item.ingredientId || item.ingredient_id;
     if (!window.confirm(`Delete ${item.name} from inventory? This also removes its menu ingredient links.`)) {
@@ -416,6 +449,8 @@ export default function ManagerPage() {
     }
   }
 
+  // Opens the inline edit row for a menu item and pre-fills the draft with its current values
+  // Sets editingMenuId so the menu table knows which row to render in edit mode
   function startMenuEdit(item) {
     setEditingMenuId(item.id);
     setMenuEdit({
@@ -426,15 +461,22 @@ export default function ManagerPage() {
     });
   }
 
+  // Merges a partial update into the in-progress menu item edit draft
+  // Used by each field's onChange handler to update only that specific field
   function updateMenuEdit(partial) {
     setMenuEdit((current) => ({ ...current, ...partial }));
   }
 
+  // Cancels the active menu inline edit and resets the draft to its initial state
+  // Clears editingMenuId so the menu table row returns to its read-only display
   function cancelMenuEdit() {
     setEditingMenuId(null);
     setMenuEdit(initialMenuEdit);
   }
 
+  // Validates the menu edit and patches the menu item record on the backend
+  // Shows an error if name or price are missing
+  // Refreshes the page on success
   async function saveMenuEdit(menuId) {
     setFeedback('');
     setError('');
@@ -488,6 +530,8 @@ export default function ManagerPage() {
     }
   }
 
+  // Applies the chosen permission level to the employee form and closes the dropdown
+  // Clears the hover highlight so the dropdown resets cleanly on next open
   function chooseEmployeePermission(permission) {
     setEmployeeForm((current) => ({ ...current, permission }));
     setEmployeePermissionOpen(false);
@@ -511,6 +555,8 @@ export default function ManagerPage() {
     }
   }
 
+  // Confirms with manager, then closes and archives today's Z report via the backend
+  // Disables the button during submission and shows feedback on success or failure
   async function handleZReset() {
     if (!window.confirm('Reset and close today\'s Z report? This can only be done once per day.')) {
       return;
@@ -532,6 +578,8 @@ export default function ManagerPage() {
     }
   }
 
+  // Confirms with the manager, then undoes the Z report close to restore live reports
+  // Only callable when the Z report is already closed
   async function handleZResetUndo() {
     if (!window.confirm('Undo today\'s Z report reset and restore the live X/Z reports?')) {
       return;
