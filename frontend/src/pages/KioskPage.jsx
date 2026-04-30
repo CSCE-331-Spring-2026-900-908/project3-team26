@@ -230,7 +230,7 @@ export default function KioskPage() {
   // Measures the heights of the sticky header and category bar so the menu grid below
   // them can offset itself. Re-runs on resize via ResizeObserver.
   useEffect(() => {
-    if (!started || confirmation) {
+    if (!started || confirmation || checkoutStep === 'payment') {
       setKioskFixedHeights({ header: 0, categories: 0 });
       return undefined;
     }
@@ -263,7 +263,7 @@ export default function KioskPage() {
       resizeObserver.disconnect();
       window.removeEventListener('resize', updateFixedHeights);
     };
-  }, [started, confirmation]);
+  }, [started, confirmation, checkoutStep]);
 
   // Fetches the menu from the backend on mount. Filters to available items and
   // tags each item with its inferred category so the category buttons can filter locally.
