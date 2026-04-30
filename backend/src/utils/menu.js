@@ -1,6 +1,7 @@
 // Shared category-bucketing logic used by both the menu route and the manager route.
 // Keeps the kiosk filter categories in sync with the manager's category column
 // without duplicating keyword logic across files.
+// Add category keyword changes here first so every backend response stays aligned.
 
 // Drinks that would be mis-categorized by keyword matching and need an explicit override.
 const SPECIALTY_OVERRIDES = new Set([

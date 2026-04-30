@@ -1,5 +1,6 @@
 // Static list of selectable roles + their landing routes. Used by the UI when the
 // user picks how they want to enter the app (cashier, manager, or kiosk).
+// Role metadata lives outside components so navigation copy stays consistent.
 export const roles = [
   {
     key: 'cashier',

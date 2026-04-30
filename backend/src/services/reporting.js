@@ -1,6 +1,7 @@
 // Reporting service: builds X-reports, Z-report previews, and manages Z-report close/undo.
 // An X-report is a running snapshot of today's sales that can be pulled at any time.
 // A Z-report is the end-of-day close: it archives the X-report totals and locks the day.
+// Public manager routes call these helpers instead of duplicating report SQL.
 import { query, withClient } from '../db/pool.js';
 import { getSchemaSupport } from '../db/compat.js';
 

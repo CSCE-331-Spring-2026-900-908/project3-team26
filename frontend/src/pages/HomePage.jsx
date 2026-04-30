@@ -1,5 +1,6 @@
 // HomePage: landing screen at "/" with the brand hero, two entry points
 // (Login for staff, Kiosk for customers), and the live weather widget for College Station.
+// This is the only public marketing-style page before users enter task-focused tools.
 import { Link } from 'react-router-dom';
 import WeatherWidget from '../components/WeatherWidget.jsx';
 

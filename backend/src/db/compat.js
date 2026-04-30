@@ -1,6 +1,7 @@
 // compat.js: detects which optional tables and columns exist in the live database
 // so routes can degrade gracefully on older schemas (e.g. the original Project 2 DB).
 // Results are cached after the first call so we only hit information_schema once.
+// Routes read this support map before touching newer Project 3 tables.
 import { query, withClient } from './pool.js';
 
 let cachedSupport;

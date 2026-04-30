@@ -1,5 +1,6 @@
 // Menu grouping helpers shared by older backend utilities/tests.
 // The frontend has its own normalization layer, but this keeps backend category names consistent.
+// This legacy helper mirrors the newer menu utility without importing React.
 export function getCategoryForName(name = '') {
   const normalized = name.toLowerCase();
   if (normalized.includes('slush')) {

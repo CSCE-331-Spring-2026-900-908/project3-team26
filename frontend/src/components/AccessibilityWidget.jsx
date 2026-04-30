@@ -3,6 +3,7 @@
 //   2) Magnifier (renders a circular lens that follows the cursor and shows a scaled clone of the page)
 //   3) Contrast (writes data-contrast on <body> so CSS can swap color schemes)
 // User preferences persist in localStorage so the choices survive page reloads.
+// Body data attributes are the bridge between this component and the global CSS rules.
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'bubble-tea-accessibility';

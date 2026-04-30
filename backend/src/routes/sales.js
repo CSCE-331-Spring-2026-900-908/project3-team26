@@ -1,6 +1,7 @@
 // Public sales analytics route: /api/sales
 // All three endpoints read from orders/order_items and require no authentication.
 // Used by the SalesPage to render the weekly chart, top items, and summary stats.
+// Queries return frontend-friendly shapes so chart components stay simple.
 import { Router } from 'express';
 import { query } from '../db/pool.js';
 

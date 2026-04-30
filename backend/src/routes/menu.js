@@ -1,6 +1,7 @@
 // Public menu route: /api/menu
 // Returns all menu items joined with their ingredient names, bucketed into categories.
 // Used by the kiosk and cashier pages to populate the drink grid on load.
+// Packaging ingredients stay in the database for inventory tracking but are hidden from menus.
 import { Router } from 'express';
 import { query } from '../db/pool.js';
 import { getCategoryForName, groupMenuByCategory } from '../utils/menu.js';

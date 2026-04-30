@@ -2,6 +2,7 @@
 // Inventory, Menu, Employees, Reports), each backed by an API endpoint under /manager/*.
 // All forms (inventory create/update, menu CRUD, employee CRUD, void order) round-trip to
 // the backend and re-fetch the page data so the UI stays in sync with PostgreSQL.
+// A single loadPage function refreshes every tab so cross-section data stays consistent.
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';

@@ -2,6 +2,7 @@
 // Loads the menu from /menu, lets the cashier pick a drink + customization, build a list of
 // order lines, and submit the order via POST /orders. The submitted order is written to the
 // orders + order_items tables in PostgreSQL.
+// Local UI state mirrors a physical POS workflow: select drink, customize, cart, checkout.
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';

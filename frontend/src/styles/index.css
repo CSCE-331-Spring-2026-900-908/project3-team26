@@ -1,4 +1,5 @@
 /* Global design tokens and shared styles for the Bubble Tea POS frontend. */
+/* Page-specific selectors live here because the app uses one shared stylesheet. */
 :root {
   --page-bg: #f4f6fb;
   --panel-bg: #ffffff;

@@ -1,6 +1,7 @@
 // Shared PostgreSQL connection pool used by every route and service.
 // Prefers DATABASE_URL (Render/hosted) over individual PG* vars (local dev).
 // SSL is enabled automatically for any non-localhost host.
+// Environment files are loaded before pool creation so both local and hosted configs work.
 import dotenv from 'dotenv';
 import pg from 'pg';
 

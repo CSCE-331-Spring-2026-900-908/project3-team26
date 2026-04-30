@@ -1,5 +1,6 @@
 // Entry point: loads .env from several possible locations (repo root, backend root,
 // or process CWD), then starts the Express server on PORT (default 4000).
+// The Express app itself is imported from app.js so tests/tools can reuse it without listening.
 import dotenv from 'dotenv';
 import app from './app.js';
 

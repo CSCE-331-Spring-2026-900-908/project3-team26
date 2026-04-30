@@ -1,4 +1,5 @@
 // Customization options and add-on prices shared by cashier and kiosk ordering flows.
+// Keep the option label and TOPPING_PRICES key identical so price lookup succeeds.
 export const toppingOptions = [
   'Boba',
   'Jelly',

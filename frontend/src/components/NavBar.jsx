@@ -1,5 +1,6 @@
 // NavBar: top navigation strip rendered on the routes that opt into chrome (see App.jsx).
 // Holds the brand lockup, links to every page, a logout button, and the weather widget.
+// Active link styling comes from NavLink so route state drives the visual selection.
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { logoutUser } from '../utils/session.js';
 import WeatherWidget from './WeatherWidget.jsx';

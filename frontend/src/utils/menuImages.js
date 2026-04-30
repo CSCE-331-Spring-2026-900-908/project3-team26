@@ -2,6 +2,7 @@
 // Images live in frontend/public/images/menu/ and are served at /images/menu/<file>
 // To add a new image: drop the file into public/images/menu/ and add an entry below.
 // Lookups are case-insensitive (see normalize() below) so DB rows can use any casing.
+// The fallback path keeps the UI usable if a new menu item has no dedicated asset yet.
 
 const imageMap = {
   'classic milk tea': '/images/menu/classic-milk-tea.jpg',

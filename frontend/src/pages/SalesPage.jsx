@@ -1,6 +1,7 @@
 // SalesPage: public analytics view at "/sales". Calls three /sales/* endpoints in parallel
 // to render weekly totals, top items, hourly activity, peak day, and order-source breakdown.
 // Reuses the SQL reporting logic from Project 2.
+// The page expects the backend to pre-aggregate chart-friendly rows.
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';

@@ -1,5 +1,6 @@
 // Orders route: creates completed orders, records line items, and returns order receipts.
 // Uses schema feature detection so it can run against both the base and migrated databases.
+// Order writes stay transactional so receipts, payments, and inventory deductions agree.
 import { Router } from 'express';
 import { withClient } from '../db/pool.js';
 import { getSchemaSupport } from '../db/compat.js';

@@ -17,6 +17,7 @@
 //     onSend={sendMessage}
 //   />
 
+// The keyboard avoids focusing native inputs so tablets do not open the OS keyboard on top.
 import { useState } from 'react';
 
 // ── Keyboard layouts ──────────────────────────────────────────────────────────

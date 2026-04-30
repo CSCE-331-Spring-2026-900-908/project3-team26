@@ -1,6 +1,7 @@
 // WeatherWidget: small badge showing the current temperature + emoji for College Station.
 // Calls the Open-Meteo forecast API on mount (no key required) and maps the returned
 // WMO weather code to a description + emoji from the table below.
+// The widget reads only public weather data and never blocks page rendering.
 import { useEffect, useState } from 'react';
 
 // Uses the free Open-Meteo API (no API key required).

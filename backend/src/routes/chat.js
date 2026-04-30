@@ -2,6 +2,7 @@
 // Forwards the conversation history from the kiosk's Order Help widget to the
 // Groq API (OpenAI-compatible) and streams the reply back to the frontend.
 // Requires GROQ_API_KEY in the environment.
+// Keeping the API key server-side prevents the browser bundle from exposing it.
 import express from 'express';
 const router = express.Router();
 

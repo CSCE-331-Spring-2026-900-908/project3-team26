@@ -1,6 +1,7 @@
 // app.js: builds and exports the Express application.
 // Registers CORS, JSON body parsing, all API route groups, and the global error handler.
 // server.js imports this and calls app.listen(); tests can import it directly.
+// Keep route wiring in this file so startup code stays small and reusable.
 import express from 'express';
 import cors from 'cors';
 import { databaseHealthcheck } from './db/compat.js';

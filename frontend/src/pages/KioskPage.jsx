@@ -2,6 +2,7 @@
 // Loads the menu via api.get('/menu'), lets the customer filter by category / ingredient / price,
 // customize a drink (size, sweetness, ice, toppings) in a modal, then checkout — which POSTs the
 // cart to /orders and shows a confirmation screen.
+// Most state is local because customers build one order in a single kiosk session.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';

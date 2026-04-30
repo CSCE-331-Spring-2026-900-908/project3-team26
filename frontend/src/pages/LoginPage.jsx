@@ -2,6 +2,7 @@
 // 1) PIN keypad (hard-coded mapping below) for fast in-store login.
 // 2) Google Sign-In via the Google Identity Services script for managers/cashiers.
 // On success, saves the session via utils/session.js and navigates to the role's page.
+// Successful login writes the same session keys regardless of auth provider.
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { saveUserSession } from '../utils/session.js';

@@ -1,5 +1,6 @@
 // NotFoundPage: catch-all route ("*" in App.jsx) shown when a URL doesn't match any defined route.
 // Provides a single link back to the home page.
+// Keeping the 404 page tiny avoids loading page-specific data for invalid routes.
 import { Link } from 'react-router-dom';
 
 export default function NotFoundPage() {

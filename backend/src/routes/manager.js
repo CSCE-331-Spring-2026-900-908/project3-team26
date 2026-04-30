@@ -2,6 +2,7 @@
 // Covers all manager-only CRUD operations: dashboard stats, order viewing/voiding,
 // inventory management, menu management, employee management, and X/Z reports.
 // All mutations use withClient + BEGIN/COMMIT so failures roll back cleanly.
+// Schema checks let reporting and payment features work even when optional tables are absent.
 import { Router } from 'express';
 import { query, withClient } from '../db/pool.js';
 import { getSchemaSupport } from '../db/compat.js';

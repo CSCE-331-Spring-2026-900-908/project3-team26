@@ -1,6 +1,7 @@
 // ChatWidget: floating "Order Help" chat panel rendered on the home and kiosk pages.
 // Sends the conversation to the backend's /chat endpoint, which proxies it to the LLM
 // (Groq/OpenAI-compatible API). The reply is appended to the message list.
+// The chat state stays client-side; only the current message history is posted to the API.
 import { useState, useRef, useEffect } from 'react';
 import OnScreenKeyboard from './OnScreenKeyboard.jsx';
 

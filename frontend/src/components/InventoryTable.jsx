@@ -1,5 +1,6 @@
 // InventoryTable: inventory table used by ManagerPage. When edit props are provided,
 // rows can switch into inline edit mode for existing ingredient/inventory data.
+// All edits are delegated through callbacks so this table stays reusable and stateless.
 export default function InventoryTable({
   items,
   editingId,

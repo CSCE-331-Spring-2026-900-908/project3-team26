@@ -2,6 +2,7 @@
 // Reads the backend URL from VITE_API_URL (set per environment) and falls back to
 // localhost for local development. Throws on non-2xx responses so callers can
 // surface errors to the UI.
+// Keeping request handling here gives pages a small api.get/post/patch/delete surface.
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 // Internal helper that adds JSON headers, handles error responses, and parses JSON.

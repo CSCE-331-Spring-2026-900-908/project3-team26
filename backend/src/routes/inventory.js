@@ -1,6 +1,7 @@
 // Public inventory route: /api/inventory
 // Used internally by the manager page. Supports an optional ?lowStock=true filter
 // to return only items that have fallen below their reorder threshold.
+// This read-only route mirrors the manager inventory query without exposing mutations.
 import { Router } from 'express';
 import { query } from '../db/pool.js';
 

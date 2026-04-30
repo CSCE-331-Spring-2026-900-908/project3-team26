@@ -2,6 +2,7 @@
 // Loads the menu, lets the user add items to a cart, and submits the cart to /orders.
 // The `source` prop ("kiosk" or "cashier") tags the order on the backend so reports
 // can split kiosk vs cashier sales.
+// The newer full pages implement their own customizers, but this remains a compact fallback.
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client.js';
 import MenuCard from './MenuCard.jsx';
