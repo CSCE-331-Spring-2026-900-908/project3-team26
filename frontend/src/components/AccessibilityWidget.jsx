@@ -261,6 +261,7 @@ export default function AccessibilityWidget() {
   const lensContentRef = useRef(null);
   const cloneRootRef = useRef(null);
   const clonePairsRef = useRef([]);
+  const scrollSyncListenersRef = useRef([]);
   const mutationObserverRef = useRef(null);
   const isDraggingRef = useRef(false);
   const appShellRectRef = useRef({ left: 0, top: 0 });
@@ -275,6 +276,8 @@ export default function AccessibilityWidget() {
     }
     cloneRootRef.current = null;
     clonePairsRef.current = [];
+    scrollSyncListenersRef.current.forEach((unsubscribe) => unsubscribe());
+    scrollSyncListenersRef.current = [];
     queueUiLayoutChangeAfterCommit();
   };
 
@@ -348,6 +351,25 @@ export default function AccessibilityWidget() {
     });
   };
 
+  const isScrollableElement = (element) => {
+    if (!(element instanceof Element)) {
+      return false;
+    }
+
+    const style = window.getComputedStyle(element);
+    const canScrollY =
+      /(auto|scroll|overlay)/.test(style.overflowY) && element.scrollHeight > element.clientHeight;
+    const canScrollX =
+      /(auto|scroll|overlay)/.test(style.overflowX) && element.scrollWidth > element.clientWidth;
+
+    return canScrollY || canScrollX;
+  };
+
+  const clearScrollSyncListeners = () => {
+    scrollSyncListenersRef.current.forEach((unsubscribe) => unsubscribe());
+    scrollSyncListenersRef.current = [];
+  };
+
   const getCloneRootRect = (sourceRoot) => {
     if (sourceRoot?.classList?.contains('app-shell')) {
       return appShellRectRef.current;
@@ -363,12 +385,13 @@ export default function AccessibilityWidget() {
     }
 
     const rect = sourceRoot.getBoundingClientRect();
+    const appRect = appShellRectRef.current;
     const clonedRoot = sourceRoot.cloneNode(true);
     clonedRoot.classList.add(className);
     Object.assign(clonedRoot.style, {
       position: 'absolute',
-      left: `${rect.left}px`,
-      top: `${rect.top}px`,
+      left: `${rect.left - appRect.left}px`,
+      top: `${rect.top - appRect.top}px`,
       right: 'auto',
       bottom: 'auto',
       width: `${rect.width}px`,
@@ -479,6 +502,7 @@ export default function AccessibilityWidget() {
       }
       cloneRootRef.current = null;
       clonePairsRef.current = [];
+      clearScrollSyncListeners();
       return undefined;
     }
 
@@ -529,6 +553,7 @@ export default function AccessibilityWidget() {
       cloneFrameId = window.requestAnimationFrame(() => {
         cloneFrameId = null;
         syncClone();
+        attachScrollSyncListeners();
         setPointerPosition((current) => ({ ...current }));
       });
     };
@@ -542,8 +567,6 @@ export default function AccessibilityWidget() {
       lastTimedCloneSync = now;
       requestCloneSync();
     };
-
-    syncClone();
 
     const appRoot = document.body;
     if (appRoot) {
@@ -594,6 +617,29 @@ export default function AccessibilityWidget() {
         setPointerPosition((current) => ({ ...current }));
       });
     };
+
+    const attachScrollSyncListeners = () => {
+      clearScrollSyncListeners();
+
+      const scrollableSources = new Set();
+      clonePairsRef.current.forEach(({ sourceRoot }) => {
+        [sourceRoot, ...sourceRoot.querySelectorAll('*')].forEach((element) => {
+          if (element === sourceRoot || isScrollableElement(element)) {
+            scrollableSources.add(element);
+          }
+        });
+      });
+
+      scrollableSources.forEach((element) => {
+        element.addEventListener('scroll', handleScrollOrResize, { passive: true });
+        scrollSyncListenersRef.current.push(() => {
+          element.removeEventListener('scroll', handleScrollOrResize);
+        });
+      });
+    };
+
+    syncClone();
+    attachScrollSyncListeners();
 
     const handleMouseMove = (event) => {
       requestTimedCloneSync();
@@ -678,6 +724,7 @@ export default function AccessibilityWidget() {
       }
       cloneRootRef.current = null;
       clonePairsRef.current = [];
+      clearScrollSyncListeners();
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('touchstart', handleTouchStart);
@@ -778,8 +825,8 @@ export default function AccessibilityWidget() {
       : 1;
   const pointerMarkerX = LENS_RADIUS + pointerOffsetX * pointerMarkerScale;
   const pointerMarkerY = LENS_RADIUS + pointerOffsetY * pointerMarkerScale;
-  const magnifiedSourceX = pointerPosition.x;
-  const magnifiedSourceY = pointerPosition.y;
+  const magnifiedSourceX = pointerPosition.x - appShellRectRef.current.left;
+  const magnifiedSourceY = pointerPosition.y - appShellRectRef.current.top;
   const isPointingAtModal = Boolean(
     document
       .elementFromPoint(pointerPosition.x, pointerPosition.y)
