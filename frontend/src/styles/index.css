@@ -1,3 +1,4 @@
+/* Global design tokens and shared styles for the Bubble Tea POS frontend. */
 :root {
   --page-bg: #f4f6fb;
   --panel-bg: #ffffff;
@@ -1742,7 +1743,12 @@ body[data-contrast='soft'] .helper-text {
 
 .cashier-modal-ice-options {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.cashier-modal-ice-options button {
+  min-width: 0;
+  padding-inline: 6px;
 }
 
 .cashier-modal-quantity input {
@@ -2258,6 +2264,7 @@ body[data-contrast='soft'] .helper-text {
   --primary-alt: #fa8b42;
   --primary-fg: #ffffff;
   --accent: #6c5ce7;
+  /* Warm tan-blush wash keeps the fixed kiosk category area unified without the old green cast. */
   --kiosk-sticky-bg:
     linear-gradient(90deg, rgba(232, 167, 127, 0.18), rgba(240, 82, 117, 0.08)),
     linear-gradient(180deg, rgba(255, 255, 255, 0.91), rgba(255, 245, 236, 0.92)),

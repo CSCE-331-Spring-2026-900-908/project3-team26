@@ -1,9 +1,11 @@
 #!/bin/zsh
 
+# Starts backend and frontend dev servers together from the repository root.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Prefer a repo-local .env when present, otherwise fall back to the team database defaults.
 if [[ -f "$ROOT_DIR/.env" ]]; then
   set -a
   source "$ROOT_DIR/.env"

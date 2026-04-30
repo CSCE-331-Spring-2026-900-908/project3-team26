@@ -1,3 +1,5 @@
+# Local backend defaults read by dotenv during development.
+# Keep production secrets in environment variables instead of committing them here.
 PORT=4000
 FRONTEND_URL=http://localhost:5173
 PGHOST=csce-315-db.engr.tamu.edu

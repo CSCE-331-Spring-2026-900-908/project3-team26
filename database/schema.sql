@@ -1,3 +1,4 @@
+-- schema.sql: base PostgreSQL schema for the Bubble Tea POS database.
 \set ON_ERROR_STOP on
 
 BEGIN;

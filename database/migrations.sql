@@ -1,3 +1,4 @@
+-- migrations.sql: optional schema upgrades used by the API when extra reporting/payment tables exist.
 \set ON_ERROR_STOP on
 
 BEGIN;

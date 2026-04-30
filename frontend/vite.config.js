@@ -1,3 +1,4 @@
+// Vite config: runs the React dev server and proxies API calls to the local Express backend.
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
