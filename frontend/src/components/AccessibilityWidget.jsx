@@ -216,8 +216,22 @@ function AccessibilitySelect({
                 className={className}
                 role="option"
                 aria-selected={option.value === value}
-                onMouseEnter={() => setHoveredOption(optionKey)}
-                onMouseLeave={() => setHoveredOption(null)}
+                onMouseEnter={() => {
+                  setHoveredOption(optionKey);
+                  queueUiLayoutChange();
+                }}
+                onMouseLeave={() => {
+                  setHoveredOption(null);
+                  queueUiLayoutChange();
+                }}
+                onFocus={() => {
+                  setHoveredOption(optionKey);
+                  queueUiLayoutChange();
+                }}
+                onBlur={() => {
+                  setHoveredOption(null);
+                  queueUiLayoutChange();
+                }}
                 onClick={() => {
                   onChange(option.value);
                   setActiveDropdown(null);
@@ -252,17 +266,12 @@ export default function AccessibilityWidget() {
   const mutationObserverRef = useRef(null);
   const isDraggingRef = useRef(false);
   const appShellRectRef = useRef({ left: 0, top: 0 });
+  const lastPointerRef = useRef({ x: 240, y: 240 });
 
   const closeAccessibilityPanel = () => {
     setIsOpen(false);
     setActiveDropdown(null);
     setHoveredOption(null);
-    setLensVisible(false);
-    if (lensContentRef.current) {
-      lensContentRef.current.innerHTML = '';
-    }
-    cloneRootRef.current = null;
-    clonePairsRef.current = [];
     queueUiLayoutChange();
   };
 
@@ -329,6 +338,44 @@ export default function AccessibilityWidget() {
         width: `${rect.width}px`,
         height: `${rect.height}px`,
         margin: '0',
+      });
+    });
+  };
+
+  const rebuildMagnifierClone = () => {
+    const appShell = document.querySelector('.app-shell');
+    const lensContent = lensContentRef.current;
+    const sourceRoots = getMagnifierSourceRoots();
+
+    if (!appShell || !lensContent || scale === '1') {
+      return;
+    }
+
+    appShellRectRef.current = appShell.getBoundingClientRect();
+    lensContent.innerHTML = '';
+    const clone = document.createElement('div');
+    clone.classList.add('magnifier-clone');
+    clone.setAttribute('aria-hidden', 'true');
+
+    const clonePairs = sourceRoots.map((sourceRoot) => {
+      const clonedRoot = sourceRoot.cloneNode(true);
+      clone.appendChild(clonedRoot);
+      return { sourceRoot, clonedRoot };
+    });
+
+    lensContent.appendChild(clone);
+    cloneRootRef.current = clone;
+    clonePairsRef.current = clonePairs;
+
+    clonePairs.forEach(({ sourceRoot, clonedRoot }) => {
+      syncCloneScrollPositions(sourceRoot, clonedRoot);
+      syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
+    });
+
+    window.requestAnimationFrame(() => {
+      clonePairsRef.current.forEach(({ sourceRoot, clonedRoot }) => {
+        syncCloneScrollPositions(sourceRoot, clonedRoot);
+        syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
       });
     });
   };
@@ -416,8 +463,31 @@ export default function AccessibilityWidget() {
       return;
     }
 
+    setPointerPosition(lastPointerRef.current);
+    setLensVisible(true);
     queueUiLayoutChange();
-  }, [activeDropdown, hoveredOption, isOpen, scale]);
+    const frameId = window.requestAnimationFrame(rebuildMagnifierClone);
+    const timeoutId = window.setTimeout(rebuildMagnifierClone, 120);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(timeoutId);
+    };
+  }, [activeDropdown, hoveredOption, isOpen, scale, language, contrast]);
+
+  useEffect(() => {
+    const trackPointer = (event) => {
+      lastPointerRef.current = { x: event.clientX, y: event.clientY };
+    };
+
+    window.addEventListener('pointermove', trackPointer, { passive: true });
+    window.addEventListener('pointerdown', trackPointer, { passive: true });
+
+    return () => {
+      window.removeEventListener('pointermove', trackPointer);
+      window.removeEventListener('pointerdown', trackPointer);
+    };
+  }, []);
 
   // Magnifier setup: when scale > 1, clones the app DOM into a circular lens that
   // follows the cursor/touch. A MutationObserver re-clones the DOM whenever the page
@@ -437,40 +507,6 @@ export default function AccessibilityWidget() {
       return undefined;
     }
 
-    const syncClone = () => {
-      const appShell = document.querySelector('.app-shell');
-      const lensContent = lensContentRef.current;
-      const sourceRoots = getMagnifierSourceRoots();
-
-      if (!appShell || !lensContent) {
-        return;
-      }
-
-      appShellRectRef.current = appShell.getBoundingClientRect();
-      lensContent.innerHTML = '';
-      const clone = document.createElement('div');
-      clone.classList.add('magnifier-clone');
-      clone.setAttribute('aria-hidden', 'true');
-      const clonePairs = sourceRoots.map((sourceRoot) => {
-        const clonedRoot = sourceRoot.cloneNode(true);
-        clone.appendChild(clonedRoot);
-        return { sourceRoot, clonedRoot };
-      });
-      lensContent.appendChild(clone);
-      cloneRootRef.current = clone;
-      clonePairsRef.current = clonePairs;
-      clonePairs.forEach(({ sourceRoot, clonedRoot }) => {
-        syncCloneScrollPositions(sourceRoot, clonedRoot);
-        syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
-      });
-      window.requestAnimationFrame(() => {
-        clonePairsRef.current.forEach(({ sourceRoot, clonedRoot }) => {
-          syncCloneScrollPositions(sourceRoot, clonedRoot);
-          syncFixedClonePositions(sourceRoot, clonedRoot, appShellRectRef.current);
-        });
-      });
-    };
-
     let cloneFrameId = null;
     let lastTimedCloneSync = 0;
     const requestCloneSync = () => {
@@ -480,7 +516,7 @@ export default function AccessibilityWidget() {
 
       cloneFrameId = window.requestAnimationFrame(() => {
         cloneFrameId = null;
-        syncClone();
+        rebuildMagnifierClone();
         setPointerPosition((current) => ({ ...current }));
       });
     };
@@ -495,7 +531,7 @@ export default function AccessibilityWidget() {
       requestCloneSync();
     };
 
-    syncClone();
+    rebuildMagnifierClone();
 
     const appRoot = document.body;
     if (appRoot) {
@@ -548,6 +584,7 @@ export default function AccessibilityWidget() {
     };
 
     const handleMouseMove = (event) => {
+      lastPointerRef.current = { x: event.clientX, y: event.clientY };
       requestTimedCloneSync();
       syncLivePosition();
       setPointerPosition({ x: event.clientX, y: event.clientY });
@@ -565,6 +602,7 @@ export default function AccessibilityWidget() {
       if (!touch) {
         return;
       }
+      lastPointerRef.current = { x: touch.clientX, y: touch.clientY };
       requestTimedCloneSync();
       syncLivePosition();
       setPointerPosition({ x: touch.clientX, y: touch.clientY });
@@ -577,6 +615,7 @@ export default function AccessibilityWidget() {
       if (!touch) {
         return;
       }
+      lastPointerRef.current = { x: touch.clientX, y: touch.clientY };
       requestTimedCloneSync();
       syncLivePosition();
       setPointerPosition({ x: touch.clientX, y: touch.clientY });

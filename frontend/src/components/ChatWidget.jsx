@@ -37,6 +37,16 @@ function getStoredKeyboardLanguage() {
   }
 }
 
+function queueUiLayoutChange() {
+  window.requestAnimationFrame(() => {
+    window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
+  });
+
+  window.setTimeout(() => {
+    window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
+  }, 80);
+}
+
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -93,9 +103,7 @@ export default function ChatWidget() {
   }, []);
 
   useEffect(() => {
-    window.requestAnimationFrame(() => {
-      window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
-    });
+    queueUiLayoutChange();
   }, [isOpen, showKeyboard, messages.length, input]);
 
   useEffect(() => {
@@ -104,6 +112,8 @@ export default function ChatWidget() {
     } else {
       delete document.body.dataset.chatOpen;
     }
+
+    queueUiLayoutChange();
 
     return () => {
       delete document.body.dataset.chatOpen;
