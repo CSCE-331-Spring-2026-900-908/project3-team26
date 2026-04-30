@@ -865,8 +865,14 @@ export default function KioskPage() {
 
       <div className="cashier-body kiosk-body">
         <div className="cashier-left">
-          <fieldset className="panel kiosk-categories-panel" ref={kioskCategoriesRef}>
-            <legend>Categories</legend>
+          <section
+            className="panel kiosk-panel-section kiosk-categories-panel"
+            ref={kioskCategoriesRef}
+            aria-labelledby="kiosk-categories-heading"
+          >
+            <div className="kiosk-panel-label" id="kiosk-categories-heading">
+              Categories
+            </div>
             <div className="cat-row kiosk-cat-row">
               {categoryNames.map((category) => (
                 <button
@@ -878,10 +884,15 @@ export default function KioskPage() {
                 </button>
               ))}
             </div>
-          </fieldset>
+          </section>
 
-          <fieldset className="panel kiosk-menu-panel">
-            <legend>Menu Items</legend>
+          <section
+            className="panel kiosk-panel-section kiosk-menu-panel"
+            aria-labelledby="kiosk-menu-heading"
+          >
+            <div className="kiosk-panel-label" id="kiosk-menu-heading">
+              Menu Items
+            </div>
             <div className="kiosk-menu-grid">
               {visibleItems.length ? (
                 visibleItems.map((item) => {
@@ -913,7 +924,7 @@ export default function KioskPage() {
                 </div>
               )}
             </div>
-          </fieldset>
+          </section>
         </div>
 
         <div className="cashier-right kiosk-right">
