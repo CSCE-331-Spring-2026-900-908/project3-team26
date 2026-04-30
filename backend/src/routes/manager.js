@@ -14,7 +14,10 @@ async function nextId(client, table) {
 router.get('/dashboard', async (_req, res, next) => {
   try {
     const support = await getSchemaSupport();
-    const [totals, lowStock, recentOrders, productUsage] = await Promise.all([
+    const voidJoin = support.hasOrderVoids ? 'LEFT JOIN order_voids ov ON ov.order_id = o.id' : '';
+    const activeOrderWhere = support.hasOrderVoids ? 'WHERE ov.order_id IS NULL' : '';
+    const activeOrderAnd = support.hasOrderVoids ? 'AND ov.order_id IS NULL' : '';
+    const [totals, lowStock, recentOrders, productUsage, salesTrend, topItems, peakHours, categoryRows] = await Promise.all([
       query(
         `SELECT
            COUNT(*)::int AS orders,
@@ -50,7 +53,58 @@ router.get('/dashboard', async (_req, res, next) => {
          ORDER BY units_used DESC, i.name
          LIMIT 10`
       ),
+      query(
+        `SELECT sales_date, daily_sales
+         FROM (
+           SELECT DATE(o.order_time) AS sales_date,
+                  COALESCE(SUM(o.total_amount), 0) AS daily_sales
+           FROM orders o
+           ${voidJoin}
+           ${activeOrderWhere}
+           GROUP BY DATE(o.order_time)
+           ORDER BY sales_date DESC
+           LIMIT 10
+         ) recent_sales
+         ORDER BY sales_date ASC`
+      ),
+      query(
+        `SELECT m.name, SUM(oi.quantity)::int AS total_units_sold
+         FROM order_items oi
+         JOIN orders o ON o.id = oi.order_id
+         ${voidJoin}
+         JOIN menu_items m ON m.id = oi.menu_item_id
+         WHERE 1 = 1 ${activeOrderAnd}
+         GROUP BY m.id, m.name
+         ORDER BY total_units_sold DESC, m.name ASC
+         LIMIT 10`
+      ),
+      query(
+        `SELECT EXTRACT(HOUR FROM o.order_time)::int AS hour_of_day,
+                COUNT(*)::int AS order_count
+         FROM orders o
+         ${voidJoin}
+         ${activeOrderWhere}
+         GROUP BY hour_of_day
+         ORDER BY order_count DESC, hour_of_day ASC
+         LIMIT 10`
+      ),
+      query(
+        `SELECT m.name,
+                COALESCE(SUM(oi.quantity * oi.price_charged), 0) AS revenue
+         FROM order_items oi
+         JOIN orders o ON o.id = oi.order_id
+         ${voidJoin}
+         JOIN menu_items m ON m.id = oi.menu_item_id
+         WHERE 1 = 1 ${activeOrderAnd}
+         GROUP BY m.id, m.name`
+      ),
     ]);
+
+    const categoryRevenueMap = categoryRows.rows.reduce((totalsByCategory, row) => {
+      const category = getCategoryForName(row.name);
+      totalsByCategory[category] = (totalsByCategory[category] || 0) + Number(row.revenue || 0);
+      return totalsByCategory;
+    }, {});
 
     res.json({
       totals: {
@@ -67,6 +121,21 @@ router.get('/dashboard', async (_req, res, next) => {
         unit: row.unit,
         unitsUsed: Number(row.units_used),
       })),
+      salesTrend: salesTrend.rows.map((row) => ({
+        date: row.sales_date,
+        sales: Number(row.daily_sales),
+      })),
+      topItems: topItems.rows.map((row) => ({
+        name: row.name,
+        totalUnitsSold: Number(row.total_units_sold),
+      })),
+      peakHours: peakHours.rows.map((row) => ({
+        hour: Number(row.hour_of_day),
+        orderCount: Number(row.order_count),
+      })),
+      categoryRevenue: Object.entries(categoryRevenueMap)
+        .map(([category, revenue]) => ({ category, revenue }))
+        .sort((a, b) => b.revenue - a.revenue),
     });
   } catch (error) {
     next(error);
@@ -183,18 +252,37 @@ router.post('/inventory', async (req, res, next) => {
 
 router.patch('/inventory/:ingredientId', async (req, res, next) => {
   const ingredientId = Number(req.params.ingredientId);
-  const { delta, threshold, availability } = req.body || {};
+  const { name, unit, quantity, delta, threshold, availability } = req.body || {};
 
   try {
-    if (delta !== undefined) {
-      await query('UPDATE inventory SET quantity = quantity + $1 WHERE ingredient_id = $2', [delta, ingredientId]);
-    }
-    if (threshold !== undefined) {
-      await query('UPDATE inventory SET threshold = $1 WHERE ingredient_id = $2', [threshold, ingredientId]);
-    }
-    if (availability !== undefined) {
-      await query('UPDATE ingredients SET availability = $1 WHERE id = $2', [availability, ingredientId]);
-    }
+    await withClient(async (client) => {
+      await client.query('BEGIN');
+      try {
+        if (name !== undefined || unit !== undefined || availability !== undefined) {
+          await client.query(
+            `UPDATE ingredients
+             SET name = COALESCE($1, name),
+                 unit = COALESCE($2, unit),
+                 availability = COALESCE($3, availability)
+             WHERE id = $4`,
+            [name, unit, availability, ingredientId]
+          );
+        }
+        if (quantity !== undefined) {
+          await client.query('UPDATE inventory SET quantity = $1 WHERE ingredient_id = $2', [quantity, ingredientId]);
+        }
+        if (delta !== undefined) {
+          await client.query('UPDATE inventory SET quantity = quantity + $1 WHERE ingredient_id = $2', [delta, ingredientId]);
+        }
+        if (threshold !== undefined) {
+          await client.query('UPDATE inventory SET threshold = $1 WHERE ingredient_id = $2', [threshold, ingredientId]);
+        }
+        await client.query('COMMIT');
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      }
+    });
     res.json({ success: true });
   } catch (error) {
     next(error);
