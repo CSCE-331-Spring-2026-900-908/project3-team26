@@ -487,7 +487,7 @@ export default function CashierPage() {
 
             <div className="kiosk-modal-field">
               <span>Ice</span>
-              <div className="kiosk-modal-options cashier-modal-ice-options">
+              <div className="kiosk-modal-options kiosk-modal-options-sweetness">
                 {iceLevels.map((entry) => (
                   <button
                     key={entry}

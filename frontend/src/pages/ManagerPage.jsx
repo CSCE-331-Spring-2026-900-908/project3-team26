@@ -240,6 +240,13 @@ export default function ManagerPage() {
     loadPage();
   }, []);
 
+  function handleSectionSelect(section) {
+    setActiveSection(section);
+    if (section !== activeSection && ['DASHBOARD', 'ORDERS', 'INVENTORY'].includes(section)) {
+      loadPage();
+    }
+  }
+
   useEffect(() => {
     if (!employeePermissionOpen) {
       return undefined;
@@ -555,7 +562,7 @@ export default function ManagerPage() {
           <button
             key={section}
             className={section === activeSection ? 'manager-nav-button active' : 'manager-nav-button'}
-            onClick={() => setActiveSection(section)}
+            onClick={() => handleSectionSelect(section)}
           >
             {section}
           </button>
