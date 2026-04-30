@@ -217,94 +217,9 @@ function getKeyboardLayout(language = 'en') {
   return KEYBOARD_LAYOUTS[baseLanguage] || KEYBOARD_LAYOUTS.en;
 }
 
-// ── Inline styles (self-contained — no external CSS required) ─────────────────
+// ── Keyboard layout helpers ───────────────────────────────────────────────────
 
-const S = {
-  overlay: {
-    position: 'fixed',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 99999,
-    background: 'linear-gradient(to bottom, #1e1e2e, #12121c)',
-    borderTop: '2px solid #444466',
-    padding: '10px 8px 14px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '7px',
-    boxShadow: '0 -6px 32px rgba(0,0,0,0.55)',
-    userSelect: 'none',
-    WebkitUserSelect: 'none',
-  },
-  row: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '5px',
-  },
-  key: {
-    height: '52px',
-    minWidth: '44px',
-    padding: '0 8px',
-    fontSize: '17px',
-    fontWeight: '700',
-    color: '#f0f0f8',
-    background: '#2e2e4a',
-    border: '1px solid #555577',
-    borderBottom: '3px solid #333355',
-    borderRadius: '9px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    touchAction: 'manipulation',
-    flexShrink: 0,
-    transition: 'filter 0.08s',
-    WebkitTapHighlightColor: 'transparent',
-  },
-  backspace: {
-    minWidth: '68px',
-    background: '#3a2030',
-    borderColor: '#664455',
-    borderBottomColor: '#442233',
-    color: '#ffaaaa',
-    fontSize: '20px',
-  },
-  shift: {
-    minWidth: '72px',
-    background: '#222244',
-    fontSize: '15px',
-  },
-  shiftActive: {
-    minWidth: '72px',
-    background: '#4a4a88',
-    borderColor: '#8888cc',
-    fontSize: '15px',
-  },
-  modeSwitch: {
-    minWidth: '68px',
-    background: '#252540',
-    fontSize: '14px',
-    color: '#aaaadd',
-  },
-  space: {
-    flex: 1,
-    maxWidth: '320px',
-    background: '#252540',
-    fontSize: '13px',
-    color: '#8888aa',
-    letterSpacing: '2px',
-  },
-  send: {
-    minWidth: '96px',
-    background: 'linear-gradient(135deg, #1a7a45, #0f5c32)',
-    border: '1px solid #2aaa66',
-    borderBottomColor: '#0a4025',
-    color: '#ffffff',
-    fontSize: '15px',
-    fontWeight: '800',
-    letterSpacing: '0.5px',
-  },
-};
+const ROW_STAGGERS = ['0px', '24px', '48px'];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -340,30 +255,15 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
     <div
       className="on-screen-keyboard notranslate"
       translate="no"
-      style={{ ...S.overlay, direction: layout.direction || 'ltr' }}
+      style={{ direction: layout.direction || 'ltr' }}
       aria-label="On-screen keyboard"
       lang={layout.lang}
     >
 
       {/* ── NEW: Close bar — always visible at the top of the keyboard ── */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'flex-end',
-        marginBottom: '2px',
-      }}>
+      <div className="osk-close-row">
         <button
-          style={{
-            background: '#3a2020',
-            border: '1px solid #664444',
-            borderRadius: '8px',
-            color: '#ffaaaa',
-            fontSize: '13px',
-            fontWeight: '700',
-            padding: '4px 14px',
-            cursor: 'pointer',
-            WebkitTapHighlightColor: 'transparent',
-            touchAction: 'manipulation',
-          }}
+          className="osk-close-button"
           onPointerDown={(e) => { e.preventDefault(); onClose(); }}
           aria-label={labels.close}
         >
@@ -373,20 +273,17 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
 
       {/* ── Letter / number rows ──────────────────────────────────── */}
       {rows.map((row, rowIndex) => (
-        <div key={rowIndex} style={S.row}>
+        <div key={rowIndex} className="osk-row">
 
           {/* Stagger middle rows for QWERTY look */}
-          {mode === 'alpha' && rowIndex === 1 && (
-            <div style={{ width: '24px', flexShrink: 0 }} />
-          )}
-          {mode === 'alpha' && rowIndex === 2 && (
-            <div style={{ width: '48px', flexShrink: 0 }} />
+          {mode === 'alpha' && rowIndex > 0 && (
+            <div className="osk-row-spacer" style={{ width: ROW_STAGGERS[rowIndex] }} />
           )}
 
           {row.map((char) => (
             <button
               key={char}
-              style={S.key}
+              className="osk-key"
               onPointerDown={(e) => tap(e, () => pressKey(char))}
               aria-label={char}
             >
@@ -397,7 +294,7 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
           {/* Backspace at the end of row 0 */}
           {rowIndex === 0 && (
             <button
-              style={{ ...S.key, ...S.backspace }}
+              className="osk-key osk-key--backspace"
               onPointerDown={(e) => tap(e, onBackspace)}
               aria-label={labels.backspace}
             >
@@ -408,11 +305,11 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
       ))}
 
       {/* ── Bottom action row ─────────────────────────────────────── */}
-      <div style={S.row}>
+      <div className="osk-row">
 
         {mode === 'alpha' && canShift && (
           <button
-            style={{ ...S.key, ...(shifted ? S.shiftActive : S.shift) }}
+            className={shifted ? 'osk-key osk-key--shift osk-key--shift-active' : 'osk-key osk-key--shift'}
             onPointerDown={(e) => { e.preventDefault(); setShifted((s) => !s); }}
             aria-label={shifted ? labels.shiftActive : labels.shift}
           >
@@ -421,7 +318,7 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
         )}
 
         <button
-          style={{ ...S.key, ...S.modeSwitch }}
+          className="osk-key osk-key--mode"
           onPointerDown={(e) => {
             e.preventDefault();
             setMode((m) => (m === 'alpha' ? 'num' : 'alpha'));
@@ -433,7 +330,7 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
         </button>
 
         <button
-          style={{ ...S.key, ...S.space }}
+          className="osk-key osk-key--space"
           onPointerDown={(e) => tap(e, onSpace)}
           aria-label={labels.space}
         >
@@ -441,7 +338,7 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
         </button>
 
         <button
-          style={{ ...S.key, ...S.send }}
+          className="osk-key osk-key--send"
           onPointerDown={(e) => tap(e, onSend)}
           aria-label={labels.send}
         >

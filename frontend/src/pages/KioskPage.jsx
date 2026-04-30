@@ -216,6 +216,16 @@ export default function KioskPage() {
 
   useKioskBodyFlag(started, Boolean(confirmation));
 
+  useEffect(() => {
+    document.body.dataset.kioskTheme = kioskTheme;
+
+    return () => {
+      if (document.body.dataset.kioskTheme === kioskTheme) {
+        delete document.body.dataset.kioskTheme;
+      }
+    };
+  }, [kioskTheme]);
+
   // Measures the heights of the sticky header and category bar so the menu grid below
   // them can offset itself. Re-runs on resize via ResizeObserver.
   useEffect(() => {
