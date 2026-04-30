@@ -1807,15 +1807,23 @@ body[data-contrast='soft'] .helper-text {
 }
 
 .inventory-edit-table th:last-child,
-.inventory-edit-table td:last-child {
+.inventory-edit-table td:last-child,
+.menu-edit-table th:last-child,
+.menu-edit-table td:last-child {
   min-width: 150px;
 }
 
-.inventory-edit-table input {
+.inventory-edit-table input,
+.menu-edit-table input {
   width: 100%;
   min-width: 90px;
   padding: 6px 8px;
   font-size: 13px;
+}
+
+.menu-edit-table input[type='checkbox'] {
+  width: auto;
+  min-width: 0;
 }
 
 .inventory-row-actions {
@@ -1825,7 +1833,8 @@ body[data-contrast='soft'] .helper-text {
 }
 
 .inventory-row-actions button,
-.inventory-edit-table td > button {
+.inventory-edit-table td > button,
+.menu-edit-table td > button {
   min-height: 32px;
   padding: 5px 8px;
   font-size: 11px;

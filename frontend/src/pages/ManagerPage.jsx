@@ -14,10 +14,20 @@ const initialInventoryForm = { name: '', unit: 'oz', quantity: '0', threshold: '
 const initialInventoryUpdate = { ingredientId: '', delta: '', threshold: '' };
 const initialInventoryEdit = { name: '', unit: '', quantity: '', threshold: '', availability: true };
 const initialMenuForm = { id: '', name: '', price: '', ingredientIds: '', availability: true };
+const initialMenuEdit = { name: '', price: '', ingredientIds: '', availability: true };
 const initialEmployeeForm = { id: '', permission: 'Cashier', actions: '', changes: '' };
 
 function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
+}
+
+function parseIdList(value) {
+  return String(value || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map(Number)
+    .filter(Number.isFinite);
 }
 
 function formatShortDate(value) {
@@ -143,6 +153,8 @@ export default function ManagerPage() {
   const [editingInventoryId, setEditingInventoryId] = useState(null);
   const [inventoryEdit, setInventoryEdit] = useState(initialInventoryEdit);
   const [menuForm, setMenuForm] = useState(initialMenuForm);
+  const [editingMenuId, setEditingMenuId] = useState(null);
+  const [menuEdit, setMenuEdit] = useState(initialMenuEdit);
   const [employeeForm, setEmployeeForm] = useState(initialEmployeeForm);
   const [voidOrderId, setVoidOrderId] = useState('');
   const [zClosing, setZClosing] = useState(false);
@@ -292,12 +304,7 @@ export default function ManagerPage() {
     setError('');
     try {
       const hasIngredientIds = menuForm.ingredientIds.trim() !== '';
-      const ingredientIds = menuForm.ingredientIds
-        .split(',')
-        .map((part) => part.trim())
-        .filter(Boolean)
-        .map(Number)
-        .filter(Number.isFinite);
+      const ingredientIds = parseIdList(menuForm.ingredientIds);
 
       if (menuForm.id) {
         const body = {
@@ -319,6 +326,49 @@ export default function ManagerPage() {
       }
       setMenuForm(initialMenuForm);
       setFeedback('Menu saved.');
+      await loadPage();
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  function startMenuEdit(item) {
+    setEditingMenuId(item.id);
+    setMenuEdit({
+      name: item.name || '',
+      price: String(item.price ?? ''),
+      ingredientIds: item.ingredient_ids || '',
+      availability: item.availability ?? true,
+    });
+  }
+
+  function updateMenuEdit(partial) {
+    setMenuEdit((current) => ({ ...current, ...partial }));
+  }
+
+  function cancelMenuEdit() {
+    setEditingMenuId(null);
+    setMenuEdit(initialMenuEdit);
+  }
+
+  async function saveMenuEdit(menuId) {
+    setFeedback('');
+    setError('');
+    const price = Number(menuEdit.price);
+    if (!menuEdit.name.trim() || !Number.isFinite(price)) {
+      setError('Name and price are required for menu edits.');
+      return;
+    }
+
+    try {
+      await api.patch(`/manager/menu/${menuId}`, {
+        name: menuEdit.name.trim(),
+        price,
+        availability: menuEdit.availability,
+        ingredientIds: parseIdList(menuEdit.ingredientIds),
+      });
+      cancelMenuEdit();
+      setFeedback('Menu item updated.');
       await loadPage();
     } catch (err) {
       setError(err.message);
@@ -590,7 +640,7 @@ export default function ManagerPage() {
       {activeSection === 'MENU' ? (
         <div className="manager-section">
           <form className="swing-panel" onSubmit={handleMenuSubmit}>
-            <div className="panel-title">MENU ITEMS</div>
+            <div className="panel-title">ADD MENU ITEM</div>
             <div className="manager-form-grid">
               <label className="compact-field"><span>ID</span><input value={menuForm.id} onChange={(event) => setMenuForm({ ...menuForm, id: event.target.value })} /></label>
               <label className="compact-field"><span>Name</span><input value={menuForm.name} onChange={(event) => setMenuForm({ ...menuForm, name: event.target.value })} /></label>
@@ -599,9 +649,12 @@ export default function ManagerPage() {
               <label className="compact-field compact-checkbox"><span>Available</span><input type="checkbox" checked={menuForm.availability} onChange={(event) => setMenuForm({ ...menuForm, availability: event.target.checked })} /></label>
             </div>
             <button className="swing-primary">{menuForm.id ? 'UPDATE' : 'ADD'}</button>
+          </form>
 
+          <article className="swing-panel">
+            <div className="panel-title">EDIT EXISTING MENU ITEMS</div>
             <div className="table-wrap">
-              <table>
+              <table className="menu-edit-table">
                 <thead>
                   <tr>
                     <th>ID</th>
@@ -610,23 +663,81 @@ export default function ManagerPage() {
                     <th>Price</th>
                     <th>Available</th>
                     <th>Ingredients</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {menuItems.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.id}</td>
-                      <td>{item.name}</td>
-                      <td>{item.category || '-'}</td>
-                      <td>{formatCurrency(item.price)}</td>
-                      <td>{String(item.availability)}</td>
-                      <td>{item.ingredient_ids || '-'}</td>
-                    </tr>
-                  ))}
+                  {menuItems.map((item) => {
+                    const isEditing = Number(editingMenuId) === Number(item.id);
+                    return (
+                      <tr key={item.id}>
+                        <td>{item.id}</td>
+                        <td>
+                          {isEditing ? (
+                            <input value={menuEdit.name} onChange={(event) => updateMenuEdit({ name: event.target.value })} />
+                          ) : (
+                            item.name
+                          )}
+                        </td>
+                        <td>{item.category || '-'}</td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={menuEdit.price}
+                              onChange={(event) => updateMenuEdit({ price: event.target.value })}
+                            />
+                          ) : (
+                            formatCurrency(item.price)
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              type="checkbox"
+                              checked={menuEdit.availability}
+                              onChange={(event) => updateMenuEdit({ availability: event.target.checked })}
+                            />
+                          ) : (
+                            String(item.availability)
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <input
+                              value={menuEdit.ingredientIds}
+                              onChange={(event) => updateMenuEdit({ ingredientIds: event.target.value })}
+                              placeholder="1, 4, 6"
+                            />
+                          ) : (
+                            item.ingredient_ids || '-'
+                          )}
+                        </td>
+                        <td>
+                          {isEditing ? (
+                            <div className="inventory-row-actions">
+                              <button type="button" className="swing-primary" onClick={() => saveMenuEdit(item.id)}>
+                                SAVE
+                              </button>
+                              <button type="button" className="swing-secondary" onClick={cancelMenuEdit}>
+                                CANCEL
+                              </button>
+                            </div>
+                          ) : (
+                            <button type="button" className="swing-secondary" onClick={() => startMenuEdit(item)}>
+                              EDIT
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-          </form>
+          </article>
         </div>
       ) : null}
 
