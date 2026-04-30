@@ -98,6 +98,18 @@ export default function ChatWidget() {
     });
   }, [isOpen, showKeyboard, messages.length, input]);
 
+  useEffect(() => {
+    if (isOpen) {
+      document.body.dataset.chatOpen = 'true';
+    } else {
+      delete document.body.dataset.chatOpen;
+    }
+
+    return () => {
+      delete document.body.dataset.chatOpen;
+    };
+  }, [isOpen]);
+
   // Sends the user's input plus the prior conversation to the backend /chat route,
   // then appends the assistant's reply (or an error message) to the messages array.
   const sendMessage = async () => {

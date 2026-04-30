@@ -153,6 +153,20 @@ function forceGoogleTranslate(language) {
   return () => timers.forEach((id) => window.clearTimeout(id));
 }
 
+function queueUiLayoutChange() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
+  });
+
+  window.setTimeout(() => {
+    window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
+  }, 80);
+}
+
 function AccessibilitySelect({
   id,
   options,
@@ -173,7 +187,11 @@ function AccessibilitySelect({
         className="accessibility-select-trigger"
         aria-haspopup="listbox"
         aria-expanded={isOpen}
-        onClick={() => setActiveDropdown(isOpen ? null : id)}
+        onClick={() => {
+          setActiveDropdown(isOpen ? null : id);
+          setHoveredOption(null);
+          queueUiLayoutChange();
+        }}
       >
         <span>{selected.label}</span>
         <span aria-hidden="true">v</span>
@@ -204,6 +222,7 @@ function AccessibilitySelect({
                   onChange(option.value);
                   setActiveDropdown(null);
                   setHoveredOption(null);
+                  queueUiLayoutChange();
                 }}
               >
                 {option.label}
@@ -233,6 +252,19 @@ export default function AccessibilityWidget() {
   const mutationObserverRef = useRef(null);
   const isDraggingRef = useRef(false);
   const appShellRectRef = useRef({ left: 0, top: 0 });
+
+  const closeAccessibilityPanel = () => {
+    setIsOpen(false);
+    setActiveDropdown(null);
+    setHoveredOption(null);
+    setLensVisible(false);
+    if (lensContentRef.current) {
+      lensContentRef.current.innerHTML = '';
+    }
+    cloneRootRef.current = null;
+    clonePairsRef.current = [];
+    queueUiLayoutChange();
+  };
 
   const updateAppShellRect = () => {
     const appShell = document.querySelector('.app-shell');
@@ -349,6 +381,18 @@ export default function AccessibilityWidget() {
   }, [contrast, language, scale]);
 
   useEffect(() => {
+    if (isOpen) {
+      document.body.dataset.accessibilityOpen = 'true';
+    } else {
+      delete document.body.dataset.accessibilityOpen;
+    }
+
+    return () => {
+      delete document.body.dataset.accessibilityOpen;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     if (!activeDropdown) {
       return undefined;
     }
@@ -360,6 +404,7 @@ export default function AccessibilityWidget() {
 
       setActiveDropdown(null);
       setHoveredOption(null);
+      queueUiLayoutChange();
     };
 
     document.addEventListener('pointerdown', closeDropdown);
@@ -371,9 +416,7 @@ export default function AccessibilityWidget() {
       return;
     }
 
-    window.requestAnimationFrame(() => {
-      window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
-    });
+    queueUiLayoutChange();
   }, [activeDropdown, hoveredOption, isOpen, scale]);
 
   // Magnifier setup: when scale > 1, clones the app DOM into a circular lens that
@@ -429,6 +472,7 @@ export default function AccessibilityWidget() {
     };
 
     let cloneFrameId = null;
+    let lastTimedCloneSync = 0;
     const requestCloneSync = () => {
       if (cloneFrameId) {
         return;
@@ -441,9 +485,19 @@ export default function AccessibilityWidget() {
       });
     };
 
+    const requestTimedCloneSync = () => {
+      const now = window.performance?.now?.() ?? Date.now();
+      if (now - lastTimedCloneSync < 120) {
+        return;
+      }
+
+      lastTimedCloneSync = now;
+      requestCloneSync();
+    };
+
     syncClone();
 
-    const appRoot = document.getElementById('root') || document.body;
+    const appRoot = document.body;
     if (appRoot) {
       mutationObserverRef.current = new MutationObserver((mutations) => {
         const onlyMagnifierChanged = mutations.every((mutation) => {
@@ -494,6 +548,7 @@ export default function AccessibilityWidget() {
     };
 
     const handleMouseMove = (event) => {
+      requestTimedCloneSync();
       syncLivePosition();
       setPointerPosition({ x: event.clientX, y: event.clientY });
       setLensVisible(true);
@@ -510,6 +565,7 @@ export default function AccessibilityWidget() {
       if (!touch) {
         return;
       }
+      requestTimedCloneSync();
       syncLivePosition();
       setPointerPosition({ x: touch.clientX, y: touch.clientY });
       setLensVisible(true);
@@ -521,6 +577,7 @@ export default function AccessibilityWidget() {
       if (!touch) {
         return;
       }
+      requestTimedCloneSync();
       syncLivePosition();
       setPointerPosition({ x: touch.clientX, y: touch.clientY });
       setLensVisible(true);
@@ -706,14 +763,15 @@ export default function AccessibilityWidget() {
           aria-expanded={isOpen}
           aria-controls="accessibility-panel"
           onClick={() => {
-            setIsOpen((open) => {
-              const nextOpen = !open;
-              if (!nextOpen) {
-                setActiveDropdown(null);
-                setHoveredOption(null);
-              }
-              return nextOpen;
-            });
+            if (isOpen) {
+              closeAccessibilityPanel();
+              return;
+            }
+
+            setIsOpen(true);
+            setActiveDropdown(null);
+            setHoveredOption(null);
+            queueUiLayoutChange();
           }}
         >
           Accessibility
@@ -728,11 +786,7 @@ export default function AccessibilityWidget() {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  setIsOpen(false);
-                  setActiveDropdown(null);
-                  setHoveredOption(null);
-                }}
+                onClick={closeAccessibilityPanel}
               >
                 Close
               </button>

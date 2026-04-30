@@ -304,7 +304,7 @@ fieldset.panel legend {
   bottom: 18px;
   z-index: 120;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: flex-end;
   gap: 8px;
 }
@@ -321,6 +321,10 @@ body[data-page='kiosk'] .accessibility-widget {
 body[data-page='cashier'] .accessibility-widget {
   bottom: 12px;
   right: 18px;
+}
+
+body[data-chat-page='true'][data-chat-open='true'][data-accessibility-open='true'] .accessibility-widget {
+  right: 378px;
 }
 
 body[data-page='cashier'] {
@@ -357,6 +361,9 @@ body[data-page='cashier'] .page-shell {
 
 .accessibility-panel {
   width: min(320px, calc(100vw - 24px));
+  max-height: min(620px, calc(100vh - 86px));
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 16px;
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
@@ -406,20 +413,17 @@ body[data-page='cashier'] .page-shell {
 }
 
 .accessibility-select-options {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  z-index: 130;
+  position: static;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 220px;
+  max-height: 172px;
   overflow-y: auto;
   background: #ffffff;
   border: 1px solid var(--border-soft);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
+  margin-top: 4px;
   padding: 5px;
 }
 
