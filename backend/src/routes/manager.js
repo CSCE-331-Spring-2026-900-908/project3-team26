@@ -27,7 +27,7 @@ router.get('/dashboard', async (_req, res, next) => {
          FROM orders`
       ),
       query(
-        `SELECT i.id AS ingredient_id, i.name, inv.quantity, inv.threshold
+        `SELECT i.id AS ingredient_id, i.name, i.unit, inv.quantity, inv.threshold
          FROM inventory inv
          JOIN ingredients i ON i.id = inv.ingredient_id
          WHERE inv.quantity <= inv.threshold

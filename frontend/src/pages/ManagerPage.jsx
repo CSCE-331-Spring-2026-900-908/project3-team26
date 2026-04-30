@@ -26,11 +26,31 @@ function formatCurrency(value) {
   }).format(Number(value || 0));
 }
 
+function formatChartCurrency(value) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    notation: Math.abs(Number(value || 0)) >= 10000 ? 'compact' : 'standard',
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  }).format(Number(value || 0));
+}
+
 function formatNumber(value, options = {}) {
   return new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 0,
     ...options,
   }).format(Number(value || 0));
+}
+
+function formatHourLabel(value) {
+  const hour = Number(value);
+  if (!Number.isFinite(hour)) {
+    return String(value || '-');
+  }
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12} ${suffix}`;
 }
 
 function parseIdList(value) {
@@ -71,7 +91,8 @@ function SalesTrendChart({ data = [] }) {
 
   return (
     <div className="manager-chart-body manager-line-chart">
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Sales trend line chart">
+      <div className="manager-chart-unit">Daily sales in USD</div>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Daily sales trend in US dollars">
         <line x1={padding} y1={padding} x2={padding} y2={height - padding} className="chart-axis" />
         <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} className="chart-axis" />
         {path ? <path d={path} className="chart-line" /> : null}
@@ -79,7 +100,7 @@ function SalesTrendChart({ data = [] }) {
           <g key={`${point.date}-${point.x}`}>
             <circle cx={point.x} cy={point.y} r="5" className="chart-dot" />
             <text x={point.x} y={point.y - 12} className="chart-value" textAnchor="middle">
-              {formatNumber(point.sales, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+              {formatChartCurrency(point.sales)}
             </text>
             <text x={point.x} y={height - 10} className="chart-label" textAnchor="middle">
               {formatShortDate(point.date)}
@@ -96,14 +117,22 @@ function PeakHoursChart({ data = [] }) {
   const maxOrders = Math.max(...rows.map((row) => Number(row.orderCount || 0)), 1);
 
   return (
-    <div className="manager-chart-body manager-bar-chart" role="img" aria-label="Peak hours bar chart">
-      {rows.map((row) => (
-        <div className="manager-bar-column" key={row.hour}>
-          <span className="manager-bar-value">{formatNumber(row.orderCount)}</span>
-          <span className="manager-bar-fill" style={{ height: `${Math.max((row.orderCount / maxOrders) * 100, 3)}%` }} />
-          <span className="manager-bar-label">{row.hour}</span>
-        </div>
-      ))}
+    <div className="manager-chart-body manager-bar-chart-wrap">
+      <div className="manager-chart-unit">Orders per hour</div>
+      <div className="manager-bar-chart" role="img" aria-label="Peak hours by order count">
+        {rows.map((row) => (
+          <div className="manager-bar-column" key={row.hour}>
+            <div className="manager-bar-stack">
+              <span className="manager-bar-value">
+                {formatNumber(row.orderCount)}
+                <small>orders</small>
+              </span>
+              <span className="manager-bar-fill" style={{ height: `${Math.max((row.orderCount / maxOrders) * 100, 3)}%` }} />
+            </div>
+            <span className="manager-bar-label">{formatHourLabel(row.hour)}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -114,7 +143,10 @@ function TopItemsList({ data = [] }) {
       {data.slice(0, 10).map((item) => (
         <div className="manager-top-row" key={item.name}>
           <span>{item.name}</span>
-          <strong>{formatNumber(item.totalUnitsSold)}</strong>
+          <strong>
+            {formatNumber(item.totalUnitsSold)}
+            <small> sold</small>
+          </strong>
         </div>
       ))}
     </div>
@@ -140,7 +172,8 @@ function RevenueCategoryChart({ data = [] }) {
           return (
             <div className="manager-legend-row" key={row.category}>
               <span style={{ background: palette[index % palette.length] }} />
-              <strong>{row.category} ({percent.toFixed(1)}%)</strong>
+              <strong>{row.category}</strong>
+              <small>{percent.toFixed(1)}% revenue</small>
             </div>
           );
         })}
@@ -501,25 +534,29 @@ export default function ManagerPage() {
             <div className="metric-box">
               <span>TOTAL SALES</span>
               <strong>{formatCurrency(dashboard?.totals?.sales)}</strong>
+              <small className="metric-unit">USD total revenue</small>
             </div>
             <div className="metric-box">
               <span>ORDERS</span>
               <strong>{formatNumber(dashboard?.totals?.orders)}</strong>
+              <small className="metric-unit">orders placed</small>
             </div>
             <div className="metric-box">
               <span>AVG ORDER</span>
               <strong>{formatCurrency(dashboard?.totals?.averageOrder)}</strong>
+              <small className="metric-unit">USD per order</small>
             </div>
             <div className="metric-box">
               <span>CASHIERS</span>
               <strong>{formatNumber(dashboard?.totals?.activeCashiers)}</strong>
+              <small className="metric-unit">active cashiers</small>
             </div>
           </div>
 
           <div className="manager-analytics-grid">
             <article className="swing-panel manager-chart-panel">
               <div className="panel-title">SALES TREND</div>
-              <h3>Sales</h3>
+              <h3>Sales (USD)</h3>
               <SalesTrendChart data={dashboard?.salesTrend || []} />
             </article>
 
@@ -530,7 +567,7 @@ export default function ManagerPage() {
 
             <article className="swing-panel manager-chart-panel">
               <div className="panel-title">PEAK HOURS</div>
-              <h3>Orders</h3>
+              <h3>Orders by Hour</h3>
               <PeakHoursChart data={dashboard?.peakHours || []} />
             </article>
 
@@ -549,6 +586,7 @@ export default function ManagerPage() {
                     <span>{item.name}</span>
                     <strong>
                       {formatNumber(item.quantity)} / {formatNumber(item.threshold)}
+                      <small> {item.unit || 'units'}</small>
                     </strong>
                   </div>
                 ))}
@@ -561,7 +599,10 @@ export default function ManagerPage() {
                 {dashboard?.productUsage?.map((item) => (
                   <div className="list-row" key={item.ingredientId}>
                     <span>{item.name}</span>
-                    <strong>{formatNumber(item.unitsUsed)}</strong>
+                    <strong>
+                      {formatNumber(item.unitsUsed)}
+                      <small> {item.unit || 'units'} used</small>
+                    </strong>
                   </div>
                 ))}
               </div>
