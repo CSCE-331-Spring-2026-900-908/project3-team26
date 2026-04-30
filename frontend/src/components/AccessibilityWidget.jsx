@@ -435,7 +435,8 @@ export default function AccessibilityWidget() {
     document.addEventListener('wheel', handleScrollOrResize, true);
     document.addEventListener('touchmove', handleScrollOrResize, true);
     window.addEventListener('resize', handleScrollOrResize);
-    appShell?.addEventListener('scroll', syncLivePosition, true);
+    const scrollRoot = updateAppShellRect();
+    scrollRoot?.addEventListener('scroll', syncLivePosition, true);
 
     return () => {
       if (mutationObserverRef.current) {
@@ -458,7 +459,7 @@ export default function AccessibilityWidget() {
       document.removeEventListener('wheel', handleScrollOrResize, true);
       document.removeEventListener('touchmove', handleScrollOrResize, true);
       window.removeEventListener('resize', handleScrollOrResize);
-      appShell?.removeEventListener('scroll', syncLivePosition, true);
+      scrollRoot?.removeEventListener('scroll', syncLivePosition, true);
     };
   }, [scale]);
 
