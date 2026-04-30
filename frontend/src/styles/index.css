@@ -412,6 +412,20 @@ body[data-page='cashier'] .page-shell {
   text-align: left;
 }
 
+.accessibility-select-chevron {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  margin-right: 2px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+}
+
+.accessibility-select-trigger[aria-expanded='true'] .accessibility-select-chevron {
+  transform: rotate(-135deg) translateY(-1px);
+}
+
 .accessibility-select-options {
   position: static;
   display: flex;

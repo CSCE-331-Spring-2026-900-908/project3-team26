@@ -194,7 +194,7 @@ function AccessibilitySelect({
         }}
       >
         <span>{selected.label}</span>
-        <span aria-hidden="true">v</span>
+        <span className="accessibility-select-chevron" aria-hidden="true" />
       </button>
 
       {isOpen ? (
