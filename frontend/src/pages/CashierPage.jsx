@@ -6,7 +6,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
-import { getMenuImage } from '../utils/menuImages.js';
+// import { getMenuImage } from '../utils/menuImages.js';
+import { getMenuImage, knownMenuItemNames } from '../utils/menuImages.js';
 import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
 import { toppingOptions } from '../utils/toppings.js';
 
@@ -22,6 +23,10 @@ const defaultCustomization = {
   addons: [],
   quantity: 1,
 };
+
+function toTitleCase(str) {
+  return str.replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 // Buckets a drink into one of four categories based on keywords in its name.
 function getCategory(name = '') {
@@ -44,6 +49,15 @@ function getCategory(name = '') {
   return 'Specialty';
 }
 
+const STATIC_SEED = knownMenuItemNames.map((key) => ({
+  id: `seed-${key}`,
+  name: toTitleCase(key),
+  price: 0,
+  availability: true,
+  category: getCategory(key),
+  _isPlaceholder: true,
+}));
+
 function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
@@ -62,7 +76,8 @@ export default function CashierPage() {
   const navigate = useNavigate();
   // Employee ID is saved in localStorage at login by saveUserSession() in utils/session.js.
   const employeeId = localStorage.getItem('team26-employee-id') || '2';
-  const [menuItems, setMenuItems] = useState([]);
+  // const [menuItems, setMenuItems] = useState([]);
+  const [menuItems, setMenuItems] = useState(STATIC_SEED);
   const [activeCategory, setActiveCategory] = useState('Milk Tea');
   const [customizationModal, setCustomizationModal] = useState(null);
   const [orderLines, setOrderLines] = useState([]);
@@ -121,6 +136,7 @@ export default function CashierPage() {
 
   // Opens the customization modal for a brand-new menu-item selection with default options.
   function openAddModal(item) {
+    if (item._isPlaceholder) return; // prices not ready yet
     setConfirmation(null);
     setCustomizationModal({
       mode: 'add',
@@ -331,7 +347,7 @@ export default function CashierPage() {
                         />
                       ) : null}
                       <span className="menu-tile-name">{item.name}</span>
-                      <strong>{formatCurrency(item.price)}</strong>
+                      <strong>{item._isPlaceholder ? 'Loading...' : formatCurrency(item.price)}</strong>
                     </button>
                   );
                 })
