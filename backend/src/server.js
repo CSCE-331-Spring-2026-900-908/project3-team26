@@ -1,3 +1,5 @@
+// Entry point: loads .env from several possible locations (repo root, backend root,
+// or process CWD), then starts the Express server on PORT (default 4000).
 import dotenv from 'dotenv';
 import app from './app.js';
 

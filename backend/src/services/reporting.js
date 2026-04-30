@@ -1,10 +1,15 @@
+// Reporting service: builds X-reports, Z-report previews, and manages Z-report close/undo.
+// An X-report is a running snapshot of today's sales that can be pulled at any time.
+// A Z-report is the end-of-day close: it archives the X-report totals and locks the day.
 import { query, withClient } from '../db/pool.js';
 import { getSchemaSupport } from '../db/compat.js';
 
+// Formats a number as a two-decimal-place string for the report fields.
 function money(value) {
   return Number(value || 0).toFixed(2);
 }
 
+// Normalizes a raw payment method string to CASH, CARD, or OTHER.
 function normalizeMethod(value = '') {
   const method = value.trim().toUpperCase();
   if (method === 'CARD' || method === 'CREDIT' || method === 'DEBIT') {
@@ -16,6 +21,8 @@ function normalizeMethod(value = '') {
   return 'OTHER';
 }
 
+// Returns a zeroed-out report skeleton used when a Z has already been closed
+// (the live X/Z queries would return wrong numbers once the day is archived).
 function emptyReport(businessDate, signature = 'Manager', closedAt = null) {
   return {
     businessDate,
@@ -31,6 +38,7 @@ function emptyReport(businessDate, signature = 'Manager', closedAt = null) {
   };
 }
 
+// Checks whether today's Z-report has been closed. Returns { closed, closedAt, signature }.
 export async function getZReportCloseStatus(businessDate) {
   const support = await getSchemaSupport();
   if (!support.hasReportDailyTotals) {
@@ -51,6 +59,8 @@ export async function getZReportCloseStatus(businessDate) {
   };
 }
 
+// Computes today's sales, void count, and payment breakdown from the orders/payments tables.
+// Unallocated revenue (orders without a matching payment row) is credited to CASH as a fallback.
 export async function getDailyTotals(businessDate) {
   const support = await getSchemaSupport();
   const salesSql = support.hasOrderVoids
@@ -117,6 +127,7 @@ export async function getDailyTotals(businessDate) {
   };
 }
 
+// Breaks today's orders into hourly buckets for the X-report's hourly activity table.
 export async function getHourlySalesSummary(businessDate) {
   const support = await getSchemaSupport();
   const sql = support.hasOrderVoids
@@ -145,6 +156,8 @@ export async function getHourlySalesSummary(businessDate) {
   }));
 }
 
+// Assembles the full X-report for a given business date.
+// Returns an empty report if the Z has already been closed so the UI shows zeroed data.
 export async function buildXReport(businessDate) {
   const closeStatus = await getZReportCloseStatus(businessDate);
   if (closeStatus.closed) {
@@ -166,6 +179,8 @@ export async function buildXReport(businessDate) {
   };
 }
 
+// Builds the Z-report preview by extending the X-report with a close status and signature.
+// Returns status: 'closed' if already reset, 'ready-to-close' otherwise.
 export async function buildZPreview(businessDate, signature = 'Manager') {
   const report = await buildXReport(businessDate);
   const closeStatus = await getZReportCloseStatus(businessDate);
@@ -179,6 +194,9 @@ export async function buildZPreview(businessDate, signature = 'Manager') {
   };
 }
 
+// Closes the Z-report for today: upserts the daily totals into report_daily_totals,
+// writes an immutable row to z_report_archive, and sets z_generated=TRUE.
+// Uses a row-level lock (FOR UPDATE) to prevent double-closes under concurrent requests.
 export async function closeZReport(businessDate, signature = 'Manager') {
   const support = await getSchemaSupport();
   if (!support.hasReportDailyTotals || !support.hasZReportArchive) {
@@ -291,6 +309,8 @@ export async function closeZReport(businessDate, signature = 'Manager') {
   };
 }
 
+// Undoes the Z-report close for today: clears the z_generated flag and removes the archive row
+// so the live X-report resumes accumulating orders normally.
 export async function reopenZReport(businessDate) {
   const support = await getSchemaSupport();
   if (!support.hasReportDailyTotals || !support.hasZReportArchive) {

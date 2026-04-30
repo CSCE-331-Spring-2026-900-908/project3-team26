@@ -1,8 +1,13 @@
+// Public inventory route: /api/inventory
+// Used internally by the manager page. Supports an optional ?lowStock=true filter
+// to return only items that have fallen below their reorder threshold.
 import { Router } from 'express';
 import { query } from '../db/pool.js';
 
 const router = Router();
 
+// GET /api/inventory[?lowStock=true] — joins inventory with ingredient names.
+// When lowStock=true, only returns rows where quantity <= threshold.
 router.get('/', async (req, res, next) => {
   const lowOnly = req.query.lowStock === 'true';
   try {
