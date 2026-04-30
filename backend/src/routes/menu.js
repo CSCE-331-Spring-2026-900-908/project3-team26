@@ -1,10 +1,17 @@
+// Public menu route: /api/menu
+// Returns all menu items joined with their ingredient names, bucketed into categories.
+// Used by the kiosk and cashier pages to populate the drink grid on load.
 import { Router } from 'express';
 import { query } from '../db/pool.js';
 import { getCategoryForName, groupMenuByCategory } from '../utils/menu.js';
 
 const router = Router();
+// Packaging items that are ingredients in the DB but shouldn't be shown to customers.
 const hiddenIngredients = new Set(['Cups', 'Lids', 'Straws']);
 
+// GET /api/menu — returns { items, grouped }.
+// items: flat list of all menu items with ingredients and category.
+// grouped: same list filtered to available items, keyed by category (for easy rendering).
 router.get('/', async (_req, res, next) => {
   try {
     const result = await query(
@@ -48,6 +55,7 @@ router.get('/', async (_req, res, next) => {
   }
 });
 
+// GET /api/menu/categories — returns the distinct category names derived from item names.
 router.get('/categories', async (_req, res, next) => {
   try {
     const result = await query('SELECT id, name, availability FROM menu_items ORDER BY id');

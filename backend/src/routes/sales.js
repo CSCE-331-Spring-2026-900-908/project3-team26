@@ -1,8 +1,13 @@
+// Public sales analytics route: /api/sales
+// All three endpoints read from orders/order_items and require no authentication.
+// Used by the SalesPage to render the weekly chart, top items, and summary stats.
 import { Router } from 'express';
 import { query } from '../db/pool.js';
 
 const router = Router();
 
+// GET /api/sales/weekly[?weeks=N] — aggregates order totals by ISO week.
+// Defaults to the last 12 weeks; capped at 52 to prevent oversized queries.
 router.get('/weekly', async (req, res, next) => {
   const weeks = Math.min(Number(req.query.weeks || 12), 52);
   try {
@@ -42,6 +47,7 @@ router.get('/weekly', async (req, res, next) => {
   }
 });
 
+// GET /api/sales/peak-day — returns the single calendar day with the highest total sales.
 router.get('/peak-day', async (_req, res, next) => {
   try {
     const result = await query(
@@ -69,6 +75,8 @@ router.get('/peak-day', async (_req, res, next) => {
   }
 });
 
+// GET /api/sales/summary — runs four queries in parallel to return:
+// overall totals, top-5 menu items by units sold, order source breakdown, and hourly activity.
 router.get('/summary', async (_req, res, next) => {
   try {
     const [summary, topItems, sourceBreakdown, hourly] = await Promise.all([
