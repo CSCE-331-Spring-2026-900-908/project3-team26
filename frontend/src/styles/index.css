@@ -1357,7 +1357,6 @@ body[data-contrast='soft'] .helper-text {
 
 .cashier-main > .swing-panel:first-child {
   flex: 0 0 auto;
-  padding-bottom: 6px;
 }
 
 .cashier-main > .swing-panel:nth-child(2) {
@@ -1365,7 +1364,6 @@ body[data-contrast='soft'] .helper-text {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-bottom: 6px;
 }
 
 .cashier-right {
@@ -1382,7 +1380,7 @@ body[data-contrast='soft'] .helper-text {
 }
 
 .cashier-categories {
-  padding: 0 6px 6px;
+  padding: 6px;
 }
 
 .cashier-categories button {
@@ -1403,7 +1401,7 @@ body[data-contrast='soft'] .helper-text {
   grid-auto-rows: minmax(0, 1fr);
   align-content: stretch;
   overflow: hidden;
-  padding: 0 6px 6px;
+  padding: 6px;
 }
 
 .menu-btn,
