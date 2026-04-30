@@ -292,19 +292,8 @@ export default function KioskPage() {
   }, []);
 
   const filterOptions = useMemo(
-    () => {
-      const ingredientOptions = [
-        ...new Set(menuItems.flatMap((item) => item.ingredients || [])),
-      ]
-        .sort((a, b) => a.localeCompare(b))
-        .map((ingredient) => ({
-          value: `ingredient:${ingredient}`,
-          label: ingredient,
-        }));
-
-      return [{ value: allIngredientsValue, label: allIngredientsLabel }, ...specialFilterOptions, ...ingredientOptions];
-    },
-    [menuItems]
+    () => [{ value: allIngredientsValue, label: allIngredientsLabel }, ...specialFilterOptions],
+    []
   );
 
   // Items that match the active category and ingredient filter. The price slider

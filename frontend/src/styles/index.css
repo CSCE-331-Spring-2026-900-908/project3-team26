@@ -2076,9 +2076,13 @@ body[data-contrast='soft'] .helper-text {
 
 .kiosk-page.kiosk-theme-hue fieldset.panel {
   border-color: rgba(240, 82, 117, 0.34);
+  padding-top: 18px;
+  overflow: visible;
 }
 
 .kiosk-page.kiosk-theme-hue fieldset.panel legend {
+  position: relative;
+  top: 7px;
   padding: 5px 12px;
   color: #ffffff;
   background: linear-gradient(135deg, #f05275, #fa8b42);
@@ -2089,6 +2093,7 @@ body[data-contrast='soft'] .helper-text {
   font-weight: 900;
   letter-spacing: 0.8px;
   line-height: 1;
+  margin-bottom: 12px;
 }
 
 .kiosk-page.kiosk-theme-hue .kiosk-categories-panel {
@@ -2383,9 +2388,10 @@ body[data-contrast='soft'] .helper-text {
   position: fixed;
   top: var(--kiosk-header-height, 0px);
   right: 10px;
+  bottom: 104px;
   width: 340px;
   flex: 0 0 auto;
-  max-height: calc(100vh - var(--kiosk-header-height, 0px) - 10px);
+  max-height: none;
   min-height: 0;
   z-index: 40;
 }
