@@ -410,18 +410,19 @@ export default function CashierPage() {
           </div>
           <div className="current-order-footer">
             <div className="total-strip">TOTAL: {formatCurrency(total)}</div>
-            <button className="swing-primary" disabled={submitting} onClick={submitOrder}>
-              {submitting ? 'SUBMITTING...' : 'SUBMIT ORDER'}
-            </button>
+            <div className="current-order-actions">
+              <button className="swing-primary" disabled={submitting} onClick={submitOrder}>
+                {submitting ? 'SUBMITTING...' : 'SUBMIT ORDER'}
+              </button>
+              <button className="swing-secondary" onClick={clearOrder}>
+                CLEAR
+              </button>
+            </div>
           </div>
         </aside>
       </div>
 
-      <div className="cashier-bottom-bar">
-        <button className="swing-secondary" onClick={clearOrder}>
-          CLEAR
-        </button>
-      </div>
+      <div className="cashier-bottom-bar" aria-hidden="true" />
 
       {customizationModal ? (
         <div className="cashier-modal-backdrop" onClick={() => setCustomizationModal(null)}>

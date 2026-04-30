@@ -319,7 +319,7 @@ body[data-page='kiosk'] .accessibility-widget {
 }
 
 body[data-page='cashier'] .accessibility-widget {
-  bottom: 74px;
+  bottom: 12px;
   right: 18px;
 }
 
@@ -385,6 +385,59 @@ body[data-page='cashier'] .page-shell {
 
 .accessibility-field:last-child {
   margin-bottom: 0;
+}
+
+.accessibility-select {
+  position: relative;
+}
+
+.accessibility-select-trigger {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  text-align: left;
+}
+
+.accessibility-select-options {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 130;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 5px;
+}
+
+.accessibility-select-option {
+  width: 100%;
+  min-height: 34px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  padding: 7px 9px;
+  text-align: left;
+}
+
+.accessibility-select-option:hover,
+.accessibility-select-option.hovered,
+.accessibility-select-option.selected {
+  color: var(--primary-fg);
+  background: linear-gradient(135deg, var(--accent), var(--primary-alt));
 }
 
 .google-translate-host {
@@ -1328,6 +1381,10 @@ body[data-contrast='soft'] .helper-text {
   gap: 5px;
 }
 
+.cashier-categories {
+  padding: 0 6px 6px;
+}
+
 .cashier-categories button {
   min-height: 30px;
   padding: 4px 8px;
@@ -1494,6 +1551,17 @@ body[data-contrast='soft'] .helper-text {
   margin-top: 0;
 }
 
+.current-order-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.current-order-actions button {
+  min-width: 0;
+  width: 100%;
+}
+
 .order-total,
 .total-strip {
   font-size: 18px;
@@ -1537,7 +1605,7 @@ body[data-contrast='soft'] .helper-text {
   justify-content: flex-end;
   gap: 8px;
   flex: 0 0 auto;
-  min-height: 34px;
+  min-height: 54px;
 }
 
 .cashier-bottom-bar button {

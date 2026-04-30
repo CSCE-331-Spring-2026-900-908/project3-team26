@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 const STORAGE_KEY = 'bubble-tea-accessibility';
 const ACCESSIBILITY_CHANGE_EVENT = 'bubble-tea-accessibility-change';
+const UI_LAYOUT_CHANGE_EVENT = 'bubble-tea-ui-layout-change';
 const GOOGLE_SCRIPT_ID = 'google-translate-script';
 const GOOGLE_HOST_ID = 'google_translate_element';
 const LENS_SIZE = 200;
@@ -152,12 +153,77 @@ function forceGoogleTranslate(language) {
   return () => timers.forEach((id) => window.clearTimeout(id));
 }
 
+function AccessibilitySelect({
+  id,
+  options,
+  value,
+  onChange,
+  activeDropdown,
+  setActiveDropdown,
+  hoveredOption,
+  setHoveredOption,
+}) {
+  const isOpen = activeDropdown === id;
+  const selected = options.find((option) => option.value === value) || options[0];
+
+  return (
+    <div className="accessibility-select">
+      <button
+        type="button"
+        className="accessibility-select-trigger"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => setActiveDropdown(isOpen ? null : id)}
+      >
+        <span>{selected.label}</span>
+        <span aria-hidden="true">v</span>
+      </button>
+
+      {isOpen ? (
+        <div className="accessibility-select-options" role="listbox">
+          {options.map((option) => {
+            const optionKey = `${id}:${option.value}`;
+            const className = [
+              'accessibility-select-option',
+              option.value === value ? 'selected' : '',
+              hoveredOption === optionKey ? 'hovered' : '',
+            ]
+              .filter(Boolean)
+              .join(' ');
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                className={className}
+                role="option"
+                aria-selected={option.value === value}
+                onMouseEnter={() => setHoveredOption(optionKey)}
+                onMouseLeave={() => setHoveredOption(null)}
+                onClick={() => {
+                  onChange(option.value);
+                  setActiveDropdown(null);
+                  setHoveredOption(null);
+                }}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function AccessibilityWidget() {
   const defaults = useMemo(() => getStoredPreferences(), []);
   const [isOpen, setIsOpen] = useState(false);
   const [language, setLanguage] = useState(defaults.language);
   const [scale, setScale] = useState(defaults.scale);
   const [contrast, setContrast] = useState(defaults.contrast);
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [hoveredOption, setHoveredOption] = useState(null);
   const [translateReady, setTranslateReady] = useState(false);
   const [pointerPosition, setPointerPosition] = useState({ x: 240, y: 240 });
   const [lensVisible, setLensVisible] = useState(false);
@@ -282,6 +348,34 @@ export default function AccessibilityWidget() {
     );
   }, [contrast, language, scale]);
 
+  useEffect(() => {
+    if (!activeDropdown) {
+      return undefined;
+    }
+
+    const closeDropdown = (event) => {
+      if (event.target instanceof Element && event.target.closest('.accessibility-select')) {
+        return;
+      }
+
+      setActiveDropdown(null);
+      setHoveredOption(null);
+    };
+
+    document.addEventListener('pointerdown', closeDropdown);
+    return () => document.removeEventListener('pointerdown', closeDropdown);
+  }, [activeDropdown]);
+
+  useEffect(() => {
+    if (scale === '1') {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
+    });
+  }, [activeDropdown, hoveredOption, isOpen, scale]);
+
   // Magnifier setup: when scale > 1, clones the app DOM into a circular lens that
   // follows the cursor/touch. A MutationObserver re-clones the DOM whenever the page
   // changes so the lens stays in sync with the live UI. Cleans up on unmount/scale=1.
@@ -334,6 +428,19 @@ export default function AccessibilityWidget() {
       });
     };
 
+    let cloneFrameId = null;
+    const requestCloneSync = () => {
+      if (cloneFrameId) {
+        return;
+      }
+
+      cloneFrameId = window.requestAnimationFrame(() => {
+        cloneFrameId = null;
+        syncClone();
+        setPointerPosition((current) => ({ ...current }));
+      });
+    };
+
     syncClone();
 
     const appRoot = document.getElementById('root') || document.body;
@@ -348,7 +455,7 @@ export default function AccessibilityWidget() {
           return;
         }
 
-        window.requestAnimationFrame(syncClone);
+        requestCloneSync();
       });
 
       mutationObserverRef.current.observe(appRoot, {
@@ -435,6 +542,7 @@ export default function AccessibilityWidget() {
     document.addEventListener('wheel', handleScrollOrResize, true);
     document.addEventListener('touchmove', handleScrollOrResize, true);
     window.addEventListener('resize', handleScrollOrResize);
+    window.addEventListener(UI_LAYOUT_CHANGE_EVENT, requestCloneSync);
     const scrollRoot = updateAppShellRect();
     scrollRoot?.addEventListener('scroll', syncLivePosition, true);
 
@@ -445,6 +553,9 @@ export default function AccessibilityWidget() {
       }
       if (refreshFrameId) {
         window.cancelAnimationFrame(refreshFrameId);
+      }
+      if (cloneFrameId) {
+        window.cancelAnimationFrame(cloneFrameId);
       }
       cloneRootRef.current = null;
       clonePairsRef.current = [];
@@ -459,9 +570,10 @@ export default function AccessibilityWidget() {
       document.removeEventListener('wheel', handleScrollOrResize, true);
       document.removeEventListener('touchmove', handleScrollOrResize, true);
       window.removeEventListener('resize', handleScrollOrResize);
+      window.removeEventListener(UI_LAYOUT_CHANGE_EVENT, requestCloneSync);
       scrollRoot?.removeEventListener('scroll', syncLivePosition, true);
     };
-  }, [scale, isOpen]);
+  }, [scale]);
 
   // Lazily loads Google Translate's element script the first time a non-English language
   // is selected. Skips loading on subsequent visits if the global is already present.
@@ -593,7 +705,16 @@ export default function AccessibilityWidget() {
           className="accessibility-trigger"
           aria-expanded={isOpen}
           aria-controls="accessibility-panel"
-          onClick={() => setIsOpen((open) => !open)}
+          onClick={() => {
+            setIsOpen((open) => {
+              const nextOpen = !open;
+              if (!nextOpen) {
+                setActiveDropdown(null);
+                setHoveredOption(null);
+              }
+              return nextOpen;
+            });
+          }}
         >
           Accessibility
         </button>
@@ -605,46 +726,58 @@ export default function AccessibilityWidget() {
                 <strong>Accessibility Tools</strong>
                 <p>Translate the page, enlarge the interface, or improve readability.</p>
               </div>
-              <button type="button" onClick={() => setIsOpen(false)}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  setActiveDropdown(null);
+                  setHoveredOption(null);
+                }}
+              >
                 Close
               </button>
             </div>
 
             <label className="accessibility-field">
               <span>Translation</span>
-              <select
-                className="language-select"
+              <AccessibilitySelect
+                id="language"
+                options={LANGUAGE_OPTIONS}
                 value={language}
-                onChange={(event) => handleLanguageChange(event.target.value)}
-              >
-                {LANGUAGE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                onChange={handleLanguageChange}
+                activeDropdown={activeDropdown}
+                setActiveDropdown={setActiveDropdown}
+                hoveredOption={hoveredOption}
+                setHoveredOption={setHoveredOption}
+              />
             </label>
 
             <label className="accessibility-field">
               <span>Magnifier</span>
-              <select value={scale} onChange={(event) => setScale(event.target.value)}>
-                {MAGNIFIER_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <AccessibilitySelect
+                id="magnifier"
+                options={MAGNIFIER_OPTIONS}
+                value={scale}
+                onChange={setScale}
+                activeDropdown={activeDropdown}
+                setActiveDropdown={setActiveDropdown}
+                hoveredOption={hoveredOption}
+                setHoveredOption={setHoveredOption}
+              />
             </label>
 
             <label className="accessibility-field">
               <span>Contrast</span>
-              <select value={contrast} onChange={(event) => setContrast(event.target.value)}>
-                {CONTRAST_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <AccessibilitySelect
+                id="contrast"
+                options={CONTRAST_OPTIONS}
+                value={contrast}
+                onChange={setContrast}
+                activeDropdown={activeDropdown}
+                setActiveDropdown={setActiveDropdown}
+                hoveredOption={hoveredOption}
+                setHoveredOption={setHoveredOption}
+              />
             </label>
           </section>
         ) : null}

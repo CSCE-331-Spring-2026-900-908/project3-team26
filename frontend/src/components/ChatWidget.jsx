@@ -8,6 +8,7 @@ import OnScreenKeyboard from './OnScreenKeyboard.jsx';
 const SYSTEM_PROMPT = `You are a friendly ordering assistant for a bubble tea shop. Help customers choose drinks, explain menu items, suggest customizations (milk tea, fruit tea, toppings, sweetness levels, ice levels), and guide them through placing their order. Keep responses concise and friendly. Only answer questions related to the menu and ordering process.`;
 const ACCESSIBILITY_STORAGE_KEY = 'bubble-tea-accessibility';
 const ACCESSIBILITY_CHANGE_EVENT = 'bubble-tea-accessibility-change';
+const UI_LAYOUT_CHANGE_EVENT = 'bubble-tea-ui-layout-change';
 
 function getGoogleTranslateLanguage() {
   const match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
@@ -90,6 +91,12 @@ export default function ChatWidget() {
       window.removeEventListener('focus', syncFromStorage);
     };
   }, []);
+
+  useEffect(() => {
+    window.requestAnimationFrame(() => {
+      window.dispatchEvent(new Event(UI_LAYOUT_CHANGE_EVENT));
+    });
+  }, [isOpen, showKeyboard, messages.length, input]);
 
   // Sends the user's input plus the prior conversation to the backend /chat route,
   // then appends the assistant's reply (or an error message) to the messages array.
