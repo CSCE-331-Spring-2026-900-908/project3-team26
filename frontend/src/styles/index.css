@@ -1741,16 +1741,6 @@ body[data-contrast='soft'] .helper-text {
   width: min(640px, 100%);
 }
 
-.cashier-modal-ice-options {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-}
-
-.cashier-modal-ice-options button {
-  min-width: 0;
-  padding-inline: 6px;
-}
-
 .cashier-modal-quantity input {
   min-height: 42px;
   width: 120px;
