@@ -8,12 +8,12 @@ import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
 import { getMenuImage } from '../utils/menuImages.js';
 import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
+import { toppingOptions } from '../utils/toppings.js';
 
 const sizes = ['Small', 'Medium', 'Large'];
 const temperatureOptions = ['Cold', 'Hot'];
 const sugarLevels = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
 const iceLevels = ['No Ice', 'Less Ice', 'Regular'];
-const addOnOptions = ['Boba', 'Jelly', 'Cheese Foam'];
 const defaultCustomization = {
   size: 'Medium',
   temperature: 'Cold',
@@ -157,7 +157,7 @@ export default function CashierPage() {
     );
   }
 
-  // Toggles a single add-on (Boba, Jelly, Cheese Foam) on the in-progress modal draft.
+  // Toggles a single add-on on the in-progress modal draft.
   function toggleModalAddon(addon) {
     setCustomizationModal((current) => {
       if (!current) {
@@ -468,7 +468,7 @@ export default function CashierPage() {
             </div>
 
             <div className="cashier-modal-addons">
-              {addOnOptions.map((addon) => (
+              {toppingOptions.map((addon) => (
                 <label key={addon} className="addon-option">
                   <input
                     type="checkbox"

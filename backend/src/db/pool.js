@@ -3,6 +3,7 @@ import pg from 'pg';
 
 dotenv.config({ path: new URL('../../../.env', import.meta.url) });
 dotenv.config({ path: new URL('../../.env', import.meta.url) });
+dotenv.config({ path: new URL('../../env', import.meta.url) });
 dotenv.config();
 
 const { Pool } = pg;

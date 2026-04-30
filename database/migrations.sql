@@ -79,14 +79,30 @@ INSERT INTO ingredients (id, name, unit, availability)
 VALUES
   (16, 'Nuts', 'oz', TRUE),
   (17, 'Coffee', 'oz', TRUE),
-  (18, 'Coconut Creamer', 'oz', TRUE)
+  (18, 'Coconut Creamer', 'oz', TRUE),
+  (19, 'Lychee Popping Boba', 'oz', TRUE),
+  (20, 'Mango Popping Boba', 'oz', TRUE),
+  (21, 'Strawberry Popping Boba', 'oz', TRUE),
+  (22, 'Crystal Boba', 'oz', TRUE),
+  (23, 'Aloe Vera', 'oz', TRUE),
+  (24, 'Egg Pudding', 'oz', TRUE),
+  (25, 'Red Bean', 'oz', TRUE),
+  (26, 'Grass Jelly', 'oz', TRUE)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO inventory (id, ingredient_id, quantity, threshold)
 VALUES
   (16, 16, 165, 18),
   (17, 17, 220, 20),
-  (18, 18, 245, 22)
+  (18, 18, 245, 22),
+  (19, 19, 220, 25),
+  (20, 20, 220, 25),
+  (21, 21, 220, 25),
+  (22, 22, 180, 20),
+  (23, 23, 180, 20),
+  (24, 24, 180, 20),
+  (25, 25, 160, 18),
+  (26, 26, 180, 20)
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO menu_items (id, name, price, availability)

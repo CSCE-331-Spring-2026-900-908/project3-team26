@@ -8,6 +8,7 @@ import { api } from '../api/client.js';
 import { logoutUser } from '../utils/session.js';
 import { getMenuImage } from '../utils/menuImages.js';
 import { categoryNames, normalizeMenuItem } from '../utils/menuCategories.js';
+import { TOPPING_PRICES, toppingOptions } from '../utils/toppings.js';
 
 // Tags <body> with data-page="kiosk" while the kiosk is active so kiosk-specific CSS can apply
 // (e.g., repositioning the accessibility/chat buttons). Cleans up on unmount.
@@ -37,12 +38,20 @@ const specialFilterOptions = [
 const milkTerms = ['milk'];
 const caffeineTerms = ['black tea', 'green tea', 'oolong tea', 'matcha powder', 'coffee'];
 const nutTerms = ['nuts', 'almond', 'peanut', 'cashew', 'hazelnut', 'walnut', 'pecan', 'pistachio'];
-const toppingTerms = ['tapioca pearls'];
+const toppingTerms = [
+  'tapioca pearls',
+  'jelly',
+  'popping',
+  'boba',
+  'aloe vera',
+  'pudding',
+  'red bean',
+  'grass jelly',
+];
 const sizeOptions = ['Small', 'Medium', 'Large'];
 const temperatureOptions = ['Cold', 'Hot'];
 const sweetnessOptions = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
 const iceOptions = ['0%', '25%', '50%', '75%', '100%', '125%', '150%'];
-const toppingOptions = ['Boba', 'Jelly', 'Cheese Foam', 'Lychee Popping'];
 
 const DEFAULT_CUSTOMIZATION = {
   size: 'Medium',
@@ -55,13 +64,6 @@ const DEFAULT_CUSTOMIZATION = {
 // Price modifiers applied on top of the menu item's base price. Sizes shift up/down,
 // toppings add a flat fee. Backend mirrors this logic so totals are recomputed server-side.
 const SIZE_PRICE_DELTA = { Small: -1.10, Medium: 0, Large: 1.10 };
-const TOPPING_PRICES = {
-  Boba: 0.75,
-  Jelly: 0.75,
-  'Cheese Foam': 1.00,
-  'Lychee Popping': 0.75,
-};
-
 // Texas state sales tax (6.25%) plus typical College Station local rate (2.0%) = 8.25%.
 // Backend mirrors this so the total stored in the database matches what the customer sees.
 const TEXAS_TAX_RATE = 0.0825;

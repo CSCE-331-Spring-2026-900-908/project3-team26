@@ -1,12 +1,12 @@
 \set ON_ERROR_STOP on
 
-\copy employees(id, permission, actions, changes) FROM './csv/employees.csv' WITH (FORMAT csv, HEADER true);
-\copy ingredients(id, name, unit, availability) FROM './csv/ingredients.csv' WITH (FORMAT csv, HEADER true);
-\copy inventory(id, ingredient_id, quantity, threshold) FROM './csv/inventory.csv' WITH (FORMAT csv, HEADER true);
-\copy menu_items(id, name, price, availability) FROM './csv/menu_items.csv' WITH (FORMAT csv, HEADER true);
-\copy menu_item_ingredients(id, menu_item_id, ingredient_id) FROM './csv/menu_item_ingredients.csv' WITH (FORMAT csv, HEADER true);
-\copy orders(id, order_time, total_amount, cashier) FROM './csv/orders.csv' WITH (FORMAT csv, HEADER true);
-\copy order_items(id, order_id, quantity, price_charged, menu_item_id) FROM './csv/order_items.csv' WITH (FORMAT csv, HEADER true);
+\copy employees(id, permission, actions, changes) FROM 'database/csv/employees.csv' WITH (FORMAT csv, HEADER true);
+\copy ingredients(id, name, unit, availability) FROM 'database/csv/ingredients.csv' WITH (FORMAT csv, HEADER true);
+\copy inventory(id, ingredient_id, quantity, threshold) FROM 'database/csv/inventory.csv' WITH (FORMAT csv, HEADER true);
+\copy menu_items(id, name, price, availability) FROM 'database/csv/menu_items.csv' WITH (FORMAT csv, HEADER true);
+\copy menu_item_ingredients(id, menu_item_id, ingredient_id) FROM 'database/csv/menu_item_ingredients.csv' WITH (FORMAT csv, HEADER true);
+\copy orders(id, order_time, total_amount, cashier) FROM 'database/csv/orders.csv' WITH (FORMAT csv, HEADER true);
+\copy order_items(id, order_id, quantity, price_charged, menu_item_id) FROM 'database/csv/order_items.csv' WITH (FORMAT csv, HEADER true);
 
 UPDATE orders
 SET order_source = 'cashier'

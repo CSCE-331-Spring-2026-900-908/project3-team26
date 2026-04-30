@@ -3,18 +3,17 @@ import { query, withClient } from './pool.js';
 let cachedSupport;
 
 async function inspectSupport(client) {
-  const [orderSourceColumn, orderPaymentsTable, orderVoidsTable, reportTotalsTable, zArchiveTable] =
-    await Promise.all([
-      client.query(
-        `SELECT COUNT(*)::int AS count
-         FROM information_schema.columns
-         WHERE table_name = 'orders' AND column_name = 'order_source'`
-      ),
-      client.query(`SELECT to_regclass('public.order_payments') AS name`),
-      client.query(`SELECT to_regclass('public.order_voids') AS name`),
-      client.query(`SELECT to_regclass('public.report_daily_totals') AS name`),
-      client.query(`SELECT to_regclass('public.z_report_archive') AS name`),
-    ]);
+  const orderSourceColumn = await client.query(
+    `SELECT COUNT(*)::int AS count
+     FROM information_schema.columns
+     WHERE table_name = 'orders' AND column_name = 'order_source'`
+  );
+  const orderPaymentsTable = await client.query(`SELECT to_regclass('public.order_payments') AS name`);
+  const orderVoidsTable = await client.query(`SELECT to_regclass('public.order_voids') AS name`);
+  const reportTotalsTable = await client.query(
+    `SELECT to_regclass('public.report_daily_totals') AS name`
+  );
+  const zArchiveTable = await client.query(`SELECT to_regclass('public.z_report_archive') AS name`);
 
   return {
     hasOrderSource: Number(orderSourceColumn.rows[0].count) > 0,
