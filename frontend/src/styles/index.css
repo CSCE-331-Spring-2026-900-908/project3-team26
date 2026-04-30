@@ -487,15 +487,7 @@ iframe.goog-te-banner-frame.skiptranslate {
 }
 
 .magnifier-clone .kiosk-header::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
-  height: calc(var(--kiosk-categories-height, 0px) + 20px);
-  background: var(--panel-bg);
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 
 .magnifier-clone #page-kiosk.kiosk-active::before {
@@ -1886,6 +1878,66 @@ body[data-contrast='soft'] .helper-text {
 .compact-field span {
   font-weight: bold;
   font-size: 12px;
+}
+
+.manager-permission-select {
+  position: relative;
+  width: 100%;
+}
+
+.manager-permission-button {
+  width: 100%;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  text-align: left;
+  background: #ffffff;
+}
+
+.manager-permission-arrow {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-2px);
+}
+
+.manager-permission-options {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  box-shadow: 0 14px 28px rgba(20, 30, 50, 0.18);
+}
+
+.manager-permission-options button {
+  width: 100%;
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 6px 10px;
+  text-align: left;
+  background: transparent;
+  border: none;
+}
+
+.manager-permission-options button:hover,
+.manager-permission-options button.active {
+  color: var(--primary-fg);
+  background: linear-gradient(135deg, var(--primary), var(--primary-alt));
 }
 
 .compact-checkbox input {

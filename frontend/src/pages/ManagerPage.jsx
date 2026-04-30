@@ -2,7 +2,7 @@
 // Inventory, Menu, Employees, Reports), each backed by an API endpoint under /manager/*.
 // All forms (inventory create/update, menu CRUD, employee CRUD, void order) round-trip to
 // the backend and re-fetch the page data so the UI stays in sync with PostgreSQL.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import InventoryTable from '../components/InventoryTable.jsx';
@@ -16,6 +16,7 @@ const initialInventoryEdit = { name: '', unit: '', quantity: '', threshold: '', 
 const initialMenuForm = { id: '', name: '', price: '', ingredientIds: '', availability: true };
 const initialMenuEdit = { name: '', price: '', ingredientIds: '', availability: true };
 const initialEmployeeForm = { id: '', permission: 'Cashier', actions: '', changes: '' };
+const employeePermissionOptions = ['Cashier', 'Manager'];
 
 function formatCurrency(value) {
   return new Intl.NumberFormat('en-US', {
@@ -200,11 +201,13 @@ export default function ManagerPage() {
   const [editingMenuId, setEditingMenuId] = useState(null);
   const [menuEdit, setMenuEdit] = useState(initialMenuEdit);
   const [employeeForm, setEmployeeForm] = useState(initialEmployeeForm);
+  const [employeePermissionOpen, setEmployeePermissionOpen] = useState(false);
   const [voidOrderId, setVoidOrderId] = useState('');
   const [zClosing, setZClosing] = useState(false);
   const [zReopening, setZReopening] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
+  const employeePermissionRef = useRef(null);
 
   // Pulls every section's data in parallel from the backend. Called on mount and
   // again after any mutation (create, update, void) so the UI stays in sync with PostgreSQL.
@@ -235,6 +238,32 @@ export default function ManagerPage() {
   useEffect(() => {
     loadPage();
   }, []);
+
+  useEffect(() => {
+    if (!employeePermissionOpen) {
+      return undefined;
+    }
+
+    const closeOnOutsideClick = (event) => {
+      if (!employeePermissionRef.current?.contains(event.target)) {
+        setEmployeePermissionOpen(false);
+      }
+    };
+
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setEmployeePermissionOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [employeePermissionOpen]);
 
   // POSTs a new ingredient + inventory row to /manager/inventory, then refreshes the page.
   async function handleInventoryCreate(event) {
@@ -446,6 +475,11 @@ export default function ManagerPage() {
     } catch (err) {
       setError(err.message);
     }
+  }
+
+  function chooseEmployeePermission(permission) {
+    setEmployeeForm((current) => ({ ...current, permission }));
+    setEmployeePermissionOpen(false);
   }
 
   // Voids an order by ID. Backend records the void with the manager's employee ID
@@ -801,10 +835,40 @@ export default function ManagerPage() {
               <label className="compact-field"><span>ID</span><input value={employeeForm.id} onChange={(event) => setEmployeeForm({ ...employeeForm, id: event.target.value })} /></label>
               <label className="compact-field">
                 <span>Permission</span>
-                <select value={employeeForm.permission} onChange={(event) => setEmployeeForm({ ...employeeForm, permission: event.target.value })}>
-                  <option>Cashier</option>
-                  <option>Manager</option>
-                </select>
+                <div className="manager-permission-select" ref={employeePermissionRef}>
+                  <button
+                    type="button"
+                    className="manager-permission-button"
+                    aria-haspopup="listbox"
+                    aria-expanded={employeePermissionOpen}
+                    aria-controls="employee-permission-options"
+                    onClick={() => setEmployeePermissionOpen((open) => !open)}
+                  >
+                    <span>{employeeForm.permission}</span>
+                    <span className="manager-permission-arrow" aria-hidden="true" />
+                  </button>
+                  {employeePermissionOpen ? (
+                    <div
+                      className="manager-permission-options"
+                      id="employee-permission-options"
+                      role="listbox"
+                      aria-label="Employee permission options"
+                    >
+                      {employeePermissionOptions.map((permission) => (
+                        <button
+                          key={permission}
+                          type="button"
+                          role="option"
+                          aria-selected={employeeForm.permission === permission}
+                          className={employeeForm.permission === permission ? 'active' : ''}
+                          onClick={() => chooseEmployeePermission(permission)}
+                        >
+                          {permission}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               </label>
               <label className="compact-field"><span>Actions</span><input value={employeeForm.actions} onChange={(event) => setEmployeeForm({ ...employeeForm, actions: event.target.value })} /></label>
               <label className="compact-field"><span>Changes</span><input value={employeeForm.changes} onChange={(event) => setEmployeeForm({ ...employeeForm, changes: event.target.value })} /></label>
