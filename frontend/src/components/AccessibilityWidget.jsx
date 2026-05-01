@@ -87,11 +87,15 @@ function clearGoogleTranslateCookie() {
   }
 }
 
+// Reads the raw googtrans cookie value from document.cookie using a regex match.
+// Returns the decoded cookie string, or an empty string if no cookie is present.
 function getGoogleTranslateCookie() {
   const match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : '';
 }
 
+// Extracts the target language code from the googtrans cookie (e.g. "es" from "/auto/es").
+// Returns null if the cookie is absent or set to the default English value.
 function getLanguageFromGoogleTranslateCookie() {
   const value = getGoogleTranslateCookie();
   if (!value || value === '/auto/en') {
@@ -154,6 +158,8 @@ function forceGoogleTranslate(language) {
   return () => timers.forEach((id) => window.clearTimeout(id));
 }
 
+// Dispatches the UI layout change event on the next animation frame and after 80ms.
+// Gives the rest of the UI time to reflow after the accessibility panel opens or closes.
 function queueUiLayoutChange() {
   if (typeof window === 'undefined') {
     return;
@@ -168,12 +174,16 @@ function queueUiLayoutChange() {
   }, 80);
 }
 
+// Fires queueUiLayoutChange immediately and at 0ms and 160ms after commit.
+// Covers async React state updates that may delay the actual DOM reflow.
 function queueUiLayoutChangeAfterCommit() {
   queueUiLayoutChange();
   window.setTimeout(queueUiLayoutChange, 0);
   window.setTimeout(queueUiLayoutChange, 160);
 }
 
+// Custom dropdown component shared by the language, magnifier, and contrast controls.
+// Uses shared parent state so only one dropdown can be open at a time across all three.
 function AccessibilitySelect({
   id,
   options,
@@ -265,6 +275,8 @@ export default function AccessibilityWidget() {
   const isDraggingRef = useRef(false);
   const appShellRectRef = useRef({ left: 0, top: 0 });
 
+  // Closes the accessibility panel and resets all dropdown, hover, and magnifier state.
+// Clears the lens DOM clone and fires a layout change so other widgets can reposition.
   const closeAccessibilityPanel = () => {
     setIsOpen(false);
     setActiveDropdown(null);
@@ -280,12 +292,16 @@ export default function AccessibilityWidget() {
     queueUiLayoutChangeAfterCommit();
   };
 
+  // Handles pointer-down on the close button, preventing bubbling before closing the panel.
+// Stops propagation so the event does not trigger the panel's own open/close toggle.
   const handleAccessibilityClosePointerDown = (event) => {
     event.preventDefault();
     event.stopPropagation();
     closeAccessibilityPanel();
   };
 
+  // Queries .app-shell and caches its bounding rect in appShellRectRef for magnifier positioning.
+// Called before each lens render so the clone is aligned to the current shell dimensions.
   const updateAppShellRect = () => {
     const appShell = document.querySelector('.app-shell');
     if (appShell) {
@@ -294,6 +310,8 @@ export default function AccessibilityWidget() {
     return appShell;
   };
 
+  // Returns the array of DOM elements to clone into the magnifier lens.
+  // Currently includes .app-shell, filtered to exclude any elements that don't exist.
   const getMagnifierSourceRoots = () =>
     [
       document.querySelector('.app-shell'),
@@ -318,6 +336,8 @@ export default function AccessibilityWidget() {
     });
   };
 
+  // Copies scroll positions from every element in the source root to its clone counterpart.
+  // Keeps the magnifier lens in sync with the page's live scroll state.
   const syncFixedClonePositions = (sourceRoot, cloneRoot, rootRect = sourceRoot?.getBoundingClientRect()) => {
     if (!sourceRoot || !cloneRoot) {
       return;
@@ -350,6 +370,8 @@ export default function AccessibilityWidget() {
     });
   };
 
+  // Returns true if the element is scrollable in either the X or Y axis.
+  // Used to identify which elements need scroll-sync listeners attached to them.
   const isScrollableElement = (element) => {
     if (!(element instanceof Element)) {
       return false;
@@ -364,11 +386,15 @@ export default function AccessibilityWidget() {
     return canScrollY || canScrollX;
   };
 
+  // Calls all stored scroll-listener cleanup functions and empties the listener array.
+  // Called before re-cloning the DOM to prevent stale listeners from accumulating.
   const clearScrollSyncListeners = () => {
     scrollSyncListenersRef.current.forEach((unsubscribe) => unsubscribe());
     scrollSyncListenersRef.current = [];
   };
 
+  // Returns the cached bounding rect for a source root used in magnifier clone positioning.
+  // Returns the stored appShellRectRef for .app-shell, or a zeroed rect for all other roots.  
   const getCloneRootRect = (sourceRoot) => {
     if (sourceRoot?.classList?.contains('app-shell')) {
       return appShellRectRef.current;
@@ -377,6 +403,8 @@ export default function AccessibilityWidget() {
     return { left: 0, top: 0 };
   };
 
+  // Clones a floating widget by selector and appends it into the magnifier lens at the
+  // same screen coordinates, offset relative to the app shell's bounding rect.
   const appendFloatingClone = (clone, selector, className) => {
     const sourceRoot = document.querySelector(selector);
     if (!sourceRoot) {
@@ -544,6 +572,9 @@ export default function AccessibilityWidget() {
 
     let cloneFrameId = null;
     let lastTimedCloneSync = 0;
+
+    // Schedules a syncClone on the next animation frame, deduplicated to one pending frame.
+    // Prevents excessive re-clones when rapid DOM mutations fire in quick succession.
     const requestCloneSync = () => {
       if (cloneFrameId) {
         return;
@@ -557,6 +588,8 @@ export default function AccessibilityWidget() {
       });
     };
 
+    // Rate-limits clone sync calls to at most once every 120ms during pointer movement.
+    // Keeps the lens fresh during fast mouse/touch movement without re-cloning every frame.
     const requestTimedCloneSync = () => {
       const now = window.performance?.now?.() ?? Date.now();
       if (now - lastTimedCloneSync < 120) {
@@ -590,6 +623,8 @@ export default function AccessibilityWidget() {
       });
     }
 
+    // Refreshes the app shell rect and re-syncs scroll and fixed-element positions in the lens.
+    // Called on scroll and resize so the lens stays aligned with the live page layout.
     const syncLivePosition = () => {
       const appShell = updateAppShellRect();
       if (appShell && cloneRootRef.current) {
@@ -605,6 +640,9 @@ export default function AccessibilityWidget() {
     };
 
     let refreshFrameId = null;
+
+    // Debounces scroll and resize events via requestAnimationFrame, then syncs live positions.
+    // Forces a pointer position update so the lens content re-renders after layout changes.
     const handleScrollOrResize = () => {
       if (refreshFrameId) {
         window.cancelAnimationFrame(refreshFrameId);
@@ -617,6 +655,9 @@ export default function AccessibilityWidget() {
       });
     };
 
+
+    // Attaches scroll listeners to every scrollable element across all magnifier source roots.
+    // Stores cleanup functions in scrollSyncListenersRef for bulk removal on re-clone or unmount.
     const attachScrollSyncListeners = () => {
       clearScrollSyncListeners();
 
@@ -640,6 +681,8 @@ export default function AccessibilityWidget() {
     syncClone();
     attachScrollSyncListeners();
 
+    // Updates the lens position to the cursor coordinates and makes the lens visible.
+    // Triggers a rate-limited clone sync on every mousemove while the magnifier is active.
     const handleMouseMove = (event) => {
       requestTimedCloneSync();
       syncLivePosition();
@@ -647,12 +690,16 @@ export default function AccessibilityWidget() {
       setLensVisible(true);
     };
 
+    // Hides the magnifier lens when the cursor leaves the window.
+    // Skips hiding if a touch drag is in progress to avoid a premature disappearance.
     const handleMouseLeave = () => {
       if (!isDraggingRef.current) {
         setLensVisible(false);
       }
     };
 
+    // Updates the lens position on each touch move and triggers a rate-limited clone sync.
+    // Sets isDraggingRef to keep the lens visible throughout a continuous touch drag.
     const handleTouchMove = (event) => {
       const touch = event.touches[0];
       if (!touch) {
@@ -665,6 +712,8 @@ export default function AccessibilityWidget() {
       isDraggingRef.current = true;
     };
 
+    // Tracks the first touch point to position the lens and shows it on touch start.
+    // Sets isDraggingRef so a subsequent mouseleave event does not hide the lens mid-drag.
     const handleTouchStart = (event) => {
       const touch = event.touches[0];
       if (!touch) {
@@ -677,10 +726,13 @@ export default function AccessibilityWidget() {
       isDraggingRef.current = true;
     };
 
+    // Clears the isDraggingRef flag when a touch gesture ends or is cancelled.
     const handleTouchEnd = () => {
       isDraggingRef.current = false;
     };
 
+    // Detects clicks inside the chat or accessibility widget and schedules staggered re-clones.
+    // Ensures the lens reflects DOM changes caused by opening or closing floating panels.
     const handleFloatingUiToggle = (event) => {
       if (!event.target?.closest?.('.chat-widget, .accessibility-widget')) {
         return;
