@@ -8,6 +8,8 @@ import { api } from '../api/client.js';
 import StatCard from '../components/StatCard.jsx';
 import { logoutUser } from '../utils/session.js';
 
+// Formats a number as a USD currency string with two decimal places
+// Used to display sales totals in the weekly history table
 function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }

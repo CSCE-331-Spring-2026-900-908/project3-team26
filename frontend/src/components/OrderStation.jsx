@@ -23,6 +23,8 @@ function useMenu() {
   return { menu, error };
 }
 
+// Top-level order-building component rendering the menu, category tabs, and cart panel.
+// Wires together menu data, cart state, payment method, and order submission in one flow.
 export default function OrderStation({
   title,
   subtitle,
@@ -101,6 +103,8 @@ export default function OrderStation({
     }
   }
 
+  // Clears the confirmation screen and empties the cart to restart the ordering flow.
+  // Called after a successful order submission when the user wants to place another order.
   function resetFlow() {
     setConfirmation(null);
     setCart([]);

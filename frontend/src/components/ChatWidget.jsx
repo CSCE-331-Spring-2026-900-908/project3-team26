@@ -11,6 +11,8 @@ const ACCESSIBILITY_STORAGE_KEY = 'bubble-tea-accessibility';
 const ACCESSIBILITY_CHANGE_EVENT = 'bubble-tea-accessibility-change';
 const UI_LAYOUT_CHANGE_EVENT = 'bubble-tea-ui-layout-change';
 
+// Reads the googtrans cookie and extracts the active Google Translate language code.
+// Returns "en" for the default English value, or null if no cookie is present.
 function getGoogleTranslateLanguage() {
   const match = document.cookie.match(/(?:^|;\s*)googtrans=([^;]+)/);
   if (!match) {
@@ -25,6 +27,8 @@ function getGoogleTranslateLanguage() {
   return value.split('/')[2] || null;
 }
 
+// Resolves the on-screen keyboard language from the Google Translate cookie or localStorage.
+// Falls back to "en" if neither source has a stored language preference.
 function getStoredKeyboardLanguage() {
   const cookieLanguage = getGoogleTranslateLanguage();
   if (cookieLanguage) {
@@ -50,20 +54,28 @@ export default function ChatWidget() {
   const bottomRef = useRef(null);
 
   // 2. closeChat — replaces calling setIsOpen(false) directly
+  // Closes the chat panel and hides the on-screen keyboard in a single call.
+  // Centralizes teardown so both states are always reset together on close.
   function closeChat() {
     setIsOpen(false);
     setShowKeyboard(false);
   }
 
   // 3. On-screen keyboard handlers — passed as props to OnScreenKeyboard
+  // Appends a tapped on-screen keyboard character to the current input value.
+  // Passed as the onKey prop to the OnScreenKeyboard component.
   function handleOskKey(char) {
     setInput((prev) => prev + char);
   }
 
+  // Removes the last character from the input when the on-screen backspace key is tapped.
+  // Passed as the onBackspace prop to the OnScreenKeyboard component.
   function handleOskBackspace() {
     setInput((prev) => prev.slice(0, -1));
   }
 
+  // Appends a space character to the input when the on-screen keyboard space bar is tapped.
+  // Passed as the onSpace prop to the OnScreenKeyboard component.
   function handleOskSpace() {
     setInput((prev) => prev + ' ');
   }

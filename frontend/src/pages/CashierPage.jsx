@@ -25,6 +25,8 @@ const defaultCustomization = {
   quantity: 1,
 };
 
+// Converts a string to title case by capitalizing the first letter of each word
+// Used to format placeholder items from the static data before the API responds
 function toTitleCase(str) {
   return str.replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -59,10 +61,14 @@ const STATIC_SEED = knownMenuItemNames.map((key) => ({
   _isPlaceholder: true,
 }));
 
+// Formats a numeric value as a USD price string with two decimal places
+// Called whenever a price is rendered on the screen
 function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
 
+// Serializes a customization object into a stable key for car de-duplication
+// Two orders with identical options produce the same key and are merged into one line
 function getCustomizationKey(customization) {
   return JSON.stringify({
     size: customization.size,
@@ -240,6 +246,9 @@ export default function CashierPage() {
     setCustomizationModal(null);
   }
 
+  // Adjusts a cart line's quantity by "delta" amount
+  // Line is removed if it hits zero
+  // Called by the +/- quantity buttons in the cart panel
   function updateLineQuantity(lineId, delta) {
     setOrderLines((current) =>
       current
@@ -249,7 +258,9 @@ export default function CashierPage() {
         .filter((line) => line.quantity > 0)
     );
   }
-
+  
+  // Removes a cart line entirely by its ID, regardless of current quantity
+  // Used by the delete/trash action on individual order lines
   function removeLine(lineId) {
     setOrderLines((current) => current.filter((line) => line.id !== lineId));
   }

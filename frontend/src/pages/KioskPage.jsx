@@ -73,6 +73,8 @@ const SIZE_PRICE_DELTA = { Small: -1.10, Medium: 0, Large: 1.10 };
 // Backend mirrors this so the total stored in the database matches what the customer sees.
 const TEXAS_TAX_RATE = 0.0825;
 
+// Rounds a numeric value to two decimal places using integer math
+// Used for all monetary calculations
 function roundCurrency(value) {
   return Math.round(Number(value) * 100) / 100;
 }
@@ -134,6 +136,8 @@ const STATIC_SEED = knownMenuItemNames.map((key) => ({
   _isPlaceholder: true,
 }));
 
+// Formats a numeric value as a USD price string with two decimal places
+// Used throughout the kiosk whenever a price is rendered on screen
 function formatCurrency(value) {
   return `$${Number(value || 0).toFixed(2)}`;
 }
@@ -596,16 +600,22 @@ export default function KioskPage() {
     closeCustomization();
   }
 
+  // Toggles the kiosk visual theme between "hue" and "classic"
+  // The active theme drives the CSS class applied to the page
   function toggleKioskTheme() {
     setKioskTheme((current) => (current === 'hue' ? 'classic' : 'hue'));
   }
 
+  // Applies the selected ingredient / dietary / allergen filter and closes the dropdown
+  // Clears the hover highlight so the dropdown resets cleanly whenever its opened next
   function chooseIngredientFilter(value) {
     setActiveFilterValue(value);
     setIngredientFilterOpen(false);
     setHoveredFilterValue('');
   }
 
+  // Returns the JSX for the theme toggle button (HUE / CLASSIC switcher)
+  // Extracted so it can be reused across multiple screens without duplicating markup
   function renderThemeButton() {
     return (
       <button

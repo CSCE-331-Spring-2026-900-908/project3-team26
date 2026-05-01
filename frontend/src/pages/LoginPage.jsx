@@ -159,11 +159,15 @@ export default function LoginPage() {
     setPin((current) => (current.length < PIN_LENGTH ? current + digit : current));
   }
 
+  // Removes the last digit from the current PIN entry and clears any error message
+  // Bound to the backspace key on the keypad UI
   function backspace() {
     setError('');
     setPin((current) => current.slice(0, -1));
   }
 
+  // Resets the PIN input to empty and clears any error message
+  // Bound to the "Clear" button on the keypad UI
   function clear() {
     setError('');
     setPin('');

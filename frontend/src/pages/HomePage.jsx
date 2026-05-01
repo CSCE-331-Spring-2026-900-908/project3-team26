@@ -4,6 +4,8 @@
 import { Link } from 'react-router-dom';
 import WeatherWidget from '../components/WeatherWidget.jsx';
 
+// HomePage: landing screen at "/" with the brand hero and two entry points
+// Login for staff, Kiosk for customers, and the live weather widget for College Station
 export default function HomePage() {
   return (
     <section className="landing-home">

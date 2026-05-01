@@ -208,6 +208,8 @@ const KEYBOARD_LAYOUTS = {
   },
 };
 
+// Looks up the keyboard layout for a given language code, normalizing it to lowercase.
+// Handles the zh-CN special case and falls back to the English layout if no match exists.
 function getKeyboardLayout(language = 'en') {
   const normalized = language.toLowerCase();
   if (normalized.startsWith('zh')) {
@@ -246,6 +248,8 @@ export default function OnScreenKeyboard({ onKey, onBackspace, onSpace, onSend, 
     if (shifted) setShifted(false);
   }
 
+  // Sends a number or symbol character to the parent via onKey without modification.
+  // Used in numeric/symbol mode where Shift and casing do not apply.
   function pressNum(char) {
     onKey(char);
   }
